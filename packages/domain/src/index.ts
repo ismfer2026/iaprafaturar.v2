@@ -37,6 +37,20 @@ export type {
   DashboardPulse,
   DashboardSummary,
 } from "./types/dashboard";
+export type {
+  FinancialPaymentMethod,
+  FinancialSummary,
+  FinancialTransaction,
+  FinancialTransactionStatus,
+  FinancialTransactionType,
+  FinancialTransactionWithClient,
+  CreateFinancialTransactionInput,
+  CreateFinancialTransactionOutput,
+  MarkTransactionPaidInput,
+  MarkTransactionPaidOutput,
+  CancelFinancialTransactionInput,
+  CancelFinancialTransactionOutput,
+} from "./types/financial";
 
 export type {
   WhatsAppMessageReceivedEvent,

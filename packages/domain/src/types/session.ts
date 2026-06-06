@@ -9,6 +9,8 @@ export interface Session {
   clinical_evolution: string | null;
   notes: string | null;
   session_value: number;
+  payment_status: "pendente" | "pago" | "parcial" | "isento";
+  payment_method: string | null;
   procedures_performed: string[];
   products_used: string[];
   ai_registered: boolean;

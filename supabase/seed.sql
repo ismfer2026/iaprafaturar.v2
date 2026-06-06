@@ -329,6 +329,85 @@ INSERT INTO public.sessions (
 )
 ON CONFLICT (id) DO NOTHING;
 
+-- ============================================================
+-- Phase 4 Financeiro Basico synthetic seeds
+-- ============================================================
+
+UPDATE public.sessions
+SET payment_status = 'pago',
+    payment_method = 'pix'
+WHERE id = '00000000-0000-4000-8000-000000000601';
+
+INSERT INTO public.financial_transactions (
+  id,
+  professional_id,
+  client_id,
+  session_id,
+  appointment_id,
+  type,
+  amount,
+  discount_amount,
+  status,
+  payment_method,
+  due_date,
+  paid_at,
+  description,
+  source,
+  notes
+) VALUES
+  (
+    '00000000-0000-4000-8000-000000000801',
+    '00000000-0000-4000-8000-000000000101',
+    '00000000-0000-4000-8000-000000000201',
+    '00000000-0000-4000-8000-000000000601',
+    '00000000-0000-4000-8000-000000000502',
+    'receita',
+    120.00,
+    0,
+    'pago',
+    'pix',
+    null,
+    now() - interval '15 days',
+    'Pagamento da Sessao Sintetica',
+    'manual',
+    'Seed financeiro pago vinculado a sessao.'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000802',
+    '00000000-0000-4000-8000-000000000101',
+    '00000000-0000-4000-8000-000000000201',
+    null,
+    '00000000-0000-4000-8000-000000000501',
+    'receita',
+    120.00,
+    0,
+    'pendente',
+    null,
+    ((now() AT TIME ZONE 'America/Sao_Paulo')::date + 3),
+    null,
+    'Pagamento pendente do agendamento sintetico',
+    'manual',
+    'Seed financeiro pendente para validar contas a receber.'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000803',
+    '00000000-0000-4000-8000-000000000101',
+    null,
+    null,
+    null,
+    'despesa',
+    45.00,
+    0,
+    'pago',
+    'dinheiro',
+    null,
+    now(),
+    'Material de atendimento',
+    'manual',
+    'Seed de despesa manual.'
+  )
+ON CONFLICT (id) DO NOTHING;
+
 INSERT INTO public.audit_log (
   id,
   professional_id,
@@ -364,5 +443,32 @@ INSERT INTO public.audit_log (
     'session',
     '00000000-0000-4000-8000-000000000601',
     '{"source":"seed"}'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000704',
+    '00000000-0000-4000-8000-000000000101',
+    'system',
+    'payment.created',
+    'financial_transaction',
+    '00000000-0000-4000-8000-000000000801',
+    '{"source":"seed","status":"paid"}'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000705',
+    '00000000-0000-4000-8000-000000000101',
+    'system',
+    'payment.received',
+    'financial_transaction',
+    '00000000-0000-4000-8000-000000000801',
+    '{"source":"seed","payment_method":"pix"}'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000706',
+    '00000000-0000-4000-8000-000000000101',
+    'system',
+    'payment.created',
+    'financial_transaction',
+    '00000000-0000-4000-8000-000000000802',
+    '{"source":"seed","status":"pending"}'
   )
 ON CONFLICT (id) DO NOTHING;

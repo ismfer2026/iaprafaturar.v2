@@ -16,6 +16,7 @@ const ConfiguracoesPage = lazy(() => import("@/pages/ConfiguracoesPage"));
 const ClientsPage = lazy(() => import("@/pages/ClientsPage"));
 const ClientProfilePage = lazy(() => import("@/pages/ClientProfilePage"));
 const ServicesPage = lazy(() => import("@/pages/ServicesPage"));
+const FinanceiroPage = lazy(() => import("@/pages/FinanceiroPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -63,7 +64,7 @@ function AppRoutes() {
                 <Route path="/clientes" element={<ClientsPage />} />
                 <Route path="/clientes/:id" element={<ClientProfilePage />} />
                 <Route path="/servicos" element={<ServicesPage />} />
-                <Route path="/financeiro" element={<ComingSoon labelKey="nav.comingSoon.finance" />} />
+                <Route path="/financeiro" element={<FinanceiroPage />} />
                 <Route path="/conversas" element={<ComingSoon labelKey="nav.comingSoon.conversations" />} />
                 <Route path="/configuracoes" element={<ConfiguracoesPage />} />
               </Route>

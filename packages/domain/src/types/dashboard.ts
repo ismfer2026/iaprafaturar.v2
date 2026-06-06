@@ -24,6 +24,9 @@ export interface DashboardPulse {
   clientsInTreatmentCount: number;
   activeClientsCount: number;
   appointmentsTodayCount: number;
+  monthRevenuePaid: number;
+  monthRevenuePending: number;
+  monthExpensesPaid: number;
 }
 
 export interface DashboardSummary {

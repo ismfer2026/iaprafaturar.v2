@@ -1,4 +1,4 @@
-import { Activity, AlertTriangle, CalendarDays, Users } from "lucide-react";
+import { Activity, AlertTriangle, CalendarDays, DollarSign, ReceiptText, Users, WalletCards } from "lucide-react";
 import { Badge, Card, CardContent, CardHeader, CardTitle, Skeleton } from "@iaprafaturar/ui";
 import type { DashboardAppointment, DashboardAttentionItem } from "@iaprafaturar/domain";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,6 +19,13 @@ function formatTime(value: string, locale: Locale) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
+}
+
+function formatCurrency(value: number, locale: Locale) {
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency: "BRL",
+  }).format(value);
 }
 
 function AppointmentRow({ appointment }: { appointment: DashboardAppointment }) {
@@ -65,7 +72,7 @@ function AttentionRow({ item }: { item: DashboardAttentionItem }) {
 }
 
 export default function DashboardPage() {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const { professionalId } = useAuth();
   const dashboardQuery = useDashboard(professionalId);
 
@@ -133,6 +140,50 @@ export default function DashboardPage() {
             <div>
               <p className="text-2xl font-semibold text-zinc-950">{pulse.appointmentsTodayCount}</p>
               <p className="text-sm text-zinc-500">{t("dashboard.pulse.appointmentsToday")}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="grid gap-3 md:grid-cols-3">
+        <Card className="rounded-lg border-zinc-200">
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+              <DollarSign className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-2xl font-semibold text-zinc-950">
+                {formatCurrency(pulse.monthRevenuePaid, locale)}
+              </p>
+              <p className="text-sm text-zinc-500">{t("dashboard.pulse.monthRevenuePaid")}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-lg border-zinc-200">
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 text-amber-700">
+              <WalletCards className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-2xl font-semibold text-zinc-950">
+                {formatCurrency(pulse.monthRevenuePending, locale)}
+              </p>
+              <p className="text-sm text-zinc-500">{t("dashboard.pulse.monthRevenuePending")}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-lg border-zinc-200">
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-red-700">
+              <ReceiptText className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-2xl font-semibold text-zinc-950">
+                {formatCurrency(pulse.monthExpensesPaid, locale)}
+              </p>
+              <p className="text-sm text-zinc-500">{t("dashboard.pulse.monthExpensesPaid")}</p>
             </div>
           </CardContent>
         </Card>
