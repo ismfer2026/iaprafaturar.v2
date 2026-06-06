@@ -1,0 +1,94 @@
+import { Outlet, NavLink } from "react-router-dom";
+import {
+  CalendarDays,
+  DollarSign,
+  LayoutDashboard,
+  MessageSquare,
+  Settings,
+  Users,
+} from "lucide-react";
+import { cn } from "@iaprafaturar/ui";
+import { useI18n, type TranslationKey } from "@/i18n";
+
+const navItems = [
+  { to: "/dashboard", icon: LayoutDashboard, labelKey: "nav.dashboard" },
+  { to: "/agenda", icon: CalendarDays, labelKey: "nav.agenda" },
+  { to: "/clientes", icon: Users, labelKey: "nav.clients" },
+  { to: "/financeiro", icon: DollarSign, labelKey: "nav.finance" },
+  { to: "/conversas", icon: MessageSquare, labelKey: "nav.conversations" },
+] satisfies Array<{ to: string; icon: typeof LayoutDashboard; labelKey: TranslationKey }>;
+
+export default function AppShell() {
+  const { t } = useI18n();
+
+  return (
+    <div className="flex h-screen">
+      <aside className="hidden w-56 flex-shrink-0 flex-col border-r border-zinc-200 bg-white md:flex">
+        <div className="flex h-14 items-center border-b border-zinc-200 px-4">
+          <span className="text-sm font-semibold text-violet-700">iaprafaturar</span>
+        </div>
+
+        <nav className="flex-1 space-y-0.5 overflow-y-auto p-2">
+          {navItems.map(({ to, icon: Icon, labelKey }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-violet-50 text-violet-700"
+                    : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900",
+                )
+              }
+            >
+              <Icon className="h-4 w-4 flex-shrink-0" />
+              {t(labelKey)}
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="border-t border-zinc-200 p-2">
+          <NavLink
+            to="/configuracoes"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                isActive
+                  ? "bg-violet-50 text-violet-700"
+                  : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900",
+              )
+            }
+          >
+            <Settings className="h-4 w-4" />
+            {t("nav.settings")}
+          </NavLink>
+        </div>
+      </aside>
+
+      <main className="flex flex-1 flex-col overflow-hidden">
+        <div className="flex-1 overflow-y-auto pb-20 md:pb-4">
+          <Outlet />
+        </div>
+      </main>
+
+      <nav className="fixed bottom-0 inset-x-0 z-40 flex border-t border-zinc-200 bg-white safe-bottom md:hidden">
+        {navItems.map(({ to, icon: Icon, labelKey }) => (
+          <NavLink
+            key={to}
+            to={to}
+            className={({ isActive }) =>
+              cn(
+                "flex flex-1 flex-col items-center justify-center gap-1 py-2 text-xs font-medium transition-colors",
+                isActive ? "text-violet-700" : "text-zinc-400",
+              )
+            }
+          >
+            <Icon className="h-5 w-5" />
+            {t(labelKey)}
+          </NavLink>
+        ))}
+      </nav>
+    </div>
+  );
+}

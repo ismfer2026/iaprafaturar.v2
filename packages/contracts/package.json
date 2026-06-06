@@ -1,0 +1,26 @@
+{
+  "name": "@iaprafaturar/contracts",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./events/message-events": "./events/message-events.ts",
+    "./events/whatsapp": "./events/whatsapp.ts",
+    "./edge-functions/webhook-admin": "./edge-functions/webhook-admin.ts",
+    "./edge-functions/webhook-whatsapp": "./edge-functions/webhook-whatsapp.ts",
+    "./edge-functions/message-processor": "./edge-functions/message-processor.ts",
+    "./edge-functions/admin-message-processor": "./edge-functions/admin-message-processor.ts",
+    "./edge-functions/send-message": "./edge-functions/send-message.ts",
+    "./edge-functions/nerissa-setup-agent": "./edge-functions/nerissa-setup-agent.ts",
+    "./edge-functions/professional-whatsapp-connection": "./edge-functions/professional-whatsapp-connection.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit --project tsconfig.json"
+  },
+  "dependencies": {
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "typescript": "*"
+  }
+}

@@ -1,0 +1,45 @@
+export type { Professional, ProfessionalSettings, PlanType, ProfessionType } from "./types/professional";
+export type {
+  Client,
+  JourneyStage,
+  ClientGender,
+  ClientSource,
+  CreateClientManualInput,
+  CreateClientManualOutput,
+  MoveClientStageInput,
+  MoveClientStageOutput,
+} from "./types/client";
+export type { TeamMember, NivelAcesso } from "./types/team-member";
+export type { UserRole, UserRoleRecord } from "./types/user-role";
+export type {
+  Service,
+  ServiceCategory,
+  CreateServiceInput,
+  UpdateServiceInput,
+  ServiceMutationOutput,
+  DeactivateServiceOutput,
+} from "./types/service";
+export type {
+  Appointment,
+  AppointmentStatus,
+  AppointmentSource,
+  AppointmentOutcome,
+  CreateAppointmentInput,
+  CreateAppointmentOutput,
+  CancelAppointmentInput,
+  AppointmentStatusOutput,
+  RegisterAppointmentOutcomeInput,
+} from "./types/appointment";
+export type { Session, RegisterSessionInput, RegisterSessionOutput } from "./types/session";
+export type {
+  DashboardAppointment,
+  DashboardAttentionItem,
+  DashboardPulse,
+  DashboardSummary,
+} from "./types/dashboard";
+
+export type {
+  WhatsAppMessageReceivedEvent,
+  WhatsAppInstanceConnectedEvent,
+  WhatsAppInstanceDisconnectedEvent,
+} from "./types/whatsapp-events";

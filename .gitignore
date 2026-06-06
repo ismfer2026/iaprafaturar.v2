@@ -8,6 +8,7 @@ dist/
 build/
 .next/
 .turbo/
+*.tsbuildinfo
 
 # Ambiente — NUNCA commitar com valores reais
 .env
@@ -32,3 +33,19 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# Fluxos de produto e inventário (contexto local, fundamento do PRD-MASTER — não versionado)
+docs/02-product-flows/
+docs/**/*.csv
+docs/**/*.txt
+
+# Artefatos efêmeros de desenvolvimento (gerados pelo squad, nunca aprovados)
+.squad/
+
+# Memória local do usuário (contexto de IA, não pertence ao repo)
+.claude/projects/
+.claude/settings.json
+.claude/settings.local.json
+
+# Exceção: skills são tooling do projeto — versionadas
+# .claude/skills/ → vai ao git
