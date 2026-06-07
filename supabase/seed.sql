@@ -472,3 +472,243 @@ INSERT INTO public.audit_log (
     '{"source":"seed","status":"pending"}'
   )
 ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- Phase 5 Rosane Agents synthetic seeds
+-- ============================================================
+
+INSERT INTO public.clients (
+  id,
+  professional_id,
+  full_name,
+  phone_whatsapp,
+  email,
+  journey_stage,
+  source,
+  internal_notes
+) VALUES
+  (
+    '00000000-0000-4000-8000-000000000901',
+    '00000000-0000-4000-8000-000000000101',
+    'Cliente Confirmacao',
+    '5511999990901',
+    'cliente-confirmacao@example.test',
+    'agendado',
+    'manual',
+    'Seed Fase 5 para confirmacao por WhatsApp.'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000902',
+    '00000000-0000-4000-8000-000000000101',
+    'Cliente Sem Telefone',
+    null,
+    'cliente-sem-telefone@example.test',
+    'agendado',
+    'manual',
+    'Seed Fase 5 para skipped sem telefone.'
+  )
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.appointments (
+  id,
+  professional_id,
+  client_id,
+  service_id,
+  scheduled_at,
+  duration_minutes,
+  status,
+  source,
+  notes
+) VALUES
+  (
+    '00000000-0000-4000-8000-000000000911',
+    '00000000-0000-4000-8000-000000000101',
+    '00000000-0000-4000-8000-000000000901',
+    '00000000-0000-4000-8000-000000000401',
+    (date_trunc('day', now() AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo') + interval '1 day 11 hours',
+    60,
+    'agendado',
+    'crm',
+    'Seed Fase 5 aguardando confirmacao.'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000912',
+    '00000000-0000-4000-8000-000000000101',
+    '00000000-0000-4000-8000-000000000901',
+    '00000000-0000-4000-8000-000000000401',
+    (date_trunc('day', now() AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo') + interval '1 day 14 hours',
+    60,
+    'confirmado',
+    'crm',
+    'Seed Fase 5 para lembrete D-1.'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000913',
+    '00000000-0000-4000-8000-000000000101',
+    '00000000-0000-4000-8000-000000000902',
+    '00000000-0000-4000-8000-000000000401',
+    (date_trunc('day', now() AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo') + interval '1 day 15 hours',
+    60,
+    'agendado',
+    'crm',
+    'Seed Fase 5 sem telefone do cliente.'
+  )
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.appointments (
+  id,
+  professional_id,
+  client_id,
+  service_id,
+  scheduled_at,
+  duration_minutes,
+  status,
+  source,
+  notes,
+  completed_at
+) VALUES (
+  '00000000-0000-4000-8000-000000000914',
+  '00000000-0000-4000-8000-000000000101',
+  '00000000-0000-4000-8000-000000000901',
+  '00000000-0000-4000-8000-000000000401',
+  now() - interval '1 day',
+  60,
+  'realizado',
+  'crm',
+  'Seed Fase 5 para pos-atendimento D+1.',
+  now() - interval '1 day'
+)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.sessions (
+  id,
+  professional_id,
+  client_id,
+  appointment_id,
+  service_id,
+  session_date,
+  session_time,
+  clinical_evolution,
+  notes,
+  session_value,
+  procedures_performed
+) VALUES (
+  '00000000-0000-4000-8000-000000000921',
+  '00000000-0000-4000-8000-000000000101',
+  '00000000-0000-4000-8000-000000000901',
+  '00000000-0000-4000-8000-000000000914',
+  '00000000-0000-4000-8000-000000000401',
+  now() - interval '1 day',
+  '01:00',
+  'Sessao sintetica para followup/NPS.',
+  'Seed Fase 5 pos-atendimento.',
+  120.00,
+  ARRAY['procedimento fase 5']
+)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.conversations (
+  id,
+  professional_id,
+  client_id,
+  channel,
+  phone,
+  rosane_status,
+  last_message_at,
+  last_message_preview,
+  unread_count
+) VALUES (
+  '00000000-0000-4000-8000-000000000931',
+  '00000000-0000-4000-8000-000000000101',
+  '00000000-0000-4000-8000-000000000901',
+  'whatsapp',
+  '5511999990901',
+  'active',
+  now(),
+  'sim',
+  1
+)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.conversation_contexts (
+  id,
+  professional_id,
+  conversation_id,
+  client_id,
+  context_type,
+  status,
+  source_function,
+  ref_type,
+  ref_id,
+  privacy_classification,
+  expires_at,
+  metadata
+) VALUES (
+  '00000000-0000-4000-8000-000000000932',
+  '00000000-0000-4000-8000-000000000101',
+  '00000000-0000-4000-8000-000000000931',
+  '00000000-0000-4000-8000-000000000901',
+  'appointment_confirmation',
+  'active',
+  'appointment-confirmation-agent',
+  'appointment',
+  '00000000-0000-4000-8000-000000000911',
+  'business',
+  now() + interval '2 days',
+  '{"source":"seed","phase":5}'
+)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.message_events (
+  id,
+  professional_id,
+  conversation_id,
+  client_id,
+  direction,
+  channel,
+  message_type,
+  source_webhook,
+  instance_name,
+  content,
+  context_type,
+  external_message_id,
+  status,
+  metadata
+) VALUES (
+  '00000000-0000-4000-8000-000000000933',
+  '00000000-0000-4000-8000-000000000101',
+  '00000000-0000-4000-8000-000000000931',
+  '00000000-0000-4000-8000-000000000901',
+  'inbound',
+  'whatsapp',
+  'text',
+  'professional',
+  'professional-a-wa',
+  'sim',
+  'confirmation',
+  'seed-phase5-confirmation-yes',
+  'processed',
+  '{"source":"seed","phase":5}'
+)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.shadow_suggestions (
+  id,
+  professional_id,
+  conversation_id,
+  message_event_id,
+  suggested_text,
+  status,
+  expires_at,
+  metadata
+) VALUES (
+  '00000000-0000-4000-8000-000000000941',
+  '00000000-0000-4000-8000-000000000101',
+  '00000000-0000-4000-8000-000000000931',
+  '00000000-0000-4000-8000-000000000933',
+  'Perfeito, seu horario esta confirmado. Te esperamos no horario combinado.',
+  'pending',
+  now() + interval '1 day',
+  '{"source":"seed","phase":5}'
+)
+ON CONFLICT (id) DO NOTHING;

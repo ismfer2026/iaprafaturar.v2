@@ -24,4 +24,8 @@ export const crmKeys = {
     ] as const,
   financialSummary: (professionalId: string | null, dateFrom?: string | null, dateTo?: string | null) =>
     ["crm", "financial-summary", professionalId, dateFrom ?? "open", dateTo ?? "open"] as const,
+  conversations: (professionalId: string | null) => ["crm", "conversations", professionalId] as const,
+  conversationMessages: (professionalId: string | null, conversationId: string | null) =>
+    ["crm", "conversation-messages", professionalId, conversationId] as const,
+  shadowSuggestions: (professionalId: string | null) => ["crm", "shadow-suggestions", professionalId] as const,
 };

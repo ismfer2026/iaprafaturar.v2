@@ -7,6 +7,8 @@ export interface AssistantSettingsInput {
   shadowMode: boolean;
   autoRespond: boolean;
   enabledAgents: string[];
+  sendGoogleReviewAfterPositiveNps: boolean;
+  googleReviewUrl: string;
 }
 
 export function useAssistantSettings(professionalId: string | null) {
@@ -38,6 +40,7 @@ export function useAssistantSettings(professionalId: string | null) {
       if (whatsappResult.error) throw whatsappResult.error;
 
       const configs = (agentResult.data?.agent_configs ?? {}) as Record<string, unknown>;
+      const postCare = (configs["post_care"] ?? {}) as Record<string, unknown>;
 
       return {
         agent: agentResult.data,
@@ -50,6 +53,10 @@ export function useAssistantSettings(professionalId: string | null) {
           enabledAgents: Array.isArray(agentResult.data?.enabled_agents)
             ? (agentResult.data.enabled_agents as string[])
             : ["duvidas", "agendamento", "lembrete"],
+          sendGoogleReviewAfterPositiveNps: Boolean(
+            postCare["send_google_review_after_positive_nps"] ?? false,
+          ),
+          googleReviewUrl: typeof postCare["google_review_url"] === "string" ? postCare["google_review_url"] : "",
         },
       };
     },
@@ -72,6 +79,11 @@ export function useAssistantSettings(professionalId: string | null) {
           agent_configs: {
             ...existingConfigs,
             tone: input.tone,
+            post_care: {
+              ...((existingConfigs["post_care"] ?? {}) as Record<string, unknown>),
+              send_google_review_after_positive_nps: input.sendGoogleReviewAfterPositiveNps,
+              google_review_url: input.googleReviewUrl.trim() || null,
+            },
           },
         })
         .eq("id", query.data.agent.id);

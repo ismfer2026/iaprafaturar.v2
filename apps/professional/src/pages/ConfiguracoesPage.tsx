@@ -22,6 +22,7 @@ const AGENT_OPTIONS = [
   { key: "duvidas", labelKey: "settings.agent.questions" },
   { key: "agendamento", labelKey: "settings.agent.scheduling" },
   { key: "lembrete", labelKey: "settings.agent.reminders" },
+  { key: "pos_atendimento", labelKey: "settings.agent.postCare" },
 ] satisfies Array<{ key: string; labelKey: TranslationKey }>;
 
 export default function ConfiguracoesPage() {
@@ -34,6 +35,8 @@ export default function ConfiguracoesPage() {
     shadowMode: true,
     autoRespond: true,
     enabledAgents: ["duvidas", "agendamento", "lembrete"],
+    sendGoogleReviewAfterPositiveNps: false,
+    googleReviewUrl: "",
   });
   const [saved, setSaved] = useState(false);
   const assistantName = form.agentName.trim() || DEFAULT_ASSISTANT_NAME;
@@ -211,7 +214,7 @@ export default function ConfiguracoesPage() {
 
           <div className="space-y-2">
             <p className="text-sm font-medium text-zinc-700">{t("settings.activeAgents")}</p>
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid gap-2 sm:grid-cols-4">
               {AGENT_OPTIONS.map((agent) => (
                 <label
                   key={agent.key}
@@ -227,6 +230,61 @@ export default function ConfiguracoesPage() {
                 </label>
               ))}
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-teal-100 text-teal-700">
+              <MessageCircle className="h-5 w-5" />
+            </div>
+            <div>
+              <CardTitle>{t("settings.postCare.title")}</CardTitle>
+              <CardDescription>{t("settings.postCare.description", assistantParams)}</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <label className="flex items-start gap-3 rounded-lg border border-zinc-200 px-3 py-3">
+            <input
+              type="checkbox"
+              className="mt-1 h-4 w-4 rounded border-zinc-300 text-violet-600"
+              checked={form.sendGoogleReviewAfterPositiveNps}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  sendGoogleReviewAfterPositiveNps: event.target.checked,
+                }))
+              }
+            />
+            <span>
+              <span className="block text-sm font-medium text-zinc-900">
+                {t("settings.postCare.googleReview.title")}
+              </span>
+              <span className="mt-0.5 block text-sm leading-5 text-zinc-500">
+                {t("settings.postCare.googleReview.description", assistantParams)}
+              </span>
+            </span>
+          </label>
+
+          <div className="space-y-1">
+            <label htmlFor="googleReviewUrl" className="text-sm font-medium text-zinc-700">
+              {t("settings.postCare.googleReviewUrl")}
+            </label>
+            <Input
+              id="googleReviewUrl"
+              value={form.googleReviewUrl}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  googleReviewUrl: event.target.value,
+                }))
+              }
+              inputMode="url"
+              placeholder="https://"
+            />
           </div>
         </CardContent>
       </Card>

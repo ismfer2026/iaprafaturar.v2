@@ -3,7 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Skeleton } from "@iaprafaturar/ui";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { I18nProvider, useI18n } from "@/i18n";
+import { I18nProvider } from "@/i18n";
 import AppShell from "@/components/layout/AppShell";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 
@@ -17,6 +17,7 @@ const ClientsPage = lazy(() => import("@/pages/ClientsPage"));
 const ClientProfilePage = lazy(() => import("@/pages/ClientProfilePage"));
 const ServicesPage = lazy(() => import("@/pages/ServicesPage"));
 const FinanceiroPage = lazy(() => import("@/pages/FinanceiroPage"));
+const ConversasPage = lazy(() => import("@/pages/ConversasPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,11 +38,6 @@ function PageLoader() {
       </div>
     </div>
   );
-}
-
-function ComingSoon({ labelKey }: { labelKey: "nav.comingSoon.finance" | "nav.comingSoon.conversations" }) {
-  const { t } = useI18n();
-  return <div className="p-4 text-zinc-400">{t(labelKey)}</div>;
 }
 
 function AppRoutes() {
@@ -65,7 +61,7 @@ function AppRoutes() {
                 <Route path="/clientes/:id" element={<ClientProfilePage />} />
                 <Route path="/servicos" element={<ServicesPage />} />
                 <Route path="/financeiro" element={<FinanceiroPage />} />
-                <Route path="/conversas" element={<ComingSoon labelKey="nav.comingSoon.conversations" />} />
+                <Route path="/conversas" element={<ConversasPage />} />
                 <Route path="/configuracoes" element={<ConfiguracoesPage />} />
               </Route>
             </Route>
