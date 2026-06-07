@@ -17,6 +17,8 @@ export interface Appointment {
   duration_minutes: number;
   status: AppointmentStatus;
   source: AppointmentSource;
+  booked_by_client?: boolean;
+  booked_at?: string | null;
   notes: string | null;
   cancellation_reason: string | null;
   outcome_notes: string | null;

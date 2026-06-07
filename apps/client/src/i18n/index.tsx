@@ -1,0 +1,313 @@
+import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+
+export type Locale = "pt-BR" | "en-US" | "es-419";
+
+const LOCALE_STORAGE_KEY = "iap_client_locale";
+
+const ptBR = {
+  "common.loading": "Carregando...",
+  "common.back": "Voltar",
+  "common.continue": "Continuar",
+  "common.tryAgain": "Tentar novamente",
+  "common.required": "Obrigatório",
+  "common.sending": "Enviando...",
+  "common.minute": "{count} min",
+  "common.notFound.title": "Link não encontrado",
+  "common.notFound.description": "Confira o endereço recebido e tente novamente.",
+  "common.poweredBy": "iaprafaturar",
+
+  "language.label": "Idioma",
+
+  "shell.booking": "Agendamento",
+  "shell.anamnese": "Ficha de atendimento",
+
+  "booking.title": "Escolha seu atendimento",
+  "booking.subtitle": "Você está no ambiente seguro de {professionalName}.",
+  "booking.step.service": "Serviço",
+  "booking.step.time": "Horário",
+  "booking.step.client": "Dados",
+  "booking.step.confirm": "Confirmar",
+  "booking.service.title": "Escolha o serviço",
+  "booking.service.description": "Selecione o atendimento que deseja agendar.",
+  "booking.time.title": "Escolha o horário",
+  "booking.time.description": "Horários disponíveis para os próximos dias.",
+  "booking.client.title": "Seus dados",
+  "booking.client.description": "Usaremos estes dados apenas para confirmar o atendimento.",
+  "booking.confirm.title": "Revise e confirme",
+  "booking.confirm.description": "Confira serviço, horário e contato antes de finalizar.",
+  "booking.slug.label": "Link do profissional",
+  "booking.empty.title": "Agenda online indisponível",
+  "booking.empty.description": "Este profissional ainda não abriu horários públicos.",
+  "booking.noSlots.title": "Sem horários disponíveis",
+  "booking.noSlots.description": "Tente novamente mais tarde ou fale diretamente com o profissional.",
+  "booking.form.name": "Nome completo",
+  "booking.form.namePlaceholder": "Digite seu nome",
+  "booking.form.phone": "WhatsApp",
+  "booking.form.phonePlaceholder": "DDD + número",
+  "booking.form.email": "E-mail",
+  "booking.form.emailPlaceholder": "seu@email.com",
+  "booking.error.load": "Não foi possível carregar este link.",
+  "booking.error.service": "Escolha um serviço.",
+  "booking.error.time": "Escolha um horário.",
+  "booking.error.name": "Informe seu nome.",
+  "booking.error.phone": "Informe seu WhatsApp.",
+  "booking.error.submit": "Não foi possível criar o agendamento.",
+  "booking.success.title": "Agendamento criado",
+  "booking.success.description": "O profissional recebeu sua solicitação. Se o WhatsApp estiver conectado, você receberá a confirmação por mensagem.",
+  "booking.success.confirmation.dryRun": "Confirmação simulada em ambiente de teste.",
+  "booking.success.confirmation.sent": "Confirmação enviada por WhatsApp.",
+  "booking.success.confirmation.queued": "Confirmação em processamento.",
+  "booking.success.confirmation.skipped_no_professional_instance": "O profissional ainda não conectou o WhatsApp.",
+  "booking.summary.service": "Serviço",
+  "booking.summary.time": "Horário",
+  "booking.summary.contact": "Contato",
+  "booking.submit": "Confirmar agendamento",
+
+  "anamnese.title": "Preencha sua ficha",
+  "anamnese.subtitle": "As informações vão para o profissional responsável pelo seu atendimento.",
+  "anamnese.section.personal": "Dados pessoais",
+  "anamnese.section.complaints": "Queixas",
+  "anamnese.section.history": "Histórico",
+  "anamnese.section.allergies": "Alergias",
+  "anamnese.section.habits": "Hábitos",
+  "anamnese.section.custom": "Informações adicionais",
+  "anamnese.lgpd": "Li e autorizo o uso das informações para este atendimento.",
+  "anamnese.field.placeholder": "Escreva sua resposta",
+  "anamnese.form.description": "Responda com calma. Você pode deixar em branco o que não souber.",
+  "anamnese.submit": "Enviar ficha",
+  "anamnese.success.title": "Ficha enviada",
+  "anamnese.success.description": "Suas informações foram registradas e ficarão disponíveis para o profissional.",
+  "anamnese.error.load": "Não foi possível carregar esta ficha.",
+  "anamnese.error.submit": "Não foi possível enviar a ficha.",
+  "anamnese.error.lgpd": "Aceite a autorização para enviar.",
+  "anamnese.completed.title": "Ficha já preenchida",
+  "anamnese.completed.description": "Este link já foi finalizado. Fale com o profissional se precisar alterar algo.",
+  "anamnese.token.label": "Token público",
+  "anamnese.expired.title": "Link expirado",
+  "anamnese.expired.description": "Peça um novo link ao profissional responsável."
+} as const;
+
+export type TranslationKey = keyof typeof ptBR;
+
+const enUS: Record<TranslationKey, string> = {
+  "common.loading": "Loading...",
+  "common.back": "Back",
+  "common.continue": "Continue",
+  "common.tryAgain": "Try again",
+  "common.required": "Required",
+  "common.sending": "Sending...",
+  "common.minute": "{count} min",
+  "common.notFound.title": "Link not found",
+  "common.notFound.description": "Check the address you received and try again.",
+  "common.poweredBy": "iaprafaturar",
+
+  "language.label": "Language",
+
+  "shell.booking": "Booking",
+  "shell.anamnese": "Intake form",
+
+  "booking.title": "Choose your service",
+  "booking.subtitle": "You are in {professionalName}'s secure environment.",
+  "booking.step.service": "Service",
+  "booking.step.time": "Time",
+  "booking.step.client": "Details",
+  "booking.step.confirm": "Confirm",
+  "booking.service.title": "Choose a service",
+  "booking.service.description": "Select the service you want to book.",
+  "booking.time.title": "Choose a time",
+  "booking.time.description": "Available times for the next few days.",
+  "booking.client.title": "Your details",
+  "booking.client.description": "We will use this information only to confirm the service.",
+  "booking.confirm.title": "Review and confirm",
+  "booking.confirm.description": "Check service, time, and contact before finishing.",
+  "booking.slug.label": "Professional link",
+  "booking.empty.title": "Online scheduling unavailable",
+  "booking.empty.description": "This professional has not opened public times yet.",
+  "booking.noSlots.title": "No times available",
+  "booking.noSlots.description": "Try again later or contact the professional directly.",
+  "booking.form.name": "Full name",
+  "booking.form.namePlaceholder": "Enter your name",
+  "booking.form.phone": "WhatsApp",
+  "booking.form.phonePlaceholder": "Area code + number",
+  "booking.form.email": "Email",
+  "booking.form.emailPlaceholder": "you@email.com",
+  "booking.error.load": "Unable to load this link.",
+  "booking.error.service": "Choose a service.",
+  "booking.error.time": "Choose a time.",
+  "booking.error.name": "Enter your name.",
+  "booking.error.phone": "Enter your WhatsApp.",
+  "booking.error.submit": "Unable to create the appointment.",
+  "booking.success.title": "Appointment created",
+  "booking.success.description": "The professional received your request. If WhatsApp is connected, you will receive confirmation by message.",
+  "booking.success.confirmation.dryRun": "Confirmation simulated in the test environment.",
+  "booking.success.confirmation.sent": "Confirmation sent by WhatsApp.",
+  "booking.success.confirmation.queued": "Confirmation is being processed.",
+  "booking.success.confirmation.skipped_no_professional_instance": "The professional has not connected WhatsApp yet.",
+  "booking.summary.service": "Service",
+  "booking.summary.time": "Time",
+  "booking.summary.contact": "Contact",
+  "booking.submit": "Confirm appointment",
+
+  "anamnese.title": "Fill in your form",
+  "anamnese.subtitle": "The information goes to the professional responsible for your care.",
+  "anamnese.section.personal": "Personal details",
+  "anamnese.section.complaints": "Main concerns",
+  "anamnese.section.history": "History",
+  "anamnese.section.allergies": "Allergies",
+  "anamnese.section.habits": "Habits",
+  "anamnese.section.custom": "Additional information",
+  "anamnese.lgpd": "I have read and authorize the use of this information for this service.",
+  "anamnese.field.placeholder": "Write your answer",
+  "anamnese.form.description": "Answer calmly. You may leave blank what you do not know.",
+  "anamnese.submit": "Send form",
+  "anamnese.success.title": "Form sent",
+  "anamnese.success.description": "Your information was registered and will be available to the professional.",
+  "anamnese.error.load": "Unable to load this form.",
+  "anamnese.error.submit": "Unable to send the form.",
+  "anamnese.error.lgpd": "Accept the authorization to submit.",
+  "anamnese.completed.title": "Form already completed",
+  "anamnese.completed.description": "This link has already been finalized. Contact the professional if you need to change anything.",
+  "anamnese.token.label": "Public token",
+  "anamnese.expired.title": "Link expired",
+  "anamnese.expired.description": "Ask the responsible professional for a new link."
+};
+
+const es419: Record<TranslationKey, string> = {
+  "common.loading": "Cargando...",
+  "common.back": "Volver",
+  "common.continue": "Continuar",
+  "common.tryAgain": "Intentar de nuevo",
+  "common.required": "Obligatorio",
+  "common.sending": "Enviando...",
+  "common.minute": "{count} min",
+  "common.notFound.title": "Link no encontrado",
+  "common.notFound.description": "Revisa la dirección recibida e intenta nuevamente.",
+  "common.poweredBy": "iaprafaturar",
+
+  "language.label": "Idioma",
+
+  "shell.booking": "Agendamiento",
+  "shell.anamnese": "Ficha de atención",
+
+  "booking.title": "Elige tu atención",
+  "booking.subtitle": "Estás en el ambiente seguro de {professionalName}.",
+  "booking.step.service": "Servicio",
+  "booking.step.time": "Horario",
+  "booking.step.client": "Datos",
+  "booking.step.confirm": "Confirmar",
+  "booking.service.title": "Elige el servicio",
+  "booking.service.description": "Selecciona la atención que quieres agendar.",
+  "booking.time.title": "Elige el horario",
+  "booking.time.description": "Horarios disponibles para los próximos días.",
+  "booking.client.title": "Tus datos",
+  "booking.client.description": "Usaremos estos datos solo para confirmar la atención.",
+  "booking.confirm.title": "Revisa y confirma",
+  "booking.confirm.description": "Confirma servicio, horario y contacto antes de finalizar.",
+  "booking.slug.label": "Link del profesional",
+  "booking.empty.title": "Agenda online no disponible",
+  "booking.empty.description": "Este profesional aún no abrió horarios públicos.",
+  "booking.noSlots.title": "Sin horarios disponibles",
+  "booking.noSlots.description": "Intenta de nuevo más tarde o habla directamente con el profesional.",
+  "booking.form.name": "Nombre completo",
+  "booking.form.namePlaceholder": "Escribe tu nombre",
+  "booking.form.phone": "WhatsApp",
+  "booking.form.phonePlaceholder": "Código de área + número",
+  "booking.form.email": "Email",
+  "booking.form.emailPlaceholder": "tu@email.com",
+  "booking.error.load": "No fue posible cargar este link.",
+  "booking.error.service": "Elige un servicio.",
+  "booking.error.time": "Elige un horario.",
+  "booking.error.name": "Informa tu nombre.",
+  "booking.error.phone": "Informa tu WhatsApp.",
+  "booking.error.submit": "No fue posible crear el agendamiento.",
+  "booking.success.title": "Agendamiento creado",
+  "booking.success.description": "El profesional recibió tu solicitud. Si WhatsApp está conectado, recibirás la confirmación por mensaje.",
+  "booking.success.confirmation.dryRun": "Confirmación simulada en ambiente de prueba.",
+  "booking.success.confirmation.sent": "Confirmación enviada por WhatsApp.",
+  "booking.success.confirmation.queued": "Confirmación en procesamiento.",
+  "booking.success.confirmation.skipped_no_professional_instance": "El profesional aún no conectó WhatsApp.",
+  "booking.summary.service": "Servicio",
+  "booking.summary.time": "Horario",
+  "booking.summary.contact": "Contacto",
+  "booking.submit": "Confirmar agendamiento",
+
+  "anamnese.title": "Completa tu ficha",
+  "anamnese.subtitle": "La información va al profesional responsable por tu atención.",
+  "anamnese.section.personal": "Datos personales",
+  "anamnese.section.complaints": "Molestias",
+  "anamnese.section.history": "Historial",
+  "anamnese.section.allergies": "Alergias",
+  "anamnese.section.habits": "Hábitos",
+  "anamnese.section.custom": "Información adicional",
+  "anamnese.lgpd": "Leí y autorizo el uso de la información para esta atención.",
+  "anamnese.field.placeholder": "Escribe tu respuesta",
+  "anamnese.form.description": "Responde con calma. Puedes dejar en blanco lo que no sepas.",
+  "anamnese.submit": "Enviar ficha",
+  "anamnese.success.title": "Ficha enviada",
+  "anamnese.success.description": "Tu información fue registrada y quedará disponible para el profesional.",
+  "anamnese.error.load": "No fue posible cargar esta ficha.",
+  "anamnese.error.submit": "No fue posible enviar la ficha.",
+  "anamnese.error.lgpd": "Acepta la autorización para enviar.",
+  "anamnese.completed.title": "Ficha ya completada",
+  "anamnese.completed.description": "Este link ya fue finalizado. Habla con el profesional si necesitas cambiar algo.",
+  "anamnese.token.label": "Token público",
+  "anamnese.expired.title": "Link expirado",
+  "anamnese.expired.description": "Pide un nuevo link al profesional responsable."
+};
+
+const messages: Record<Locale, Record<TranslationKey, string>> = {
+  "pt-BR": ptBR,
+  "en-US": enUS,
+  "es-419": es419
+};
+
+export function normalizeLocale(value: string | null | undefined): Locale {
+  if (value === "pt-BR" || value === "en-US" || value === "es-419") return value;
+  const lower = value?.toLowerCase() ?? "";
+  if (lower.startsWith("en")) return "en-US";
+  if (lower.startsWith("es")) return "es-419";
+  return "pt-BR";
+}
+
+interface I18nContextValue {
+  locale: Locale;
+  setLocale: (locale: Locale) => void;
+  t: (key: TranslationKey, params?: Record<string, string | number>) => string;
+}
+
+const I18nContext = createContext<I18nContextValue | null>(null);
+
+function getInitialLocale(): Locale {
+  if (typeof window === "undefined") return "pt-BR";
+  const urlLocale = new URLSearchParams(window.location.search).get("lang");
+  return normalizeLocale(urlLocale ?? window.localStorage.getItem(LOCALE_STORAGE_KEY) ?? window.navigator.language);
+}
+
+export function I18nProvider({ children }: { children: ReactNode }) {
+  const [locale, setLocaleState] = useState<Locale>(getInitialLocale);
+
+  const value = useMemo<I18nContextValue>(() => {
+    return {
+      locale,
+      setLocale(nextLocale) {
+        setLocaleState(nextLocale);
+        window.localStorage.setItem(LOCALE_STORAGE_KEY, nextLocale);
+      },
+      t(key, params) {
+        const template = messages[locale][key] ?? messages["pt-BR"][key] ?? key;
+        if (!params) return template;
+        return Object.entries(params).reduce((text, [paramKey, value]) => {
+          return text.replaceAll(`{${paramKey}}`, String(value));
+        }, template);
+      }
+    };
+  }, [locale]);
+
+  return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
+}
+
+export function useI18n() {
+  const context = useContext(I18nContext);
+  if (!context) throw new Error("useI18n must be used inside I18nProvider");
+  return context;
+}

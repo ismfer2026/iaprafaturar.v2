@@ -32,7 +32,14 @@ export interface Client {
   referral_client_id: string | null;
   lgpd_consent_at: string | null;
   lgpd_consent_source: string | null;
+  lgpd_consent_channel?: string | null;
   pwa_installed: boolean;
+  pwa_onboarded_at?: string | null;
+  push_notifications_enabled?: boolean;
+  pwa_token?: string | null;
+  pwa_token_expires_at?: string | null;
+  has_anamnese?: boolean;
+  last_anamnese_at?: string | null;
   loyalty_points: number;
   is_active: boolean;
   is_blocked: boolean;

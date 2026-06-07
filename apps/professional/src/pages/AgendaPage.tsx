@@ -301,6 +301,11 @@ export default function AgendaPage() {
                       {t(APPOINTMENT_STATUS_LABEL_KEYS[appointment.status])}
                     </Badge>
                   </div>
+                  {appointment.source === "public_link" || appointment.booked_by_client ? (
+                    <Badge className="w-fit border border-teal-200 bg-teal-50 text-teal-700">
+                      {t("agenda.source.publicLink")}
+                    </Badge>
+                  ) : null}
                   <div className="flex items-center gap-2 text-sm text-zinc-500">
                     <Clock className="h-4 w-4" />
                     {appointment.duration_minutes} {t("common.minutes.short")}

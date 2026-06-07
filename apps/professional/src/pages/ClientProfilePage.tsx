@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, CalendarDays, DollarSign, History, UserRound } from "lucide-react";
+import { ArrowLeft, CalendarDays, DollarSign, FileHeart, History, UserRound } from "lucide-react";
 import { Badge, Button, Card, CardContent, Skeleton, cn } from "@iaprafaturar/ui";
 import type { Appointment, JourneyStage, Session } from "@iaprafaturar/domain";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClient } from "@/hooks/useClients";
 import { useClientAppointments } from "@/hooks/useAppointments";
+import { useClientAnamneseFichas, type AnamneseFicha } from "@/hooks/useAnamnese";
 import { useSessions } from "@/hooks/useSessions";
 import { useI18n, type Locale, type TranslationKey } from "@/i18n";
 
@@ -27,11 +28,12 @@ const APPOINTMENT_STATUS_LABEL_KEYS: Record<Appointment["status"], TranslationKe
   reagendado: "appointment.status.reagendado",
 };
 
-type Tab = "resumo" | "historico" | "financeiro";
+type Tab = "resumo" | "historico" | "anamnese" | "financeiro";
 
 const TABS = [
   { value: "resumo", labelKey: "clientProfile.tab.summary", icon: UserRound },
   { value: "historico", labelKey: "clientProfile.tab.history", icon: History },
+  { value: "anamnese", labelKey: "clientProfile.tab.anamnese", icon: FileHeart },
   { value: "financeiro", labelKey: "clientProfile.tab.finance", icon: DollarSign },
 ] satisfies Array<{ value: Tab; labelKey: TranslationKey; icon: typeof UserRound }>;
 
@@ -74,6 +76,70 @@ function TimelineItem({ item }: { item: Appointment | Session }) {
   );
 }
 
+const ANAMNESE_SECTION_KEYS = [
+  ["dados_pessoais", "clientProfile.anamnese.section.dadosPessoais"],
+  ["queixas", "clientProfile.anamnese.section.queixas"],
+  ["historico", "clientProfile.anamnese.section.historico"],
+  ["alergias", "clientProfile.anamnese.section.alergias"],
+  ["habitos", "clientProfile.anamnese.section.habitos"],
+  ["custom_data", "clientProfile.anamnese.section.customData"],
+] satisfies Array<[keyof AnamneseFicha, TranslationKey]>;
+
+function stringifySection(value: unknown) {
+  if (!value || typeof value !== "object") return "";
+  const record = value as Record<string, unknown>;
+  const notes = record.notes;
+  if (typeof notes === "string") return notes;
+  return Object.entries(record)
+    .filter(([, item]) => item !== null && item !== undefined && item !== "")
+    .map(([key, item]) => `${key}: ${String(item)}`)
+    .join("\n");
+}
+
+function AnamneseCard({ ficha }: { ficha: AnamneseFicha }) {
+  const { locale, t } = useI18n();
+
+  return (
+    <Card className="rounded-lg border-zinc-200">
+      <CardContent className="space-y-4 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 className="text-base font-semibold text-zinc-950">{t("clientProfile.anamnese.available")}</h2>
+            <p className="mt-1 text-sm text-zinc-500">
+              {formatDate(ficha.preenchido_em ?? ficha.created_at, locale, t("common.noDate"))}
+            </p>
+          </div>
+          <Badge className="border border-teal-200 bg-teal-50 text-teal-700">{ficha.status}</Badge>
+        </div>
+
+        <dl className="grid gap-2 text-sm sm:grid-cols-2">
+          <div className="rounded-md bg-zinc-50 p-3">
+            <dt className="text-zinc-500">{t("clientProfile.anamnese.status")}</dt>
+            <dd className="mt-1 font-medium text-zinc-950">{ficha.status}</dd>
+          </div>
+          <div className="rounded-md bg-zinc-50 p-3">
+            <dt className="text-zinc-500">{t("clientProfile.anamnese.lgpd")}</dt>
+            <dd className="mt-1 font-medium text-zinc-950">{ficha.lgpd_aceito ? t("common.active") : t("common.pending")}</dd>
+          </div>
+        </dl>
+
+        <div className="space-y-3">
+          {ANAMNESE_SECTION_KEYS.map(([field, labelKey]) => {
+            const text = stringifySection(ficha[field]);
+            if (!text) return null;
+            return (
+              <section key={field} className="rounded-lg border border-zinc-200 bg-white p-3">
+                <h3 className="text-sm font-semibold text-zinc-950">{t(labelKey)}</h3>
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-zinc-600">{text}</p>
+              </section>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function ClientProfilePage() {
   const { locale, t } = useI18n();
   const { id } = useParams<{ id: string }>();
@@ -83,6 +149,7 @@ export default function ClientProfilePage() {
   const clientQuery = useClient(professionalId, id ?? null);
   const appointmentsQuery = useClientAppointments(professionalId, id ?? null);
   const sessionsQuery = useSessions(professionalId, id ?? null);
+  const anamneseQuery = useClientAnamneseFichas(professionalId, id ?? null);
 
   const timeline = useMemo(() => {
     const appointments = appointmentsQuery.data ?? [];
@@ -148,7 +215,7 @@ export default function ClientProfilePage() {
         </div>
       </header>
 
-      <div className="grid grid-cols-3 rounded-lg bg-zinc-100 p-1">
+      <div className="grid grid-cols-4 rounded-lg bg-zinc-100 p-1">
         {TABS.map(({ value, labelKey, icon: Icon }) => {
           const isActive = activeTab === value;
           return (
@@ -243,6 +310,31 @@ export default function ClientProfilePage() {
         <section className="rounded-lg border border-dashed border-zinc-300 bg-white p-6 text-center">
           <h2 className="text-base font-semibold text-zinc-950">{t("clientProfile.finance.title")}</h2>
           <p className="mt-1 text-sm text-zinc-500">{t("clientProfile.finance.description")}</p>
+        </section>
+      ) : null}
+
+      {activeTab === "anamnese" ? (
+        <section className="space-y-3">
+          {anamneseQuery.isLoading ? (
+            <>
+              <Skeleton className="h-24 w-full" />
+              <Skeleton className="h-24 w-full" />
+            </>
+          ) : null}
+
+          {!anamneseQuery.isLoading && !anamneseQuery.data?.length ? (
+            <div className="rounded-lg border border-dashed border-zinc-300 bg-white p-6 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-teal-50 text-teal-700">
+                <FileHeart className="h-5 w-5" />
+              </div>
+              <h2 className="mt-4 text-base font-semibold text-zinc-950">{t("clientProfile.anamnese.missing")}</h2>
+              <p className="mt-1 text-sm text-zinc-500">{t("clientProfile.anamnese.missingDescription")}</p>
+            </div>
+          ) : null}
+
+          {anamneseQuery.data?.map((ficha) => (
+            <AnamneseCard key={ficha.id} ficha={ficha} />
+          ))}
         </section>
       ) : null}
     </div>

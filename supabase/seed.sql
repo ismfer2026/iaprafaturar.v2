@@ -712,3 +712,308 @@ INSERT INTO public.shadow_suggestions (
   '{"source":"seed","phase":5}'
 )
 ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- Phase 6 Client Public PWA synthetic seeds
+-- ============================================================
+
+UPDATE public.professionals
+SET onboarding_completed = true,
+    onboarding_essentials_completed = true,
+    settings = settings || jsonb_build_object(
+      'brand_color', '#0f766e',
+      'public_booking', jsonb_build_object('enabled', true)
+    )
+WHERE id = '00000000-0000-4000-8000-000000000101';
+
+UPDATE public.professionals
+SET settings = settings || jsonb_build_object(
+      'brand_color', '#7c3aed',
+      'public_booking', jsonb_build_object('enabled', true)
+    )
+WHERE id = '00000000-0000-4000-8000-000000000102';
+
+INSERT INTO public.registration_links (
+  id,
+  professional_id,
+  code,
+  is_active,
+  expires_at,
+  uses_count,
+  max_uses
+) VALUES
+  (
+    '00000000-0000-4000-8000-000000001001',
+    '00000000-0000-4000-8000-000000000101',
+    'PROFA-PUBLIC',
+    true,
+    now() + interval '90 days',
+    0,
+    null
+  ),
+  (
+    '00000000-0000-4000-8000-000000001002',
+    '00000000-0000-4000-8000-000000000101',
+    'PROFA-EXPIRED',
+    true,
+    now() - interval '1 day',
+    0,
+    null
+  ),
+  (
+    '00000000-0000-4000-8000-000000001003',
+    '00000000-0000-4000-8000-000000000102',
+    'PROFB-PUBLIC',
+    true,
+    now() + interval '90 days',
+    0,
+    null
+  )
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.clients (
+  id,
+  professional_id,
+  full_name,
+  phone_whatsapp,
+  email,
+  journey_stage,
+  source,
+  lgpd_consent_at,
+  lgpd_consent_source,
+  lgpd_consent_channel,
+  internal_notes
+) VALUES
+  (
+    '00000000-0000-4000-8000-000000001101',
+    '00000000-0000-4000-8000-000000000101',
+    'Lead Publico Fase 6',
+    '5511999991101',
+    'lead-publico-fase6@example.test',
+    'lead',
+    'public_link',
+    now(),
+    'public_booking',
+    'public_booking',
+    'Seed Fase 6 para agendamento publico.'
+  ),
+  (
+    '00000000-0000-4000-8000-000000001102',
+    '00000000-0000-4000-8000-000000000102',
+    'Mesmo Telefone Prof B',
+    '5511999991101',
+    'mesmo-telefone-b@example.test',
+    'lead',
+    'manual',
+    null,
+    null,
+    null,
+    'Seed Fase 6 para validar que telefone igual em outro profissional nao mistura tenant.'
+  )
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.appointments (
+  id,
+  professional_id,
+  client_id,
+  service_id,
+  scheduled_at,
+  duration_minutes,
+  status,
+  source,
+  notes,
+  booked_by_client,
+  booked_at,
+  metadata
+) VALUES (
+  '00000000-0000-4000-8000-000000001201',
+  '00000000-0000-4000-8000-000000000101',
+  '00000000-0000-4000-8000-000000001101',
+  '00000000-0000-4000-8000-000000000401',
+  (date_trunc('day', now() AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo') + interval '2 days 9 hours',
+  60,
+  'agendado',
+  'public_link',
+  'Seed Fase 6 criado por fluxo publico.',
+  true,
+  now(),
+  '{"source":"seed","phase":6,"lang":"pt-BR","ref":"seed"}'
+)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.registration_sessions (
+  id,
+  link_id,
+  professional_id,
+  session_token,
+  data,
+  completed_at,
+  client_id
+) VALUES (
+  '00000000-0000-4000-8000-000000001301',
+  '00000000-0000-4000-8000-000000001001',
+  '00000000-0000-4000-8000-000000000101',
+  'seed-phase6-public-booking-session',
+  '{"kind":"public_booking","slug":"professional-a","lang":"pt-BR","ref":"seed"}',
+  now(),
+  '00000000-0000-4000-8000-000000001101'
+)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.anamnese_templates (
+  id,
+  professional_id,
+  name,
+  fields,
+  is_default
+) VALUES (
+  '00000000-0000-4000-8000-000000001401',
+  '00000000-0000-4000-8000-000000000101',
+  'Anamnese Padrao Fase 6',
+  '{
+    "dados_pessoais": [{"key":"idade","label":"Idade","type":"number"}],
+    "queixas": [{"key":"principal","label":"Queixa principal","type":"textarea"}],
+    "historico": [{"key":"tratamentos_previos","label":"Tratamentos previos","type":"textarea"}],
+    "alergias": [{"key":"possui","label":"Possui alergias?","type":"textarea"}],
+    "habitos": [{"key":"rotina","label":"Rotina e habitos relevantes","type":"textarea"}],
+    "custom_data": []
+  }',
+  true
+)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.anamnese_fichas (
+  id,
+  professional_id,
+  client_id,
+  template_id,
+  appointment_id,
+  public_token,
+  status,
+  token_expires_at,
+  dados_pessoais,
+  queixas,
+  historico,
+  alergias,
+  habitos,
+  custom_data,
+  lgpd_aceito,
+  lgpd_aceito_em,
+  lgpd_ip,
+  preenchido_em
+) VALUES
+  (
+    '00000000-0000-4000-8000-000000001501',
+    '00000000-0000-4000-8000-000000000101',
+    '00000000-0000-4000-8000-000000001101',
+    '00000000-0000-4000-8000-000000001401',
+    '00000000-0000-4000-8000-000000001201',
+    '00000000-0000-4000-8000-000000001551',
+    'aguardando',
+    now() + interval '14 days',
+    '{}',
+    '{}',
+    '{}',
+    '{}',
+    '{}',
+    '{}',
+    false,
+    null,
+    null,
+    null
+  ),
+  (
+    '00000000-0000-4000-8000-000000001502',
+    '00000000-0000-4000-8000-000000000101',
+    '00000000-0000-4000-8000-000000001101',
+    '00000000-0000-4000-8000-000000001401',
+    null,
+    '00000000-0000-4000-8000-000000001552',
+    'expirado',
+    now() - interval '1 day',
+    '{}',
+    '{}',
+    '{}',
+    '{}',
+    '{}',
+    '{}',
+    false,
+    null,
+    null,
+    null
+  ),
+  (
+    '00000000-0000-4000-8000-000000001503',
+    '00000000-0000-4000-8000-000000000101',
+    '00000000-0000-4000-8000-000000001101',
+    '00000000-0000-4000-8000-000000001401',
+    null,
+    '00000000-0000-4000-8000-000000001553',
+    'preenchido',
+    now() + interval '14 days',
+    '{"idade":35}',
+    '{"principal":"Queixa sintetica preenchida."}',
+    '{"tratamentos_previos":"Sem tratamentos previos relevantes."}',
+    '{"possui":"Nao informado."}',
+    '{"rotina":"Rotina sintetica."}',
+    '{}',
+    true,
+    now(),
+    '127.0.0.1',
+    now()
+  ),
+  (
+    '00000000-0000-4000-8000-000000001504',
+    '00000000-0000-4000-8000-000000000101',
+    '00000000-0000-4000-8000-000000001101',
+    '00000000-0000-4000-8000-000000001401',
+    null,
+    '00000000-0000-4000-8000-000000001554',
+    'revisado',
+    now() + interval '14 days',
+    '{"idade":35}',
+    '{"principal":"Queixa revisada sintetica."}',
+    '{"tratamentos_previos":"Sem tratamentos previos relevantes."}',
+    '{"possui":"Nao informado."}',
+    '{"rotina":"Rotina sintetica."}',
+    '{}',
+    true,
+    now(),
+    '127.0.0.1',
+    now()
+  )
+ON CONFLICT (id) DO NOTHING;
+
+UPDATE public.clients
+SET has_anamnese = true,
+    last_anamnese_at = now()
+WHERE id = '00000000-0000-4000-8000-000000001101';
+
+INSERT INTO public.audit_log (
+  id,
+  professional_id,
+  actor_type,
+  event_type,
+  entity_type,
+  entity_id,
+  payload
+) VALUES
+  (
+    '00000000-0000-4000-8000-000000001601',
+    '00000000-0000-4000-8000-000000000101',
+    'client',
+    'appointment.created',
+    'appointment',
+    '00000000-0000-4000-8000-000000001201',
+    '{"source":"seed","phase":6,"booked_by_client":true}'
+  ),
+  (
+    '00000000-0000-4000-8000-000000001602',
+    '00000000-0000-4000-8000-000000000101',
+    'client',
+    'anamnese.completed',
+    'anamnese_ficha',
+    '00000000-0000-4000-8000-000000001503',
+    '{"source":"seed","phase":6,"lgpd_aceito":true}'
+  )
+ON CONFLICT (id) DO NOTHING;

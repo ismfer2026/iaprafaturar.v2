@@ -9,6 +9,8 @@ export const crmKeys = {
     ["crm", "appointments", professionalId, dateKey ?? "all"] as const,
   sessions: (professionalId: string | null, clientId?: string | null) =>
     ["crm", "sessions", professionalId, clientId ?? "all"] as const,
+  anamneseFichas: (professionalId: string | null, clientId?: string | null) =>
+    ["crm", "anamnese-fichas", professionalId, clientId ?? "all"] as const,
   financialTransactions: (
     professionalId: string | null,
     filters?: { status?: string | null; type?: string | null; dateFrom?: string | null; dateTo?: string | null },
