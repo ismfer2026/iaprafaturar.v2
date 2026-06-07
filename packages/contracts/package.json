@@ -28,6 +28,8 @@
     "./edge-functions/lembrete-agent.ts": "./edge-functions/lembrete-agent.ts",
     "./edge-functions/pos-atendimento-agent": "./edge-functions/pos-atendimento-agent.ts",
     "./edge-functions/pos-atendimento-agent.ts": "./edge-functions/pos-atendimento-agent.ts",
+    "./edge-functions/approve-shadow-suggestion": "./edge-functions/approve-shadow-suggestion.ts",
+    "./edge-functions/approve-shadow-suggestion.ts": "./edge-functions/approve-shadow-suggestion.ts",
     "./database/shadow-suggestions": "./database/shadow-suggestions.ts",
     "./database/shadow-suggestions.ts": "./database/shadow-suggestions.ts"
   },

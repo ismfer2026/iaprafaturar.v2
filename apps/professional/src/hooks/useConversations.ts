@@ -125,13 +125,21 @@ export function useShadowSuggestions(professionalId: string | null) {
 
   const approve = useMutation({
     mutationFn: async (input: { suggestionId: string; actualText?: string | null }) => {
-      const { data, error } = await supabase.rpc("approve_shadow_suggestion", {
-        p_suggestion_id: input.suggestionId,
-        p_actual_text: input.actualText ?? null,
+      const { data, error } = await supabase.functions.invoke("approve-shadow-suggestion", {
+        body: {
+          suggestion_id: input.suggestionId,
+          actual_text: input.actualText ?? undefined,
+        },
       });
 
       if (error) throw error;
-      return data as { suggestion_id: string; status: string; text_to_send?: string };
+      return data as {
+        approved: boolean;
+        sent?: boolean;
+        dry_run: boolean;
+        suggestion_id: string;
+        skipped_reason?: string;
+      };
     },
     onSuccess: invalidate,
   });

@@ -36,6 +36,31 @@ function buildShadowSuggestion(text: string | null | undefined): string {
   return 'Oi, recebi sua mensagem. Vou verificar com atencao e ja te respondo por aqui.'
 }
 
+async function invokeInternalFunction(functionName: string, payload: Record<string, unknown>): Promise<unknown> {
+  const baseUrl = Deno.env.get('FUNCTIONS_BASE_URL')
+  const internalToken = Deno.env.get('INTERNAL_FUNCTION_TOKEN')
+
+  if (!baseUrl || !internalToken) {
+    throw new Error('Missing FUNCTIONS_BASE_URL or INTERNAL_FUNCTION_TOKEN')
+  }
+
+  const response = await fetch(`${baseUrl.replace(/\/$/, '')}/${functionName}`, {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${internalToken}`,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+
+  const body = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    throw new Error(`${functionName} failed: ${response.status} ${JSON.stringify(body)}`)
+  }
+
+  return body
+}
+
 Deno.serve(async (request) => {
   try {
     assertInternalAuth(request)
@@ -185,10 +210,18 @@ Deno.serve(async (request) => {
     }
 
     if (activeContext?.contextType === 'post_care') {
+      const agentResult = await invokeInternalFunction('pos-atendimento-agent', {
+        mode: 'nps_reply',
+        message_event_id: messageEvent.id,
+        dry_run: dryRun,
+      })
+
       await completeAgentExecution(supabase, execution.id, { status: 'success' })
       return jsonResponse({
         processed: true,
         route: 'post_care',
+        action: 'nps_reply_processed',
+        agent_result: agentResult,
         dry_run: dryRun,
         message_event_id: messageEvent.id,
         professional_id: messageEvent.professional_id,
