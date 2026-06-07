@@ -133,7 +133,7 @@ Deno.serve(async (request) => {
       instance_name: instance.instanceName,
       to: targetPhone,
       text: textToSend,
-      actor_type: 'human',
+      actor_type: 'professional',
       dry_run: dryRun,
     })
 
