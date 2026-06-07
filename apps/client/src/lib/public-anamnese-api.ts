@@ -4,6 +4,7 @@ import type {
   PublicAnamneseSubmitOutput
 } from "@iaprafaturar/contracts/edge-functions/anamnese-public-handler";
 import type { Locale } from "@/i18n";
+import { readFunctionErrorBody } from "@/lib/function-error";
 import { supabase } from "@/lib/supabase";
 
 export type PublicAnamneseFormResult = PublicAnamneseFormOutput | PublicAnamneseErrorOutput;
@@ -57,7 +58,11 @@ export async function submitPublicAnamnese(
     }
   );
 
-  if (error) throw error;
+  if (error) {
+    const errorBody = await readFunctionErrorBody<PublicAnamneseErrorOutput>(error);
+    if (errorBody) return errorBody;
+    throw error;
+  }
   if (!data) throw new Error("empty_public_anamnese_submit");
   return data;
 }

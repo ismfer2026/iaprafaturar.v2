@@ -5,6 +5,7 @@ import type {
 } from "@iaprafaturar/contracts/edge-functions/public-booking-handler";
 import { supabase } from "@/lib/supabase";
 import type { Locale } from "@/i18n";
+import { readFunctionErrorBody } from "@/lib/function-error";
 
 export type PublicBookingResult = PublicBookingContextOutput | PublicBookingErrorOutput;
 
@@ -57,7 +58,11 @@ export async function createPublicAppointment(
     }
   });
 
-  if (error) throw error;
+  if (error) {
+    const errorBody = await readFunctionErrorBody<PublicBookingErrorOutput>(error);
+    if (errorBody) return errorBody;
+    throw error;
+  }
   if (!data) throw new Error("empty_public_appointment_response");
   return data;
 }

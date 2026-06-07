@@ -86,7 +86,17 @@ export default function PublicAnamnesePage() {
       }),
     onSuccess(data) {
       if (isError(data)) {
-        setFormError(t(data.error === "lgpd_required" ? "anamnese.error.lgpd" : "anamnese.error.submit"));
+        if (data.error === "lgpd_required") {
+          setFormError(t("anamnese.error.lgpd"));
+          return;
+        }
+        if (data.error === "invalid_input") {
+          setFormError(t("anamnese.error.invalidInput"));
+          return;
+        }
+        if (data.error !== "expired" && data.error !== "already_completed" && data.error !== "not_found") {
+          setFormError(t("anamnese.error.submit"));
+        }
         return;
       }
       setFormError(null);
@@ -95,6 +105,12 @@ export default function PublicAnamnesePage() {
       setFormError(t("anamnese.error.submit"));
     }
   });
+
+  const submitErrorState = isError(submitMutation.data) ? submitMutation.data : null;
+  const terminalErrorState =
+    submitErrorState?.error === "expired" || submitErrorState?.error === "already_completed" || submitErrorState?.error === "not_found"
+      ? submitErrorState
+      : errorState;
 
   const completed = useMemo(() => {
     return submitMutation.data && !isError(submitMutation.data);
@@ -127,9 +143,9 @@ export default function PublicAnamnesePage() {
     );
   }
 
-  if (errorState) {
-    const isExpired = errorState.error === "expired";
-    const isCompleted = errorState.error === "already_completed";
+  if (terminalErrorState) {
+    const isExpired = terminalErrorState.error === "expired";
+    const isCompleted = terminalErrorState.error === "already_completed";
     return (
       <PublicLayout
         eyebrow={t("shell.anamnese")}

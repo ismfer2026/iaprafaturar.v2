@@ -9,7 +9,8 @@ import { readRefParam } from "@/lib/public-flow-state";
 import { PublicLayout } from "./PublicLayout";
 import type {
   PublicBookingContextOutput,
-  PublicBookingCreateAppointmentOutput
+  PublicBookingCreateAppointmentOutput,
+  PublicBookingErrorOutput
 } from "@iaprafaturar/contracts/edge-functions/public-booking-handler";
 
 type FlowStep = "service" | "time" | "client" | "confirm";
@@ -49,6 +50,14 @@ function isAppointmentOutput(data: unknown): data is PublicBookingCreateAppointm
 function getConfirmationKey(status: PublicBookingCreateAppointmentOutput["confirmation_status"]) {
   if (status === "dry_run") return "booking.success.confirmation.dryRun";
   return `booking.success.confirmation.${status}` as const;
+}
+
+function getBookingErrorKey(error: PublicBookingErrorOutput["error"]) {
+  if (error === "service_not_available") return "booking.error.serviceUnavailable";
+  if (error === "scheduled_at_must_be_future") return "booking.error.futureTime";
+  if (error === "invalid_input") return "booking.error.invalidInput";
+  if (error === "not_found") return "booking.error.load";
+  return "booking.error.submit";
 }
 
 export default function PublicBookingPage() {
@@ -92,7 +101,7 @@ export default function PublicBookingPage() {
     },
     onSuccess(data) {
       if ("ok" in data && data.ok === false) {
-        setFormError(t("booking.error.submit"));
+        setFormError(t(getBookingErrorKey(data.error)));
         return;
       }
       setStep("success");
