@@ -1017,3 +1017,281 @@ INSERT INTO public.audit_log (
     '{"source":"seed","phase":6,"lgpd_aceito":true}'
   )
 ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- Phase 7 Documentos & Pacotes synthetic seeds
+-- ============================================================
+
+INSERT INTO public.service_packages (
+  id, professional_id, service_id, name, slug, total_sessions, price,
+  validity_days, description, is_active, is_public
+) VALUES
+  (
+    '00000000-0000-4000-8000-000000001701',
+    '00000000-0000-4000-8000-000000000101',
+    '00000000-0000-4000-8000-000000000401',
+    'Pacote Sintetico A',
+    'pacote-sintetico-a',
+    5,
+    450.00,
+    90,
+    'Pacote sintetico para validacao da Fase 7.',
+    true,
+    true
+  ),
+  (
+    '00000000-0000-4000-8000-000000001702',
+    '00000000-0000-4000-8000-000000000102',
+    '00000000-0000-4000-8000-000000000402',
+    'Pacote Sintetico B',
+    'pacote-sintetico-b',
+    3,
+    300.00,
+    60,
+    'Pacote sintetico do profissional B para validar isolamento.',
+    true,
+    true
+  )
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  slug = EXCLUDED.slug,
+  total_sessions = EXCLUDED.total_sessions,
+  price = EXCLUDED.price,
+  validity_days = EXCLUDED.validity_days,
+  description = EXCLUDED.description,
+  is_active = EXCLUDED.is_active,
+  is_public = EXCLUDED.is_public,
+  updated_at = now();
+
+INSERT INTO public.client_packages (
+  id, professional_id, client_id, service_package_id, sessions_total,
+  sessions_used, purchased_at, expires_at, status
+) VALUES
+  (
+    '00000000-0000-4000-8000-000000001711',
+    '00000000-0000-4000-8000-000000000101',
+    '00000000-0000-4000-8000-000000000201',
+    '00000000-0000-4000-8000-000000001701',
+    5,
+    1,
+    now() - interval '3 days',
+    now() + interval '87 days',
+    'ativo'
+  ),
+  (
+    '00000000-0000-4000-8000-000000001712',
+    '00000000-0000-4000-8000-000000000102',
+    '00000000-0000-4000-8000-000000000203',
+    '00000000-0000-4000-8000-000000001702',
+    3,
+    0,
+    now() - interval '1 day',
+    now() + interval '59 days',
+    'ativo'
+  )
+ON CONFLICT (id) DO UPDATE SET
+  sessions_total = EXCLUDED.sessions_total,
+  sessions_used = EXCLUDED.sessions_used,
+  purchased_at = EXCLUDED.purchased_at,
+  expires_at = EXCLUDED.expires_at,
+  status = EXCLUDED.status,
+  updated_at = now();
+
+INSERT INTO public.financial_transactions (
+  id, professional_id, client_id, client_package_id, type, amount, status,
+  payment_method, payment_gateway, paid_at, description, source, notes
+) VALUES (
+  '00000000-0000-4000-8000-000000001721',
+  '00000000-0000-4000-8000-000000000101',
+  '00000000-0000-4000-8000-000000000201',
+  '00000000-0000-4000-8000-000000001711',
+  'receita',
+  450.00,
+  'pago',
+  'pix',
+  'manual',
+  now() - interval '3 days',
+  'Venda de pacote sintetico A',
+  'pacote',
+  'Seed Fase 7'
+)
+ON CONFLICT (id) DO UPDATE SET
+  client_package_id = EXCLUDED.client_package_id,
+  amount = EXCLUDED.amount,
+  status = EXCLUDED.status,
+  payment_method = EXCLUDED.payment_method,
+  paid_at = EXCLUDED.paid_at,
+  description = EXCLUDED.description,
+  source = EXCLUDED.source,
+  notes = EXCLUDED.notes,
+  updated_at = now();
+
+UPDATE public.client_packages
+SET financial_transaction_id = '00000000-0000-4000-8000-000000001721',
+    updated_at = now()
+WHERE id = '00000000-0000-4000-8000-000000001711';
+
+UPDATE public.sessions
+SET client_package_id = '00000000-0000-4000-8000-000000001711'
+WHERE id = '00000000-0000-4000-8000-000000000601';
+
+UPDATE public.appointments
+SET client_package_id = '00000000-0000-4000-8000-000000001711'
+WHERE id = '00000000-0000-4000-8000-000000000502';
+
+INSERT INTO public.package_session_usage (
+  id, professional_id, client_package_id, session_id, appointment_id, used_at
+) VALUES (
+  '00000000-0000-4000-8000-000000001731',
+  '00000000-0000-4000-8000-000000000101',
+  '00000000-0000-4000-8000-000000001711',
+  '00000000-0000-4000-8000-000000000601',
+  '00000000-0000-4000-8000-000000000502',
+  now() - interval '1 day'
+)
+ON CONFLICT (session_id) DO NOTHING;
+
+INSERT INTO public.quotes (
+  id, professional_id, client_id, quote_number, title, items, subtotal,
+  discount_amount, total_amount, status, expires_at, notes, sent_at
+) VALUES
+  (
+    '00000000-0000-4000-8000-000000001741',
+    '00000000-0000-4000-8000-000000000101',
+    '00000000-0000-4000-8000-000000000201',
+    'ORC-SEED-001',
+    'Orcamento sintetico rascunho',
+    '[{"description":"Sessao sintetica","quantity":1,"unit_price":120}]',
+    120.00,
+    0,
+    120.00,
+    'rascunho',
+    CURRENT_DATE + 7,
+    'Seed Fase 7',
+    null
+  ),
+  (
+    '00000000-0000-4000-8000-000000001742',
+    '00000000-0000-4000-8000-000000000101',
+    '00000000-0000-4000-8000-000000000201',
+    'ORC-SEED-002',
+    'Orcamento sintetico enviado',
+    '[{"description":"Pacote sintetico","quantity":1,"unit_price":450}]',
+    450.00,
+    50.00,
+    400.00,
+    'enviado',
+    CURRENT_DATE + 10,
+    'Seed Fase 7 enviado',
+    now() - interval '2 hours'
+  )
+ON CONFLICT (id) DO UPDATE SET
+  title = EXCLUDED.title,
+  items = EXCLUDED.items,
+  subtotal = EXCLUDED.subtotal,
+  discount_amount = EXCLUDED.discount_amount,
+  total_amount = EXCLUDED.total_amount,
+  status = EXCLUDED.status,
+  expires_at = EXCLUDED.expires_at,
+  notes = EXCLUDED.notes,
+  sent_at = EXCLUDED.sent_at,
+  updated_at = now();
+
+INSERT INTO public.modelos (
+  id, professional_id, name, type, content, variables, is_active
+) VALUES (
+  '00000000-0000-4000-8000-000000001751',
+  '00000000-0000-4000-8000-000000000101',
+  'Contrato sintetico de atendimento',
+  'contrato',
+  'Contrato entre {{professional_name}} e {{client_name}} para {{service_name}}.',
+  '["professional_name","client_name","service_name"]',
+  true
+)
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  type = EXCLUDED.type,
+  content = EXCLUDED.content,
+  variables = EXCLUDED.variables,
+  is_active = EXCLUDED.is_active,
+  updated_at = now();
+
+INSERT INTO public.contracts (
+  id, professional_id, client_id, modelo_id, title, type, content, status,
+  signed_at, signature_method, notes
+) VALUES (
+  '00000000-0000-4000-8000-000000001761',
+  '00000000-0000-4000-8000-000000000101',
+  '00000000-0000-4000-8000-000000000201',
+  '00000000-0000-4000-8000-000000001751',
+  'Contrato sintetico assinado',
+  'contrato',
+  'Contrato sintetico assinado manualmente para validacao.',
+  'assinado',
+  now() - interval '1 hour',
+  'manual',
+  'Seed Fase 7'
+)
+ON CONFLICT (id) DO UPDATE SET
+  title = EXCLUDED.title,
+  type = EXCLUDED.type,
+  content = EXCLUDED.content,
+  status = EXCLUDED.status,
+  signed_at = EXCLUDED.signed_at,
+  signature_method = EXCLUDED.signature_method,
+  notes = EXCLUDED.notes,
+  updated_at = now();
+
+UPDATE public.anamnese_templates
+SET fields = '{
+  "sections": [
+    {
+      "id": "dados_pessoais",
+      "title": "Dados pessoais",
+      "fields": [
+        {"id": "idade", "type": "number", "label": "Idade", "required": true}
+      ]
+    },
+    {
+      "id": "queixas",
+      "title": "Queixas",
+      "fields": [
+        {"id": "principal", "type": "textarea", "label": "Queixa principal", "required": true}
+      ]
+    }
+  ]
+}'::jsonb,
+    updated_at = now()
+WHERE id = '00000000-0000-4000-8000-000000001401';
+
+INSERT INTO public.audit_log (
+  id, professional_id, actor_type, event_type, entity_type, entity_id, payload
+) VALUES
+  (
+    '00000000-0000-4000-8000-000000001771',
+    '00000000-0000-4000-8000-000000000101',
+    'professional',
+    'client_package.created',
+    'client_package',
+    '00000000-0000-4000-8000-000000001711',
+    '{"source":"seed","phase":7}'
+  ),
+  (
+    '00000000-0000-4000-8000-000000001772',
+    '00000000-0000-4000-8000-000000000101',
+    'professional',
+    'quote.sent',
+    'quote',
+    '00000000-0000-4000-8000-000000001742',
+    '{"source":"seed","phase":7,"dry_run":true}'
+  ),
+  (
+    '00000000-0000-4000-8000-000000001773',
+    '00000000-0000-4000-8000-000000000101',
+    'professional',
+    'contract.signed',
+    'contract',
+    '00000000-0000-4000-8000-000000001761',
+    '{"source":"seed","phase":7,"signature_method":"manual"}'
+  )
+ON CONFLICT (id) DO NOTHING;
