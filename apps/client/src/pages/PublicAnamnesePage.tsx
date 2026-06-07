@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CheckCircle2, ClipboardCheck, FileHeart, ShieldCheck } from "lucide-react";
+import { CheckCircle2, ClipboardCheck, FileHeart, ImagePlus, PenLine, ShieldCheck } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Skeleton } from "@iaprafaturar/ui";
 import type {
@@ -8,7 +8,7 @@ import type {
   PublicAnamneseFormOutput
 } from "@iaprafaturar/contracts/edge-functions/anamnese-public-handler";
 import { useI18n } from "@/i18n";
-import { getPublicAnamneseForm, submitPublicAnamnese } from "@/lib/public-anamnese-api";
+import { getPublicAnamneseForm, submitPublicAnamnese, type PublicAnamneseAssetInput } from "@/lib/public-anamnese-api";
 import { PublicLayout } from "./PublicLayout";
 
 type SectionKey = "dadosPessoais" | "queixas" | "historico" | "alergias" | "habitos" | "customData";
@@ -56,12 +56,43 @@ function toSectionRecord(value: string): Record<string, unknown> {
   return value.trim() ? { notes: value.trim() } : {};
 }
 
+const MAX_ANAMNESE_ASSET_SIZE = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
+
+function isAllowedImageType(value: string): value is PublicAnamneseAssetInput["type"] {
+  return ALLOWED_IMAGE_TYPES.includes(value as PublicAnamneseAssetInput["type"]);
+}
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result ?? ""));
+    reader.onerror = () => reject(reader.error ?? new Error("file_read_failed"));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function fileToAnamneseAsset(file: File): Promise<PublicAnamneseAssetInput> {
+  if (!isAllowedImageType(file.type) || file.size > MAX_ANAMNESE_ASSET_SIZE) {
+    throw new Error("invalid_asset");
+  }
+
+  return {
+    name: file.name,
+    type: file.type,
+    size: file.size,
+    data_url: await readFileAsDataUrl(file)
+  };
+}
+
 export default function PublicAnamnesePage() {
   const { token = "" } = useParams<{ token: string }>();
   const { locale, t } = useI18n();
   const [answers, setAnswers] = useState<Answers>(initialAnswers);
   const [lgpdAccepted, setLgpdAccepted] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<PublicAnamneseAssetInput[]>([]);
+  const [signature, setSignature] = useState<PublicAnamneseAssetInput | null>(null);
 
   const formQuery = useQuery({
     queryKey: ["public-anamnese-form", token, locale],
@@ -82,7 +113,9 @@ export default function PublicAnamnesePage() {
         historico: toSectionRecord(answers.historico),
         alergias: toSectionRecord(answers.alergias),
         habitos: toSectionRecord(answers.habitos),
-        customData: toSectionRecord(answers.customData)
+        customData: toSectionRecord(answers.customData),
+        fotos: photos,
+        assinaturaUrl: signature?.data_url ?? null
       }),
     onSuccess(data) {
       if (isError(data)) {
@@ -118,6 +151,31 @@ export default function PublicAnamnesePage() {
 
   function updateAnswer(key: SectionKey, value: string) {
     setAnswers((current) => ({ ...current, [key]: value }));
+  }
+
+  async function handlePhotosChange(files: FileList | null) {
+    setFormError(null);
+    if (!files?.length) return;
+
+    try {
+      const nextFiles = Array.from(files).slice(0, Math.max(0, 4 - photos.length));
+      const nextAssets = await Promise.all(nextFiles.map(fileToAnamneseAsset));
+      setPhotos((current) => [...current, ...nextAssets].slice(0, 4));
+    } catch {
+      setFormError(t("anamnese.error.asset"));
+    }
+  }
+
+  async function handleSignatureChange(files: FileList | null) {
+    setFormError(null);
+    const file = files?.[0];
+    if (!file) return;
+
+    try {
+      setSignature(await fileToAnamneseAsset(file));
+    } catch {
+      setFormError(t("anamnese.error.asset"));
+    }
   }
 
   function submit() {
@@ -228,6 +286,55 @@ export default function PublicAnamnesePage() {
                   </label>
                 ))}
               </div>
+
+              <section className="space-y-3 rounded-lg border border-zinc-200 bg-white p-3">
+                <div className="flex items-start gap-2">
+                  <ImagePlus className="mt-0.5 h-4 w-4 text-brand" aria-hidden="true" />
+                  <div>
+                    <h3 className="text-sm font-semibold text-zinc-950">{t("anamnese.photos.title")}</h3>
+                    <p className="mt-1 text-xs leading-5 text-zinc-500">{t("anamnese.photos.description")}</p>
+                  </div>
+                </div>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  multiple
+                  className="block w-full text-sm text-zinc-700 file:mr-3 file:rounded-md file:border-0 file:bg-teal-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-teal-800"
+                  onChange={(event) => {
+                    void handlePhotosChange(event.target.files);
+                    event.target.value = "";
+                  }}
+                />
+                {photos.length ? (
+                  <div className="flex flex-wrap gap-2">
+                    {photos.map((photo) => (
+                      <span key={`${photo.name}-${photo.size}`} className="rounded-full bg-zinc-100 px-3 py-1 text-xs text-zinc-700">
+                        {photo.name}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </section>
+
+              <section className="space-y-3 rounded-lg border border-zinc-200 bg-white p-3">
+                <div className="flex items-start gap-2">
+                  <PenLine className="mt-0.5 h-4 w-4 text-brand" aria-hidden="true" />
+                  <div>
+                    <h3 className="text-sm font-semibold text-zinc-950">{t("anamnese.signature.title")}</h3>
+                    <p className="mt-1 text-xs leading-5 text-zinc-500">{t("anamnese.signature.description")}</p>
+                  </div>
+                </div>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="block w-full text-sm text-zinc-700 file:mr-3 file:rounded-md file:border-0 file:bg-teal-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-teal-800"
+                  onChange={(event) => {
+                    void handleSignatureChange(event.target.files);
+                    event.target.value = "";
+                  }}
+                />
+                {signature ? <p className="text-xs font-medium text-teal-700">{t("anamnese.signature.selected")}</p> : null}
+              </section>
 
               <label className="flex items-start gap-3 rounded-lg bg-teal-50 p-3 text-sm text-teal-950">
                 <input

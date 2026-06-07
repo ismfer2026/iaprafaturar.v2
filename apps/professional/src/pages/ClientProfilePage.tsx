@@ -6,7 +6,7 @@ import type { Appointment, JourneyStage, Session } from "@iaprafaturar/domain";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClient } from "@/hooks/useClients";
 import { useClientAppointments } from "@/hooks/useAppointments";
-import { useClientAnamneseFichas, type AnamneseFicha } from "@/hooks/useAnamnese";
+import { useClientAnamneseFichas, useReviewAnamneseFicha, type AnamneseFicha } from "@/hooks/useAnamnese";
 import { useClientPackages, useContracts } from "@/hooks/useDocumentsPackages";
 import { useSessions } from "@/hooks/useSessions";
 import { useI18n, type Locale, type TranslationKey } from "@/i18n";
@@ -114,7 +114,19 @@ function stringifySection(value: unknown) {
     .join("\n");
 }
 
-function AnamneseCard({ ficha }: { ficha: AnamneseFicha }) {
+function AnamneseCard({
+  ficha,
+  reviewNotes,
+  reviewPending,
+  onReview,
+  onReviewNotesChange
+}: {
+  ficha: AnamneseFicha;
+  reviewNotes: string;
+  reviewPending: boolean;
+  onReview: () => void;
+  onReviewNotesChange: (value: string) => void;
+}) {
   const { locale, t } = useI18n();
 
   return (
@@ -153,6 +165,60 @@ function AnamneseCard({ ficha }: { ficha: AnamneseFicha }) {
             );
           })}
         </div>
+
+        {ficha.fotos?.length ? (
+          <section className="rounded-lg border border-zinc-200 bg-white p-3">
+            <h3 className="text-sm font-semibold text-zinc-950">{t("clientProfile.anamnese.photos")}</h3>
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {ficha.fotos.map((photo) => (
+                <a
+                  key={photo.path}
+                  href={photo.signedUrl ?? "#"}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block overflow-hidden rounded-md border border-zinc-200 bg-zinc-50"
+                >
+                  {photo.signedUrl ? (
+                    <img src={photo.signedUrl} alt={photo.name ?? t("clientProfile.anamnese.photos")} className="aspect-square w-full object-cover" />
+                  ) : (
+                    <span className="flex aspect-square items-center justify-center px-2 text-center text-xs text-zinc-500">
+                      {photo.name ?? t("clientProfile.anamnese.photos")}
+                    </span>
+                  )}
+                </a>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {ficha.assinatura_signed_url ? (
+          <section className="rounded-lg border border-zinc-200 bg-white p-3">
+            <h3 className="text-sm font-semibold text-zinc-950">{t("clientProfile.anamnese.signature")}</h3>
+            <a href={ficha.assinatura_signed_url} target="_blank" rel="noreferrer" className="mt-3 block w-fit overflow-hidden rounded-md border border-zinc-200 bg-zinc-50">
+              <img src={ficha.assinatura_signed_url} alt={t("clientProfile.anamnese.signature")} className="max-h-36 max-w-full object-contain" />
+            </a>
+          </section>
+        ) : null}
+
+        <section className="space-y-3 rounded-lg border border-zinc-200 bg-white p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-sm font-semibold text-zinc-950">{t("clientProfile.anamnese.reviewNotes")}</h3>
+            {ficha.revisado_em ? (
+              <span className="text-xs text-zinc-500">
+                {t("clientProfile.anamnese.reviewedAt")}: {formatDate(ficha.revisado_em, locale, t("common.noDate"))}
+              </span>
+            ) : null}
+          </div>
+          <textarea
+            value={reviewNotes}
+            placeholder={t("clientProfile.anamnese.reviewPlaceholder")}
+            className="min-h-24 w-full resize-y rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+            onChange={(event) => onReviewNotesChange(event.target.value)}
+          />
+          <Button type="button" className="w-full sm:w-fit" disabled={reviewPending} onClick={onReview}>
+            {reviewPending ? t("common.saving") : t("clientProfile.anamnese.reviewAction")}
+          </Button>
+        </section>
       </CardContent>
     </Card>
   );
@@ -163,11 +229,13 @@ export default function ClientProfilePage() {
   const { id } = useParams<{ id: string }>();
   const { professionalId } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("resumo");
+  const [reviewNotesByFichaId, setReviewNotesByFichaId] = useState<Record<string, string>>({});
 
   const clientQuery = useClient(professionalId, id ?? null);
   const appointmentsQuery = useClientAppointments(professionalId, id ?? null);
   const sessionsQuery = useSessions(professionalId, id ?? null);
   const anamneseQuery = useClientAnamneseFichas(professionalId, id ?? null);
+  const reviewAnamneseMutation = useReviewAnamneseFicha(professionalId, id ?? null);
   const clientPackagesQuery = useClientPackages(professionalId, id ?? null);
   const contractsQuery = useContracts(professionalId, id ?? null);
 
@@ -390,7 +458,24 @@ export default function ClientProfilePage() {
           ) : null}
 
           {anamneseQuery.data?.map((ficha) => (
-            <AnamneseCard key={ficha.id} ficha={ficha} />
+            <AnamneseCard
+              key={ficha.id}
+              ficha={ficha}
+              reviewNotes={reviewNotesByFichaId[ficha.id] ?? ficha.notas_profissional ?? ""}
+              reviewPending={reviewAnamneseMutation.isPending}
+              onReview={() =>
+                reviewAnamneseMutation.mutate({
+                  fichaId: ficha.id,
+                  notasProfissional: reviewNotesByFichaId[ficha.id] ?? ficha.notas_profissional ?? ""
+                })
+              }
+              onReviewNotesChange={(value) =>
+                setReviewNotesByFichaId((current) => ({
+                  ...current,
+                  [ficha.id]: value
+                }))
+              }
+            />
           ))}
         </section>
       ) : null}

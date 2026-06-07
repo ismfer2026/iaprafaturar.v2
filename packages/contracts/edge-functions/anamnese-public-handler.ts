@@ -6,6 +6,13 @@ export const PublicAnamneseStatusSchema = z.enum(['aguardando', 'preenchido', 'r
 
 const JsonObjectSchema = z.record(z.unknown())
 
+const PublicAnamneseAssetInputSchema = z.object({
+  name: z.string().min(1).max(160),
+  type: z.enum(['image/jpeg', 'image/png', 'image/webp']),
+  size: z.number().int().positive().max(5 * 1024 * 1024),
+  data_url: z.string().min(1),
+}).strict()
+
 export const PublicAnamneseGetFormInputSchema = z.object({
   mode: z.literal('get_form'),
   token: z.string().uuid(),
@@ -21,6 +28,8 @@ export const PublicAnamneseSubmitFormInputSchema = z.object({
   alergias: JsonObjectSchema.default({}),
   habitos: JsonObjectSchema.default({}),
   custom_data: JsonObjectSchema.default({}),
+  fotos: z.array(PublicAnamneseAssetInputSchema).max(4).default([]),
+  assinatura_url: z.string().min(1).max(7 * 1024 * 1024).nullable().optional(),
   lgpd_aceito: z.literal(true),
   lang: PublicAnamneseLocaleSchema.optional(),
 }).strict()

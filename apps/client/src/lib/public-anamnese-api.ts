@@ -9,6 +9,13 @@ import { supabase } from "@/lib/supabase";
 
 export type PublicAnamneseFormResult = PublicAnamneseFormOutput | PublicAnamneseErrorOutput;
 
+export interface PublicAnamneseAssetInput {
+  name: string;
+  type: "image/jpeg" | "image/png" | "image/webp";
+  size: number;
+  data_url: string;
+}
+
 export interface SubmitPublicAnamneseInput {
   token: string;
   lang: Locale;
@@ -18,6 +25,8 @@ export interface SubmitPublicAnamneseInput {
   alergias: Record<string, unknown>;
   habitos: Record<string, unknown>;
   customData: Record<string, unknown>;
+  fotos?: PublicAnamneseAssetInput[];
+  assinaturaUrl?: string | null;
 }
 
 export async function getPublicAnamneseForm(params: {
@@ -52,6 +61,8 @@ export async function submitPublicAnamnese(
         alergias: input.alergias,
         habitos: input.habitos,
         custom_data: input.customData,
+        fotos: input.fotos ?? [],
+        assinatura_url: input.assinaturaUrl ?? null,
         lgpd_aceito: true,
         lang: input.lang
       }
