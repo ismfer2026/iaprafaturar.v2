@@ -64,10 +64,21 @@ const CLIENT_PACKAGE_STATUS_KEYS: Record<ClientPackageStatus, TranslationKey> = 
 
 const MODELO_TYPE_KEYS: Record<ModeloType, TranslationKey> = {
   contrato: "docs.modelo.type.contrato",
-  termo: "docs.modelo.type.termo",
-  orientacao: "docs.modelo.type.orientacao",
-  outro: "docs.modelo.type.outro",
+  termo_lgpd: "docs.modelo.type.termo_lgpd",
+  consentimento_clinico: "docs.modelo.type.consentimento_clinico",
+  responsabilidade: "docs.modelo.type.responsabilidade",
+  contrato_pacote: "docs.modelo.type.contrato_pacote",
+  orcamento: "docs.modelo.type.orcamento",
 };
+
+const MODELO_TYPES: ModeloType[] = [
+  "contrato",
+  "termo_lgpd",
+  "consentimento_clinico",
+  "responsabilidade",
+  "contrato_pacote",
+  "orcamento",
+];
 
 const CONTRACT_STATUS_KEYS: Record<ContractStatus, TranslationKey> = {
   rascunho: "docs.contract.status.rascunho",
@@ -152,8 +163,7 @@ export default function DocumentsPackagesPage() {
   const [contractForm, setContractForm] = useState({
     clientId: "",
     modeloId: "",
-    title: "",
-    content: "",
+    expiresAt: "",
   });
   const [anamneseForm, setAnamneseForm] = useState({
     templateId: "",
@@ -294,14 +304,13 @@ export default function DocumentsPackagesPage() {
     event.preventDefault();
     setFormError(null);
     if (!contractForm.clientId) return setFormError(t("docs.error.clientRequired"));
-    if (!contractForm.title.trim()) return setFormError(t("docs.error.titleRequired"));
+    if (!contractForm.modeloId) return setFormError(t("docs.error.modelRequired"));
 
     try {
       await contractsQuery.createContractFromModelo({
         clientId: contractForm.clientId,
-        modeloId: contractForm.modeloId || null,
-        title: contractForm.title.trim(),
-        content: contractForm.content.trim() || null,
+        modeloId: contractForm.modeloId,
+        expiresAt: contractForm.expiresAt || null,
       });
       setSheetMode(null);
     } catch (err) {
@@ -489,7 +498,7 @@ export default function DocumentsPackagesPage() {
               <CardContent className="space-y-3 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h2 className="text-base font-semibold text-zinc-950">{contract.title}</h2>
+                    <h2 className="text-base font-semibold text-zinc-950">{contract.modelo_name ?? t(MODELO_TYPE_KEYS[contract.type])}</h2>
                     <p className="mt-1 text-sm text-zinc-500">{contract.client_name}</p>
                   </div>
                   <Badge className="border border-zinc-200 bg-white text-zinc-700">{t(CONTRACT_STATUS_KEYS[contract.status])}</Badge>
@@ -590,7 +599,7 @@ export default function DocumentsPackagesPage() {
               <SheetHeader><SheetTitle>{t("docs.modelo.new")}</SheetTitle></SheetHeader>
               <div className="space-y-4 px-4 py-2">
                 <TextInput label={t("docs.form.name")} value={modeloForm.name} onChange={(name) => setModeloForm((current) => ({ ...current, name }))} />
-                <SelectInput label={t("docs.form.type")} value={modeloForm.type} onChange={(type) => setModeloForm((current) => ({ ...current, type: type as ModeloType }))} options={(["contrato", "termo", "orientacao", "outro"] as ModeloType[]).map((type) => ({ value: type, label: t(MODELO_TYPE_KEYS[type]) }))} />
+                <SelectInput label={t("docs.form.type")} value={modeloForm.type} onChange={(type) => setModeloForm((current) => ({ ...current, type: type as ModeloType }))} options={MODELO_TYPES.map((type) => ({ value: type, label: t(MODELO_TYPE_KEYS[type]) }))} />
                 <TextAreaInput label={t("docs.form.content")} value={modeloForm.content} onChange={(content) => setModeloForm((current) => ({ ...current, content }))} />
                 <TextInput label={t("docs.form.variables")} value={modeloForm.variables} onChange={(variables) => setModeloForm((current) => ({ ...current, variables }))} />
                 <FormError message={formError} />
@@ -604,9 +613,8 @@ export default function DocumentsPackagesPage() {
               <SheetHeader><SheetTitle>{t("docs.contract.new")}</SheetTitle></SheetHeader>
               <div className="space-y-4 px-4 py-2">
                 <SelectInput label={t("docs.form.client")} value={contractForm.clientId} onChange={(clientId) => setContractForm((current) => ({ ...current, clientId }))} options={[{ value: "", label: t("common.select") }, ...clients.map((client) => ({ value: client.id, label: client.full_name }))]} />
-                <SelectInput label={t("docs.form.model")} value={contractForm.modeloId} onChange={(modeloId) => setContractForm((current) => ({ ...current, modeloId }))} options={[{ value: "", label: t("common.optional") }, ...modelos.map((modelo) => ({ value: modelo.id, label: modelo.name }))]} />
-                <TextInput label={t("docs.form.title")} value={contractForm.title} onChange={(title) => setContractForm((current) => ({ ...current, title }))} />
-                <TextAreaInput label={t("docs.form.content")} value={contractForm.content} onChange={(content) => setContractForm((current) => ({ ...current, content }))} />
+                <SelectInput label={t("docs.form.model")} value={contractForm.modeloId} onChange={(modeloId) => setContractForm((current) => ({ ...current, modeloId }))} options={[{ value: "", label: t("common.select") }, ...modelos.map((modelo) => ({ value: modelo.id, label: `${modelo.name} · ${t(MODELO_TYPE_KEYS[modelo.type])}` }))]} />
+                <TextInput label={t("docs.form.expiresAt")} value={contractForm.expiresAt} onChange={(expiresAt) => setContractForm((current) => ({ ...current, expiresAt }))} type="date" />
                 <FormError message={formError} />
               </div>
               <SheetFooter><SheetActions onCancel={() => setSheetMode(null)} isBusy={contractsQuery.isCreatingContract} /></SheetFooter>

@@ -2,7 +2,13 @@ import type { FinancialPaymentMethod } from "./financial";
 
 export type ClientPackageStatus = "ativo" | "esgotado" | "expirado" | "cancelado";
 export type QuoteStatus = "rascunho" | "enviado" | "aprovado" | "rejeitado" | "expirado";
-export type ModeloType = "contrato" | "termo" | "orientacao" | "outro";
+export type ModeloType =
+  | "contrato"
+  | "termo_lgpd"
+  | "consentimento_clinico"
+  | "responsabilidade"
+  | "contrato_pacote"
+  | "orcamento";
 export type ContractStatus = "rascunho" | "enviado" | "assinado_manual" | "cancelado" | "expirado";
 
 export interface ServicePackage {
@@ -179,16 +185,17 @@ export interface Contract {
   modelo_id: string | null;
   quote_id: string | null;
   client_package_id: string | null;
-  title: string;
   type: ModeloType;
-  content: string;
+  content_snapshot: string | null;
   status: ContractStatus;
+  external_url: string | null;
   sent_at: string | null;
   signed_at: string | null;
-  signature_method: string | null;
-  notes: string | null;
+  expires_at: string | null;
+  metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
 }
 
 export interface ContractWithClient extends Contract {
@@ -198,12 +205,11 @@ export interface ContractWithClient extends Contract {
 
 export interface CreateContractFromModeloInput {
   clientId: string;
-  modeloId?: string | null;
-  title: string;
-  content?: string | null;
+  modeloId: string;
   type?: ModeloType | null;
   quoteId?: string | null;
   clientPackageId?: string | null;
+  expiresAt?: string | null;
 }
 
 export interface CreateContractOutput {

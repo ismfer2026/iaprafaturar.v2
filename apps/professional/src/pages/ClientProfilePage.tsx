@@ -29,6 +29,23 @@ const APPOINTMENT_STATUS_LABEL_KEYS: Record<Appointment["status"], TranslationKe
   reagendado: "appointment.status.reagendado",
 };
 
+const DOCUMENT_TYPE_LABEL_KEYS = {
+  contrato: "docs.modelo.type.contrato",
+  termo_lgpd: "docs.modelo.type.termo_lgpd",
+  consentimento_clinico: "docs.modelo.type.consentimento_clinico",
+  responsabilidade: "docs.modelo.type.responsabilidade",
+  contrato_pacote: "docs.modelo.type.contrato_pacote",
+  orcamento: "docs.modelo.type.orcamento",
+} as const satisfies Record<string, TranslationKey>;
+
+const CONTRACT_STATUS_LABEL_KEYS = {
+  rascunho: "docs.contract.status.rascunho",
+  enviado: "docs.contract.status.enviado",
+  assinado_manual: "docs.contract.status.assinado_manual",
+  cancelado: "docs.contract.status.cancelado",
+  expirado: "docs.contract.status.expirado",
+} as const satisfies Record<string, TranslationKey>;
+
 type Tab = "resumo" | "historico" | "anamnese" | "financeiro";
 
 const TABS = [
@@ -342,10 +359,10 @@ export default function ClientProfilePage() {
               {contractsQuery.data?.map((contract) => (
                 <div key={contract.id} className="flex items-center justify-between gap-3 rounded-lg bg-zinc-50 p-3">
                   <div>
-                    <p className="text-sm font-semibold text-zinc-950">{contract.title}</p>
-                    <p className="mt-0.5 text-xs text-zinc-500">{contract.modelo_name ?? contract.type}</p>
+                    <p className="text-sm font-semibold text-zinc-950">{contract.modelo_name ?? t(DOCUMENT_TYPE_LABEL_KEYS[contract.type])}</p>
+                    <p className="mt-0.5 text-xs text-zinc-500">{t(DOCUMENT_TYPE_LABEL_KEYS[contract.type])}</p>
                   </div>
-                  <Badge className="border border-zinc-200 bg-white text-zinc-700">{contract.status}</Badge>
+                  <Badge className="border border-zinc-200 bg-white text-zinc-700">{t(CONTRACT_STATUS_LABEL_KEYS[contract.status])}</Badge>
                 </div>
               ))}
             </CardContent>

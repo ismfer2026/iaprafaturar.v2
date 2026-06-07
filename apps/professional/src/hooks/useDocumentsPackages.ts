@@ -350,12 +350,11 @@ export function useContracts(professionalId: string | null, clientId?: string | 
     mutationFn: async (input: CreateContractFromModeloInput) => {
       const { data, error } = await supabase.rpc("create_contract_from_modelo", {
         p_client_id: input.clientId,
-        p_modelo_id: input.modeloId ?? null,
-        p_title: input.title,
-        p_content: input.content ?? null,
+        p_modelo_id: input.modeloId,
         p_type: input.type ?? null,
         p_quote_id: input.quoteId ?? null,
         p_client_package_id: input.clientPackageId ?? null,
+        p_expires_at: input.expiresAt ?? null,
       });
 
       if (error) throw error;
