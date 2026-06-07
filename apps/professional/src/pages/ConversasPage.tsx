@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Bot, Check, MessageSquare, ShieldAlert, X } from "lucide-react";
+import { ArrowLeft, Bot, Check, MessageSquare, ShieldAlert, X } from "lucide-react";
 import {
   Badge,
   Button,
@@ -122,6 +122,7 @@ export default function ConversasPage() {
   const conversations = useConversations(professionalId);
   const suggestions = useShadowSuggestions(professionalId);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(false);
 
   const conversationList = useMemo(() => conversations.data ?? [], [conversations.data]);
 
@@ -174,7 +175,7 @@ export default function ConversasPage() {
       ) : null}
 
       <div className="grid min-h-[calc(100vh-220px)] gap-4 lg:grid-cols-[360px_1fr]">
-        <section className="space-y-3">
+        <section className={cn("space-y-3", isMobileDetailOpen ? "hidden lg:block" : "block")}>
           {conversations.isLoading ? <ConversationSkeleton /> : null}
 
           {!conversations.isLoading && conversationList.length === 0 ? (
@@ -201,7 +202,10 @@ export default function ConversasPage() {
               <button
                 key={conversation.id}
                 type="button"
-                onClick={() => setSelectedConversationId(conversation.id)}
+                onClick={() => {
+                  setSelectedConversationId(conversation.id);
+                  setIsMobileDetailOpen(true);
+                }}
                 className={cn(
                   "block w-full rounded-lg border bg-white p-4 text-left shadow-sm transition-colors",
                   isSelected
@@ -233,7 +237,12 @@ export default function ConversasPage() {
           })}
         </section>
 
-        <section className="min-h-[520px] rounded-xl border border-zinc-200 bg-white shadow-sm">
+        <section
+          className={cn(
+            "min-h-[calc(100vh-180px)] rounded-xl border border-zinc-200 bg-white shadow-sm lg:block lg:min-h-[520px]",
+            isMobileDetailOpen ? "block" : "hidden",
+          )}
+        >
           {!selectedConversation ? (
             <div className="flex h-full min-h-[520px] items-center justify-center p-6 text-center">
               <div>
@@ -244,6 +253,15 @@ export default function ConversasPage() {
           ) : (
             <div className="flex h-full min-h-[520px] flex-col">
               <div className="border-b border-zinc-200 p-4">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="-ml-2 mb-3 gap-2 px-2 lg:hidden"
+                  onClick={() => setIsMobileDetailOpen(false)}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  {t("conversations.backToList")}
+                </Button>
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h2 className="text-lg font-semibold text-zinc-950">
