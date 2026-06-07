@@ -19,6 +19,7 @@ const ServicesPage = lazy(() => import("@/pages/ServicesPage"));
 const FinanceiroPage = lazy(() => import("@/pages/FinanceiroPage"));
 const ConversasPage = lazy(() => import("@/pages/ConversasPage"));
 const DocumentsPackagesPage = lazy(() => import("@/pages/DocumentsPackagesPage"));
+const GrowthPage = lazy(() => import("@/pages/GrowthPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -63,6 +64,7 @@ function AppRoutes() {
                 <Route path="/servicos" element={<ServicesPage />} />
                 <Route path="/financeiro" element={<FinanceiroPage />} />
                 <Route path="/conversas" element={<ConversasPage />} />
+                <Route path="/growth" element={<GrowthPage />} />
                 <Route path="/documentos-pacotes" element={<DocumentsPackagesPage />} />
                 <Route path="/configuracoes" element={<ConfiguracoesPage />} />
               </Route>

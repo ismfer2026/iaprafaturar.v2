@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   MessageSquare,
   Settings,
+  TrendingUp,
   Users,
 } from "lucide-react";
 import { cn } from "@iaprafaturar/ui";
@@ -16,6 +17,7 @@ const navItems = [
   { to: "/clientes", icon: Users, labelKey: "nav.clients" },
   { to: "/financeiro", icon: DollarSign, labelKey: "nav.finance" },
   { to: "/conversas", icon: MessageSquare, labelKey: "nav.conversations" },
+  { to: "/growth", icon: TrendingUp, labelKey: "nav.growth" },
 ] satisfies Array<{ to: string; icon: typeof LayoutDashboard; labelKey: TranslationKey }>;
 
 export default function AppShell() {
