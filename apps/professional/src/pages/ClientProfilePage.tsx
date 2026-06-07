@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useClient } from "@/hooks/useClients";
 import { useClientAppointments } from "@/hooks/useAppointments";
 import { useClientAnamneseFichas, type AnamneseFicha } from "@/hooks/useAnamnese";
+import { useClientPackages, useContracts } from "@/hooks/useDocumentsPackages";
 import { useSessions } from "@/hooks/useSessions";
 import { useI18n, type Locale, type TranslationKey } from "@/i18n";
 
@@ -150,6 +151,8 @@ export default function ClientProfilePage() {
   const appointmentsQuery = useClientAppointments(professionalId, id ?? null);
   const sessionsQuery = useSessions(professionalId, id ?? null);
   const anamneseQuery = useClientAnamneseFichas(professionalId, id ?? null);
+  const clientPackagesQuery = useClientPackages(professionalId, id ?? null);
+  const contractsQuery = useContracts(professionalId, id ?? null);
 
   const timeline = useMemo(() => {
     const appointments = appointmentsQuery.data ?? [];
@@ -307,9 +310,46 @@ export default function ClientProfilePage() {
       ) : null}
 
       {activeTab === "financeiro" ? (
-        <section className="rounded-lg border border-dashed border-zinc-300 bg-white p-6 text-center">
-          <h2 className="text-base font-semibold text-zinc-950">{t("clientProfile.finance.title")}</h2>
-          <p className="mt-1 text-sm text-zinc-500">{t("clientProfile.finance.description")}</p>
+        <section className="space-y-3">
+          <Card className="rounded-lg border-zinc-200">
+            <CardContent className="space-y-3 p-4">
+              <h2 className="text-base font-semibold text-zinc-950">{t("clientProfile.packages.title")}</h2>
+              {clientPackagesQuery.isLoading ? <Skeleton className="h-16 w-full" /> : null}
+              {!clientPackagesQuery.isLoading && !clientPackagesQuery.data?.length ? (
+                <p className="text-sm text-zinc-500">{t("clientProfile.packages.empty")}</p>
+              ) : null}
+              {clientPackagesQuery.data?.map((item) => (
+                <div key={item.id} className="flex items-center justify-between gap-3 rounded-lg bg-zinc-50 p-3">
+                  <div>
+                    <p className="text-sm font-semibold text-zinc-950">{item.package_name}</p>
+                    <p className="mt-0.5 text-xs text-zinc-500">{item.status}</p>
+                  </div>
+                  <Badge className="border border-violet-200 bg-violet-50 text-violet-700">
+                    {item.sessions_remaining}/{item.sessions_total}
+                  </Badge>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-lg border-zinc-200">
+            <CardContent className="space-y-3 p-4">
+              <h2 className="text-base font-semibold text-zinc-950">{t("clientProfile.documents.title")}</h2>
+              {contractsQuery.isLoading ? <Skeleton className="h-16 w-full" /> : null}
+              {!contractsQuery.isLoading && !contractsQuery.data?.length ? (
+                <p className="text-sm text-zinc-500">{t("clientProfile.documents.empty")}</p>
+              ) : null}
+              {contractsQuery.data?.map((contract) => (
+                <div key={contract.id} className="flex items-center justify-between gap-3 rounded-lg bg-zinc-50 p-3">
+                  <div>
+                    <p className="text-sm font-semibold text-zinc-950">{contract.title}</p>
+                    <p className="mt-0.5 text-xs text-zinc-500">{contract.modelo_name ?? contract.type}</p>
+                  </div>
+                  <Badge className="border border-zinc-200 bg-white text-zinc-700">{contract.status}</Badge>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         </section>
       ) : null}
 

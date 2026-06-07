@@ -30,4 +30,13 @@ export const crmKeys = {
   conversationMessages: (professionalId: string | null, conversationId: string | null) =>
     ["crm", "conversation-messages", professionalId, conversationId] as const,
   shadowSuggestions: (professionalId: string | null) => ["crm", "shadow-suggestions", professionalId] as const,
+  servicePackages: (professionalId: string | null) => ["crm", "service-packages", professionalId] as const,
+  clientPackages: (professionalId: string | null, clientId?: string | null) =>
+    ["crm", "client-packages", professionalId, clientId ?? "all"] as const,
+  quotes: (professionalId: string | null, status?: string | null) =>
+    ["crm", "quotes", professionalId, status ?? "all"] as const,
+  modelos: (professionalId: string | null) => ["crm", "modelos", professionalId] as const,
+  contracts: (professionalId: string | null, clientId?: string | null) =>
+    ["crm", "contracts", professionalId, clientId ?? "all"] as const,
+  anamneseTemplates: (professionalId: string | null) => ["crm", "anamnese-templates", professionalId] as const,
 };

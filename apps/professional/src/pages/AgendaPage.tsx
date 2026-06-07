@@ -18,6 +18,7 @@ import type { Appointment, Client, Service } from "@iaprafaturar/domain";
 import { useAppointments } from "@/hooks/useAppointments";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClients } from "@/hooks/useClients";
+import { useClientPackages } from "@/hooks/useDocumentsPackages";
 import { useServices } from "@/hooks/useServices";
 import { useSessions } from "@/hooks/useSessions";
 import { useI18n, type Locale, type TranslationKey } from "@/i18n";
@@ -91,6 +92,7 @@ export default function AgendaPage() {
   const [clinicalEvolution, setClinicalEvolution] = useState("");
   const [sessionNotes, setSessionNotes] = useState("");
   const [sessionValue, setSessionValue] = useState("0");
+  const [selectedClientPackageId, setSelectedClientPackageId] = useState("");
   const [sessionError, setSessionError] = useState<string | null>(null);
 
   const dateKey = toDateKey(selectedDate);
@@ -98,16 +100,21 @@ export default function AgendaPage() {
   const clientsQuery = useClients(professionalId);
   const servicesQuery = useServices(professionalId);
   const sessionsQuery = useSessions(professionalId);
+  const appointmentClientPackagesQuery = useClientPackages(professionalId, selectedAppointment?.client_id ?? null);
 
   const clients = useMemo(() => clientsQuery.data ?? [], [clientsQuery.data]);
   const services = useMemo(() => servicesQuery.data?.services ?? [], [servicesQuery.data?.services]);
   const activeClients = useMemo(() => clients.filter((client) => client.is_active), [clients]);
   const activeServices = useMemo(() => services.filter((service) => service.is_active), [services]);
+  const activeClientPackages = useMemo(() => {
+    return (appointmentClientPackagesQuery.data ?? []).filter((item) => item.status === "ativo" && item.sessions_remaining > 0);
+  }, [appointmentClientPackagesQuery.data]);
 
   function resetSessionForm() {
     setClinicalEvolution("");
     setSessionNotes("");
     setSessionValue("0");
+    setSelectedClientPackageId("");
     setSessionError(null);
     setIsSessionFormOpen(false);
   }
@@ -117,6 +124,7 @@ export default function AgendaPage() {
     setClinicalEvolution("");
     setSessionNotes("");
     setSessionValue(String(service?.price ?? 0));
+    setSelectedClientPackageId("");
     setSessionError(null);
     setIsSessionFormOpen(true);
   }
@@ -196,7 +204,7 @@ export default function AgendaPage() {
     }
 
     try {
-      await sessionsQuery.registerSession({
+      const result = await sessionsQuery.registerSession({
         appointmentId: selectedAppointment.id,
         clientId: selectedAppointment.client_id,
         serviceId: selectedAppointment.service_id,
@@ -205,6 +213,14 @@ export default function AgendaPage() {
         notes: sessionNotes.trim() || null,
         sessionValue: parsedSessionValue,
       });
+
+      if (selectedClientPackageId) {
+        await appointmentClientPackagesQuery.useClientPackageSession({
+          clientPackageId: selectedClientPackageId,
+          sessionId: result.session_id,
+          appointmentId: selectedAppointment.id,
+        });
+      }
 
       resetSessionForm();
       setSelectedAppointment(null);
@@ -497,6 +513,29 @@ export default function AgendaPage() {
                         inputMode="decimal"
                       />
                     </label>
+
+                    {activeClientPackages.length > 0 ? (
+                      <label className="block space-y-1.5 rounded-lg border border-violet-200 bg-violet-50 p-3">
+                        <span className="text-sm font-medium text-violet-900">
+                          {t("session.register.packageUse")}
+                        </span>
+                        <select
+                          className="mt-2 h-10 w-full rounded-md border border-violet-200 bg-white px-3 text-sm shadow-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                          value={selectedClientPackageId}
+                          onChange={(event) => setSelectedClientPackageId(event.target.value)}
+                        >
+                          <option value="">{t("session.register.packageNone")}</option>
+                          {activeClientPackages.map((item) => (
+                            <option key={item.id} value={item.id}>
+                              {item.package_name ?? t("docs.tab.packages")} - {item.sessions_remaining}/{item.sessions_total}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="mt-2 block text-xs leading-5 text-violet-700">
+                          {t("session.register.packageUseDescription")}
+                        </span>
+                      </label>
+                    ) : null}
 
                     {sessionError ? (
                       <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Bot, MessageCircle, Save, ShieldCheck, SlidersHorizontal } from "lucide-react";
+import { Bot, FileSignature, MessageCircle, Save, ShieldCheck, SlidersHorizontal } from "lucide-react";
 import {
   Badge,
   Button,
@@ -112,6 +112,25 @@ export default function ConfiguracoesPage() {
             </div>
             <Button asChild variant="outline">
               <Link to="/servicos">{t("common.open")}</Link>
+            </Button>
+          </div>
+        </CardHeader>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                <FileSignature className="h-5 w-5" />
+              </div>
+              <div>
+                <CardTitle>{t("settings.documentsPackages.title")}</CardTitle>
+                <CardDescription>{t("settings.documentsPackages.description")}</CardDescription>
+              </div>
+            </div>
+            <Button asChild variant="outline">
+              <Link to="/documentos-pacotes">{t("common.open")}</Link>
             </Button>
           </div>
         </CardHeader>
