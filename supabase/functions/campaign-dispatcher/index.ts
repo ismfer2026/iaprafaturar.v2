@@ -39,6 +39,41 @@ interface RecipientRow {
   clients: { full_name: string } | { full_name: string }[] | null
 }
 
+async function selectSegmentClientIds(
+  supabase: SupabaseClient,
+  campaign: CampaignRow,
+  limit: number,
+): Promise<string[] | null> {
+  if (campaign.segment_type === 'risk') {
+    const { data, error } = await supabase
+      .from('client_health_scores')
+      .select('client_id')
+      .eq('professional_id', campaign.professional_id)
+      .in('risk_level', ['risk', 'churn'])
+      .limit(limit)
+
+    if (error) throw error
+    return (data ?? []).map((row: { client_id: string }) => row.client_id)
+  }
+
+  if (campaign.segment_type === 'champions') {
+    const { data, error } = await supabase
+      .from('rfm_scores')
+      .select('client_id')
+      .eq('professional_id', campaign.professional_id)
+      .eq('segment', 'champions')
+      .limit(limit)
+
+    if (error) throw error
+    return (data ?? []).map((row: { client_id: string }) => row.client_id)
+  }
+
+  if (campaign.segment_type === 'all' || campaign.segment_type === 'inactive') return null
+
+  // Unknown/custom segment definitions must not degrade into a broadcast.
+  return []
+}
+
 function renderTemplate(template: string, clientName: string): string {
   return template
     .replaceAll('{{client_name}}', clientName)
@@ -74,6 +109,9 @@ async function ensureRecipients(supabase: SupabaseClient, campaign: CampaignRow,
   if (countError) throw countError
   if ((count ?? 0) > 0) return
 
+  const segmentClientIds = await selectSegmentClientIds(supabase, campaign, limit)
+  if (segmentClientIds && segmentClientIds.length === 0) return
+
   let query = supabase
     .from('clients')
     .select('id, full_name, phone_whatsapp, whatsapp_opt_out')
@@ -83,6 +121,7 @@ async function ensureRecipients(supabase: SupabaseClient, campaign: CampaignRow,
     .limit(limit)
 
   if (campaign.segment_type === 'inactive') query = query.eq('journey_stage', 'inativo')
+  if (segmentClientIds) query = query.in('id', segmentClientIds)
 
   const { data, error } = await query
   if (error) throw error

@@ -351,6 +351,7 @@ export default function GrowthPage() {
                     <option value="all">{t("growth.form.segment.all")}</option>
                     <option value="inactive">{t("growth.form.segment.inactive")}</option>
                     <option value="risk">{t("growth.form.segment.risk")}</option>
+                    <option value="champions">{t("growth.form.segment.champions")}</option>
                   </select>
                 </label>
 
