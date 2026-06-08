@@ -49,6 +49,38 @@ async function invokeNerissaSetupAgent(input: {
   return body as Record<string, unknown>
 }
 
+async function invokeAdminAiGateway(input: {
+  message: string
+  messageEventId: string
+  dryRun: boolean
+}) {
+  const internalToken = Deno.env.get('INTERNAL_FUNCTION_TOKEN')
+  if (!internalToken) throw new Error('Missing INTERNAL_FUNCTION_TOKEN')
+
+  const response = await fetch(`${functionsBaseUrl()}/admin-ai-gateway`, {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${internalToken}`,
+      'content-type': 'application/json',
+      'x-dry-run': input.dryRun ? 'true' : 'false',
+    },
+    body: JSON.stringify({
+      mode: 'whatsapp_chat',
+      channel: 'whatsapp',
+      message: input.message,
+      message_event_id: input.messageEventId,
+      dry_run: input.dryRun,
+    }),
+  })
+
+  const body = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    throw new Error(`admin-ai-gateway failed: ${response.status} ${JSON.stringify(body)}`)
+  }
+
+  return body as Record<string, unknown>
+}
+
 Deno.serve(async (request) => {
   let executionId: string | null = null
 
@@ -116,6 +148,17 @@ Deno.serve(async (request) => {
 
       const agentResult = await invokeNerissaSetupAgent({
         professionalId,
+        messageEventId: input.message_event_id,
+        dryRun,
+      })
+
+      await completeAgentExecution(supabase, execution.id, { status: 'success' })
+      return jsonResponse({ processed: true, route, dry_run: dryRun, agent_result: agentResult })
+    }
+
+    if (route === 'admin-ai-gateway') {
+      const agentResult = await invokeAdminAiGateway({
+        message: typeof messageEvent.content === 'string' ? messageEvent.content : '',
         messageEventId: input.message_event_id,
         dryRun,
       })

@@ -1019,6 +1019,134 @@ INSERT INTO public.audit_log (
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
+-- Phase 9 Admin Analytics synthetic seeds
+-- ============================================================
+
+UPDATE public.professionals
+SET plan_type = 'individual',
+    onboarding_completed = true,
+    settings = jsonb_set(settings, '{billing_info,monthly_amount}', '"99.90"', true),
+    updated_at = now()
+WHERE id = '00000000-0000-4000-8000-000000000101';
+
+UPDATE public.professionals
+SET plan_type = 'trial',
+    trial_ends_at = now() + interval '2 days',
+    onboarding_completed = false,
+    updated_at = now()
+WHERE id = '00000000-0000-4000-8000-000000000102';
+
+INSERT INTO public.master_admins (user_id, email, name)
+SELECT
+  u.id,
+  u.email,
+  COALESCE(u.raw_user_meta_data->>'name', 'Admin User')
+FROM auth.users u
+WHERE u.email = 'admin@example.test'
+ON CONFLICT (user_id) DO UPDATE SET
+  email = EXCLUDED.email,
+  name = EXCLUDED.name;
+
+INSERT INTO public.user_roles (user_id, role)
+SELECT u.id, 'admin_master'
+FROM auth.users u
+WHERE u.email = 'admin@example.test'
+ON CONFLICT (user_id, role) DO NOTHING;
+
+INSERT INTO public.professional_platform_health_scores (
+  professional_id,
+  whatsapp_connected,
+  clients_active,
+  appointments_monthly,
+  rosane_active,
+  financial_registered,
+  nps_collected,
+  health_level,
+  components,
+  calculated_at
+) VALUES
+  (
+    '00000000-0000-4000-8000-000000000101',
+    20,
+    10,
+    10,
+    20,
+    10,
+    0,
+    'medio',
+    '{"source":"seed","phase":9,"profile":"active_paid"}',
+    now()
+  ),
+  (
+    '00000000-0000-4000-8000-000000000102',
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    'critico',
+    '{"source":"seed","phase":9,"profile":"trial_risk"}',
+    now()
+  )
+ON CONFLICT (professional_id) DO UPDATE SET
+  whatsapp_connected = EXCLUDED.whatsapp_connected,
+  clients_active = EXCLUDED.clients_active,
+  appointments_monthly = EXCLUDED.appointments_monthly,
+  rosane_active = EXCLUDED.rosane_active,
+  financial_registered = EXCLUDED.financial_registered,
+  nps_collected = EXCLUDED.nps_collected,
+  health_level = EXCLUDED.health_level,
+  components = EXCLUDED.components,
+  calculated_at = EXCLUDED.calculated_at;
+
+INSERT INTO public.platform_metrics_daily (
+  date,
+  total_professionals,
+  new_professionals,
+  active_professionals,
+  churned_professionals,
+  mrr,
+  new_mrr,
+  churned_mrr,
+  total_revenue_day,
+  total_sessions,
+  total_messages_sent,
+  total_ai_credits_used,
+  total_appointments,
+  plan_breakdown
+) VALUES (
+  CURRENT_DATE,
+  2,
+  0,
+  1,
+  1,
+  99.90,
+  0,
+  0,
+  450.00,
+  1,
+  0,
+  0,
+  1,
+  '{"trial":1,"individual":1}'
+)
+ON CONFLICT (date) DO UPDATE SET
+  total_professionals = EXCLUDED.total_professionals,
+  new_professionals = EXCLUDED.new_professionals,
+  active_professionals = EXCLUDED.active_professionals,
+  churned_professionals = EXCLUDED.churned_professionals,
+  mrr = EXCLUDED.mrr,
+  new_mrr = EXCLUDED.new_mrr,
+  churned_mrr = EXCLUDED.churned_mrr,
+  total_revenue_day = EXCLUDED.total_revenue_day,
+  total_sessions = EXCLUDED.total_sessions,
+  total_messages_sent = EXCLUDED.total_messages_sent,
+  total_ai_credits_used = EXCLUDED.total_ai_credits_used,
+  total_appointments = EXCLUDED.total_appointments,
+  plan_breakdown = EXCLUDED.plan_breakdown;
+
+-- ============================================================
 -- Phase 7 Documentos & Pacotes synthetic seeds
 -- ============================================================
 

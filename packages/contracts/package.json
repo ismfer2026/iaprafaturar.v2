@@ -44,6 +44,12 @@
     "./edge-functions/reativacao-agent.ts": "./edge-functions/reativacao-agent.ts",
     "./edge-functions/indicacao-agent": "./edge-functions/indicacao-agent.ts",
     "./edge-functions/indicacao-agent.ts": "./edge-functions/indicacao-agent.ts",
+    "./edge-functions/platform-health-agent": "./edge-functions/platform-health-agent.ts",
+    "./edge-functions/platform-health-agent.ts": "./edge-functions/platform-health-agent.ts",
+    "./edge-functions/admin-ai-gateway": "./edge-functions/admin-ai-gateway.ts",
+    "./edge-functions/admin-ai-gateway.ts": "./edge-functions/admin-ai-gateway.ts",
+    "./edge-functions/admin-broadcast": "./edge-functions/admin-broadcast.ts",
+    "./edge-functions/admin-broadcast.ts": "./edge-functions/admin-broadcast.ts",
     "./database/shadow-suggestions": "./database/shadow-suggestions.ts",
     "./database/shadow-suggestions.ts": "./database/shadow-suggestions.ts"
   },
