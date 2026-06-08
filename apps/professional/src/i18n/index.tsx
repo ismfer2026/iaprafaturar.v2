@@ -1063,7 +1063,7 @@ const es419: Record<TranslationKey, string> = {
   "nav.conversations": "Conversaciones",
   "nav.growth": "Growth",
   "nav.reports": "Reportes",
-  "nav.more": "Mas",
+  "nav.more": "Más",
   "nav.settings": "Configuración",
   "nav.comingSoon.finance": "Finanzas - próximamente",
   "nav.comingSoon.conversations": "Conversaciones - próximamente",
@@ -1143,7 +1143,7 @@ const es419: Record<TranslationKey, string> = {
   "reports.csv.extra": "Extra",
 
   "more.eyebrow": "Menu",
-  "more.title": "Mas",
+  "more.title": "Más",
   "more.subtitle": "Accede a modulos de gestion e inteligencia sin sobrecargar la barra principal.",
   "more.finance.description": "Ingresos, pendientes y gastos del mes.",
   "more.growth.description": "Campanas, reactivacion, RFM e indicaciones.",
