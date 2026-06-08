@@ -4,6 +4,7 @@ import {
   CalendarDays,
   DollarSign,
   LayoutDashboard,
+  MoreHorizontal,
   MessageSquare,
   Settings,
   TrendingUp,
@@ -20,6 +21,14 @@ const navItems = [
   { to: "/conversas", icon: MessageSquare, labelKey: "nav.conversations" },
   { to: "/growth", icon: TrendingUp, labelKey: "nav.growth" },
   { to: "/relatorios", icon: BarChart3, labelKey: "nav.reports" },
+] satisfies Array<{ to: string; icon: typeof LayoutDashboard; labelKey: TranslationKey }>;
+
+const mobileNavItems = [
+  { to: "/dashboard", icon: LayoutDashboard, labelKey: "nav.dashboard" },
+  { to: "/agenda", icon: CalendarDays, labelKey: "nav.agenda" },
+  { to: "/clientes", icon: Users, labelKey: "nav.clients" },
+  { to: "/conversas", icon: MessageSquare, labelKey: "nav.conversations" },
+  { to: "/mais", icon: MoreHorizontal, labelKey: "nav.more" },
 ] satisfies Array<{ to: string; icon: typeof LayoutDashboard; labelKey: TranslationKey }>;
 
 export default function AppShell() {
@@ -76,14 +85,14 @@ export default function AppShell() {
         </div>
       </main>
 
-      <nav className="fixed bottom-0 inset-x-0 z-40 flex overflow-x-auto border-t border-zinc-200 bg-white safe-bottom md:hidden">
-        {navItems.map(({ to, icon: Icon, labelKey }) => (
+      <nav className="fixed bottom-0 inset-x-0 z-40 grid grid-cols-5 border-t border-zinc-200 bg-white safe-bottom md:hidden">
+        {mobileNavItems.map(({ to, icon: Icon, labelKey }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) =>
               cn(
-                "flex min-w-[4.75rem] flex-none flex-col items-center justify-center gap-1 py-2 text-xs font-medium transition-colors",
+                "flex min-w-0 flex-col items-center justify-center gap-1 px-1 py-2 text-[11px] font-medium transition-colors",
                 isActive ? "text-violet-700" : "text-zinc-400",
               )
             }

@@ -21,6 +21,7 @@ const ConversasPage = lazy(() => import("@/pages/ConversasPage"));
 const DocumentsPackagesPage = lazy(() => import("@/pages/DocumentsPackagesPage"));
 const GrowthPage = lazy(() => import("@/pages/GrowthPage"));
 const ReportsPage = lazy(() => import("@/pages/ReportsPage"));
+const MorePage = lazy(() => import("@/pages/MorePage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -69,6 +70,7 @@ function AppRoutes() {
                 <Route path="/relatorios" element={<ReportsPage />} />
                 <Route path="/documentos-pacotes" element={<DocumentsPackagesPage />} />
                 <Route path="/configuracoes" element={<ConfiguracoesPage />} />
+                <Route path="/mais" element={<MorePage />} />
               </Route>
             </Route>
 
