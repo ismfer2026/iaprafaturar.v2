@@ -1,5 +1,6 @@
 import { Outlet, NavLink } from "react-router-dom";
 import {
+  BarChart3,
   CalendarDays,
   DollarSign,
   LayoutDashboard,
@@ -18,6 +19,7 @@ const navItems = [
   { to: "/financeiro", icon: DollarSign, labelKey: "nav.finance" },
   { to: "/conversas", icon: MessageSquare, labelKey: "nav.conversations" },
   { to: "/growth", icon: TrendingUp, labelKey: "nav.growth" },
+  { to: "/relatorios", icon: BarChart3, labelKey: "nav.reports" },
 ] satisfies Array<{ to: string; icon: typeof LayoutDashboard; labelKey: TranslationKey }>;
 
 export default function AppShell() {
@@ -74,14 +76,14 @@ export default function AppShell() {
         </div>
       </main>
 
-      <nav className="fixed bottom-0 inset-x-0 z-40 flex border-t border-zinc-200 bg-white safe-bottom md:hidden">
+      <nav className="fixed bottom-0 inset-x-0 z-40 flex overflow-x-auto border-t border-zinc-200 bg-white safe-bottom md:hidden">
         {navItems.map(({ to, icon: Icon, labelKey }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) =>
               cn(
-                "flex flex-1 flex-col items-center justify-center gap-1 py-2 text-xs font-medium transition-colors",
+                "flex min-w-[4.75rem] flex-none flex-col items-center justify-center gap-1 py-2 text-xs font-medium transition-colors",
                 isActive ? "text-violet-700" : "text-zinc-400",
               )
             }

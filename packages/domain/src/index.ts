@@ -38,6 +38,13 @@ export type {
   DashboardSummary,
 } from "./types/dashboard";
 export type {
+  ProfessionalReports,
+  ReportsOccupancySlot,
+  ReportsServiceRanking,
+  ReportsSummary,
+  ReportsTopClient,
+} from "./types/reports";
+export type {
   FinancialPaymentMethod,
   FinancialSummary,
   FinancialTransaction,

@@ -1,5 +1,7 @@
 export const crmKeys = {
   dashboard: (professionalId: string | null) => ["crm", "dashboard", professionalId] as const,
+  reports: (professionalId: string | null, month: string | null) =>
+    ["crm", "reports", professionalId, month ?? "current"] as const,
   clients: (professionalId: string | null, stage?: string | null) =>
     ["crm", "clients", professionalId, stage ?? "all"] as const,
   client: (professionalId: string | null, clientId: string | null) =>
