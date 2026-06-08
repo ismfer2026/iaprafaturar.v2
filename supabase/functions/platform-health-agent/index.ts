@@ -33,7 +33,7 @@ Deno.serve(async (request) => {
     const { data, error } = await supabase.rpc('calculate_platform_health_scores_batch', {
       p_limit: input.professional_id ? 1 : (input.limit ?? 50),
       p_cursor: input.professional_id ? null : (input.cursor ?? null),
-      p_dry_run: dryRun,
+      p_dry_run: persistSnapshot ? false : dryRun,
       p_professional_id: input.professional_id ?? null,
     })
 
