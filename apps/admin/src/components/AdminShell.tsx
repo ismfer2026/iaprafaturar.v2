@@ -1,4 +1,4 @@
-import { BarChart3, Bot, LogOut, Users } from "lucide-react";
+import { BarChart3, Bot, LogOut, Megaphone, Users } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 import { Button, cn } from "@iaprafaturar/ui";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
@@ -7,6 +7,7 @@ import { useI18n } from "@/i18n";
 const navItems = [
   { href: "/dashboard", labelKey: "nav.dashboard", icon: BarChart3 },
   { href: "/profissionais", labelKey: "nav.professionals", icon: Users },
+  { href: "/broadcast", labelKey: "nav.broadcast", icon: Megaphone },
   { href: "/nexus", labelKey: "nav.nexus", icon: Bot }
 ] as const;
 
@@ -44,7 +45,7 @@ export default function AdminShell() {
         <Outlet />
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-3 border-t bg-white px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 lg:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t bg-white px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 lg:hidden">
         {navItems.map((item) => (
           <NavLink
             key={item.href}

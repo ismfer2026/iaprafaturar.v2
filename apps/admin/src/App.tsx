@@ -10,6 +10,7 @@ const LoginPage = lazy(() => import("@/pages/LoginPage"));
 const DashboardPage = lazy(() => import("@/pages/DashboardPage"));
 const ProfessionalsPage = lazy(() => import("@/pages/ProfessionalsPage"));
 const NexusPage = lazy(() => import("@/pages/NexusPage"));
+const BroadcastPage = lazy(() => import("@/pages/BroadcastPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -62,6 +63,7 @@ function AppRoutes() {
               <Route element={<AdminShell />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/profissionais" element={<ProfessionalsPage />} />
+                <Route path="/broadcast" element={<BroadcastPage />} />
                 <Route path="/nexus" element={<NexusPage />} />
               </Route>
             </Route>

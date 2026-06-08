@@ -6,16 +6,49 @@ import {
 import { startAgentExecution, completeAgentExecution } from '../_shared/agent-executions.ts'
 import { isDryRun } from '../_shared/dry-run.ts'
 import { jsonResponse } from '../_shared/http.ts'
-import { assertInternalAuth } from '../_shared/internal-auth.ts'
 import { sendMessageCore } from '../_shared/send-message-core.ts'
 import { createServiceClient } from '../_shared/supabase.ts'
 
 const AGENT_SLUG = 'admin-broadcast'
 
+const corsHeaders = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-headers': 'authorization, x-client-info, apikey, content-type, x-dry-run',
+  'access-control-allow-methods': 'POST, OPTIONS',
+}
+
 interface ProfessionalTarget {
   id: string
   phone_whatsapp: string | null
   health_level?: string | null
+}
+
+function readBearerToken(request: Request): string | null {
+  const header = request.headers.get('authorization')
+  if (!header) return null
+  const [scheme, token] = header.split(' ')
+  return scheme?.toLowerCase() === 'bearer' && token ? token : null
+}
+
+async function assertAdminOrInternal(request: Request): Promise<'internal' | 'admin'> {
+  const token = readBearerToken(request)
+  const internalToken = Deno.env.get('INTERNAL_FUNCTION_TOKEN')
+  if (token && internalToken && token === internalToken) return 'internal'
+  if (!token) throw new Response('Unauthorized', { status: 401, headers: corsHeaders })
+
+  const supabase = createServiceClient()
+  const { data: userData, error: userError } = await supabase.auth.getUser(token)
+  if (userError || !userData.user) throw new Response('Unauthorized', { status: 401, headers: corsHeaders })
+
+  const { data, error } = await supabase
+    .from('master_admins')
+    .select('id')
+    .eq('user_id', userData.user.id)
+    .maybeSingle()
+
+  if (error) throw error
+  if (!data) throw new Response('Forbidden', { status: 403, headers: corsHeaders })
+  return 'admin'
 }
 
 async function selectTargets(input: { target: string; limit: number }): Promise<ProfessionalTarget[]> {
@@ -56,7 +89,11 @@ Deno.serve(async (request) => {
   let executionId: string | null = null
 
   try {
-    assertInternalAuth(request)
+    if (request.method === 'OPTIONS') {
+      return new Response('ok', { headers: corsHeaders })
+    }
+
+    const caller = await assertAdminOrInternal(request)
     const input = validateAdminBroadcastInput(await request.json())
     const dryRun = input.dry_run ?? isDryRun(request)
     const limit = input.limit ?? 50
@@ -67,7 +104,7 @@ Deno.serve(async (request) => {
       agentSlug: AGENT_SLUG,
       triggerType: 'manual',
       triggerRef: input.target,
-      triggerPayload: { ...input, dry_run: dryRun },
+      triggerPayload: { ...input, dry_run: dryRun, caller },
     })
     executionId = execution.id
 
@@ -82,7 +119,7 @@ Deno.serve(async (request) => {
         skipped: targets.length,
         dry_run: false,
         reason: 'no_admin_instance',
-      }))
+      }), { headers: corsHeaders })
     }
 
     let sentOrDryRun = 0
@@ -114,7 +151,7 @@ Deno.serve(async (request) => {
       sent_or_dry_run: sentOrDryRun,
       skipped,
       dry_run: dryRun,
-    }))
+    }), { headers: corsHeaders })
   } catch (error) {
     if (error instanceof Response) return error
 
@@ -129,6 +166,9 @@ Deno.serve(async (request) => {
       }
     }
 
-    return jsonResponse({ error: error instanceof Error ? error.message : 'unknown_error' }, { status: 500 })
+    return jsonResponse(
+      { error: error instanceof Error ? error.message : 'unknown_error' },
+      { status: 500, headers: corsHeaders },
+    )
   }
 })

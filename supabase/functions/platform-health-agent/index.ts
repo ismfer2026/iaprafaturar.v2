@@ -18,6 +18,7 @@ Deno.serve(async (request) => {
     assertInternalAuth(request)
     const input = validatePlatformHealthAgentInput(await request.json())
     const dryRun = input.dry_run ?? isDryRun(request)
+    const persistSnapshot = input.mode === 'daily' && input.persist_snapshot === true
     const supabase = createServiceClient()
 
     const execution = await startAgentExecution(supabase, {
@@ -25,7 +26,7 @@ Deno.serve(async (request) => {
       agentSlug: AGENT_SLUG,
       triggerType: input.mode === 'professional' ? 'manual' : 'cron',
       triggerRef: input.professional_id ?? input.cursor ?? input.mode,
-      triggerPayload: { ...input, dry_run: dryRun },
+      triggerPayload: { ...input, dry_run: dryRun, persist_snapshot: persistSnapshot },
     })
     executionId = execution.id
 
@@ -38,7 +39,7 @@ Deno.serve(async (request) => {
 
     if (error) throw error
 
-    if (input.mode === 'daily' && !dryRun) {
+    if (persistSnapshot) {
       const { error: metricsError } = await supabase.rpc('refresh_platform_metrics_daily', {
         p_date: new Date().toISOString().slice(0, 10),
         p_dry_run: false,
@@ -52,6 +53,7 @@ Deno.serve(async (request) => {
       processed: Number(data?.processed ?? 0),
       next_cursor: data?.next_cursor ?? null,
       dry_run: dryRun,
+      snapshot_persisted: persistSnapshot,
     }))
   } catch (error) {
     if (error instanceof Response) return error

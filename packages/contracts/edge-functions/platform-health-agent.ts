@@ -6,12 +6,14 @@ export const PlatformHealthAgentInputSchema = z.object({
   limit: z.number().int().min(1).max(200).optional(),
   cursor: z.string().uuid().nullable().optional(),
   dry_run: z.boolean().optional(),
+  persist_snapshot: z.boolean().optional(),
 }).strict()
 
 export const PlatformHealthAgentOutputSchema = z.object({
   processed: z.number().int().nonnegative(),
   next_cursor: z.string().uuid().nullable(),
   dry_run: z.boolean(),
+  snapshot_persisted: z.boolean(),
 })
 
 export type PlatformHealthAgentInput = z.infer<typeof PlatformHealthAgentInputSchema>
