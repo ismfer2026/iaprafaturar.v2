@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-export type DeterministicContextType = 'appointment_confirmation' | 'post_care' | 'reminder'
+export type DeterministicContextType = 'appointment_confirmation' | 'post_care' | 'reminder' | 'conversation' | 'relationship'
 
 export interface ConversationRef {
   id: string

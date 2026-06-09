@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Bot, FileSignature, MessageCircle, Save, ShieldCheck, SlidersHorizontal } from "lucide-react";
+import { Bot, CalendarClock, FileSignature, MessageCircle, Save, ShieldCheck, SlidersHorizontal } from "lucide-react";
 import {
   Badge,
   Button,
@@ -37,6 +37,10 @@ export default function ConfiguracoesPage() {
     enabledAgents: ["duvidas", "agendamento", "lembrete"],
     sendGoogleReviewAfterPositiveNps: false,
     googleReviewUrl: "",
+    cancelWindowHours: 24,
+    rescheduleWindowHours: 24,
+    relationshipCheckinsEnabled: true,
+    relationshipCheckinIntervalDays: 45,
   });
   const [saved, setSaved] = useState(false);
   const assistantName = form.agentName.trim() || DEFAULT_ASSISTANT_NAME;
@@ -180,6 +184,87 @@ export default function ConfiguracoesPage() {
               <option value="profissional">{t("settings.tone.professional")}</option>
               <option value="objetivo">{t("settings.tone.objective")}</option>
             </select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-100 text-sky-700">
+              <CalendarClock className="h-5 w-5" />
+            </div>
+            <div>
+              <CardTitle>{t("settings.operationalRules.title")}</CardTitle>
+              <CardDescription>{t("settings.operationalRules.description", assistantParams)}</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1">
+              <label htmlFor="cancelWindowHours" className="text-sm font-medium text-zinc-700">
+                {t("settings.operationalRules.cancelWindow")}
+              </label>
+              <Input
+                id="cancelWindowHours"
+                type="number"
+                min={1}
+                max={168}
+                value={form.cancelWindowHours}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, cancelWindowHours: Number(event.target.value) }))
+                }
+              />
+            </div>
+            <div className="space-y-1">
+              <label htmlFor="rescheduleWindowHours" className="text-sm font-medium text-zinc-700">
+                {t("settings.operationalRules.rescheduleWindow")}
+              </label>
+              <Input
+                id="rescheduleWindowHours"
+                type="number"
+                min={1}
+                max={168}
+                value={form.rescheduleWindowHours}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, rescheduleWindowHours: Number(event.target.value) }))
+                }
+              />
+            </div>
+          </div>
+
+          <label className="flex items-start gap-3 rounded-lg border border-zinc-200 px-3 py-3">
+            <input
+              type="checkbox"
+              className="mt-1 h-4 w-4 rounded border-zinc-300 text-violet-600"
+              checked={form.relationshipCheckinsEnabled}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, relationshipCheckinsEnabled: event.target.checked }))
+              }
+            />
+            <span>
+              <span className="block text-sm font-medium text-zinc-900">{t("settings.operationalRules.checkins")}</span>
+              <span className="mt-0.5 block text-sm leading-5 text-zinc-500">
+                {t("settings.operationalRules.checkinsDescription", assistantParams)}
+              </span>
+            </span>
+          </label>
+
+          <div className="space-y-1">
+            <label htmlFor="relationshipCheckinIntervalDays" className="text-sm font-medium text-zinc-700">
+              {t("settings.operationalRules.checkinInterval")}
+            </label>
+            <Input
+              id="relationshipCheckinIntervalDays"
+              type="number"
+              min={7}
+              max={180}
+              value={form.relationshipCheckinIntervalDays}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, relationshipCheckinIntervalDays: Number(event.target.value) }))
+              }
+            />
           </div>
         </CardContent>
       </Card>

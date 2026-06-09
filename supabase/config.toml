@@ -386,6 +386,9 @@ verify_jwt = false
 [functions.anamnese-public-handler]
 verify_jwt = false
 
+[functions.public-appointment-actions]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

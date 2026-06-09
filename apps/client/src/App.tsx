@@ -7,6 +7,7 @@ import { I18nProvider } from "@/i18n";
 const PublicBookingPage = lazy(() => import("@/pages/PublicBookingPage"));
 const PublicClientOnboardingPage = lazy(() => import("@/pages/PublicClientOnboardingPage"));
 const PublicAnamnesePage = lazy(() => import("@/pages/PublicAnamnesePage"));
+const PublicAppointmentActionsPage = lazy(() => import("@/pages/PublicAppointmentActionsPage"));
 const PublicNotFoundPage = lazy(() => import("@/pages/PublicNotFoundPage"));
 
 const queryClient = new QueryClient({
@@ -38,6 +39,7 @@ function AppRoutes() {
         <Routes>
           <Route path="/cliente/:slug" element={<PublicClientOnboardingPage />} />
           <Route path="/agendar/:slug" element={<PublicBookingPage />} />
+          <Route path="/agendamento/:token" element={<PublicAppointmentActionsPage />} />
           <Route path="/anamnese/:token" element={<PublicAnamnesePage />} />
           <Route path="/" element={<Navigate to="/agendar/demo" replace />} />
           <Route path="*" element={<PublicNotFoundPage />} />

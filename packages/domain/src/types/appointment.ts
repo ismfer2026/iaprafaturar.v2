@@ -19,6 +19,8 @@ export interface Appointment {
   source: AppointmentSource;
   booked_by_client?: boolean;
   booked_at?: string | null;
+  series_id?: string | null;
+  series_occurrence_index?: number | null;
   notes: string | null;
   cancellation_reason: string | null;
   outcome_notes: string | null;
@@ -44,6 +46,26 @@ export interface CreateAppointmentOutput {
   appointment_id: string;
   status: AppointmentStatus;
   appointment: Appointment;
+}
+
+export type AppointmentSeriesFrequency = "weekly" | "biweekly" | "monthly_day" | "monthly_week";
+
+export interface CreateAppointmentSeriesInput {
+  clientId: string;
+  serviceId: string;
+  firstScheduledAt: string;
+  frequency: AppointmentSeriesFrequency;
+  occurrenceCount: number;
+  endsAt?: string | null;
+}
+
+export interface CreateAppointmentSeriesOutput {
+  ok: boolean;
+  series_id?: string;
+  created_appointment_ids?: string[];
+  created_count?: number;
+  error?: string;
+  conflicts?: Array<{ index: number; scheduled_at: string }>;
 }
 
 export interface CancelAppointmentInput {

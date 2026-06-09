@@ -1,5 +1,5 @@
 import { type FormEvent, useMemo, useState } from "react";
-import { CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Clock, Plus, XCircle } from "lucide-react";
+import { CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Clock, Link2, Plus, XCircle } from "lucide-react";
 import {
   Badge,
   Button,
@@ -88,6 +88,9 @@ export default function AgendaPage() {
   const [duration, setDuration] = useState("60");
   const [notes, setNotes] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [seriesFrequency, setSeriesFrequency] = useState<"weekly" | "biweekly" | "monthly_day" | "monthly_week">("weekly");
+  const [seriesOccurrenceCount, setSeriesOccurrenceCount] = useState("4");
   const [isSessionFormOpen, setIsSessionFormOpen] = useState(false);
   const [clinicalEvolution, setClinicalEvolution] = useState("");
   const [sessionNotes, setSessionNotes] = useState("");
@@ -145,19 +148,57 @@ export default function AgendaPage() {
     }
 
     try {
-      await appointmentsQuery.createAppointment({
-        clientId,
-        serviceId: serviceId || null,
-        scheduledAt: new Date(`${dateKey}T${time}:00`).toISOString(),
-        durationMinutes,
-        notes: notes.trim() || null,
-      });
+      const scheduledAt = new Date(`${dateKey}T${time}:00`).toISOString();
+
+      if (isRecurring) {
+        const count = Number(seriesOccurrenceCount);
+        if (!serviceId) {
+          setFormError(t("agenda.recurring.error.serviceRequired"));
+          return;
+        }
+        if (!Number.isInteger(count) || count < 2 || count > 52) {
+          setFormError(t("agenda.recurring.error.countInvalid"));
+          return;
+        }
+
+        const result = await appointmentsQuery.createAppointmentSeries({
+          clientId,
+          serviceId,
+          firstScheduledAt: scheduledAt,
+          frequency: seriesFrequency,
+          occurrenceCount: count,
+        });
+
+        if (!result.ok) {
+          if (result.error === "series_conflicts" && result.conflicts?.length) {
+            const conflicts = result.conflicts
+              .map((conflict: { index: number; scheduled_at: string }) => formatTime(conflict.scheduled_at, locale))
+              .join(", ");
+            setFormError(`${t("agenda.recurring.error.conflicts")}: ${conflicts}`);
+            return;
+          }
+
+          setFormError(t("agenda.recurring.error.create"));
+          return;
+        }
+      } else {
+        await appointmentsQuery.createAppointment({
+          clientId,
+          serviceId: serviceId || null,
+          scheduledAt,
+          durationMinutes,
+          notes: notes.trim() || null,
+        });
+      }
 
       setClientId("");
       setServiceId("");
       setTime("09:00");
       setDuration("60");
       setNotes("");
+      setIsRecurring(false);
+      setSeriesFrequency("weekly");
+      setSeriesOccurrenceCount("4");
       setIsNewOpen(false);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : t("agenda.error.create"));
@@ -322,6 +363,13 @@ export default function AgendaPage() {
                       {t("agenda.source.publicLink")}
                     </Badge>
                   ) : null}
+                  {appointment.series_id ? (
+                    <Badge className="w-fit gap-1 border border-violet-200 bg-violet-50 text-violet-700">
+                      <Link2 className="h-3.5 w-3.5" />
+                      {t("agenda.recurring.badge")}
+                      {appointment.series_occurrence_index ? ` ${appointment.series_occurrence_index}` : ""}
+                    </Badge>
+                  ) : null}
                   <div className="flex items-center gap-2 text-sm text-zinc-500">
                     <Clock className="h-4 w-4" />
                     {appointment.duration_minutes} {t("common.minutes.short")}
@@ -398,6 +446,55 @@ export default function AgendaPage() {
                 <Input value={notes} onChange={(event) => setNotes(event.target.value)} placeholder={t("common.optional")} />
               </label>
 
+              <div className="rounded-lg border border-violet-100 bg-violet-50/60 p-3">
+                <label className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    className="mt-1 h-4 w-4 rounded border-violet-300 text-violet-700"
+                    checked={isRecurring}
+                    onChange={(event) => setIsRecurring(event.target.checked)}
+                  />
+                  <span>
+                    <span className="block text-sm font-semibold text-zinc-950">
+                      {t("agenda.recurring.enable")}
+                    </span>
+                    <span className="mt-1 block text-xs leading-5 text-zinc-500">
+                      {t("agenda.recurring.description")}
+                    </span>
+                  </span>
+                </label>
+
+                {isRecurring ? (
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <label className="block space-y-1.5">
+                      <span className="text-sm font-medium text-zinc-700">
+                        {t("agenda.recurring.frequency")}
+                      </span>
+                      <select
+                        className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm shadow-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                        value={seriesFrequency}
+                        onChange={(event) => setSeriesFrequency(event.target.value as typeof seriesFrequency)}
+                      >
+                        <option value="weekly">{t("agenda.recurring.frequency.weekly")}</option>
+                        <option value="biweekly">{t("agenda.recurring.frequency.biweekly")}</option>
+                        <option value="monthly_day">{t("agenda.recurring.frequency.monthlyDay")}</option>
+                        <option value="monthly_week">{t("agenda.recurring.frequency.monthlyWeek")}</option>
+                      </select>
+                    </label>
+                    <label className="block space-y-1.5">
+                      <span className="text-sm font-medium text-zinc-700">
+                        {t("agenda.recurring.count")}
+                      </span>
+                      <Input
+                        value={seriesOccurrenceCount}
+                        inputMode="numeric"
+                        onChange={(event) => setSeriesOccurrenceCount(event.target.value)}
+                      />
+                    </label>
+                  </div>
+                ) : null}
+              </div>
+
               {formError ? (
                 <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                   {formError}
@@ -409,8 +506,15 @@ export default function AgendaPage() {
               <Button type="button" variant="outline" onClick={() => setIsNewOpen(false)}>
                 {t("common.cancel")}
               </Button>
-              <Button type="submit" disabled={appointmentsQuery.isCreatingAppointment}>
-                {appointmentsQuery.isCreatingAppointment ? t("common.saving") : t("common.save")}
+              <Button
+                type="submit"
+                disabled={appointmentsQuery.isCreatingAppointment || appointmentsQuery.isCreatingAppointmentSeries}
+              >
+                {appointmentsQuery.isCreatingAppointment || appointmentsQuery.isCreatingAppointmentSeries
+                  ? t("common.saving")
+                  : isRecurring
+                    ? t("agenda.recurring.create")
+                    : t("common.save")}
               </Button>
             </SheetFooter>
           </form>

@@ -166,3 +166,65 @@ export function useShadowSuggestions(professionalId: string | null) {
     suggestionActionError: approve.error ?? reject.error,
   };
 }
+
+export function useConversationActions(professionalId: string | null) {
+  const queryClient = useQueryClient();
+
+  const invalidate = async (conversationId?: string | null) => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: crmKeys.conversations(professionalId) }),
+      queryClient.invalidateQueries({ queryKey: crmKeys.conversationMessages(professionalId, conversationId ?? null) }),
+      queryClient.invalidateQueries({ queryKey: ["crm", "conversation-messages", professionalId] }),
+    ]);
+  };
+
+  const takeOver = useMutation({
+    mutationFn: async (conversationId: string) => {
+      const { data, error } = await supabase.rpc("take_over_conversation", {
+        p_conversation_id: conversationId,
+      });
+
+      if (error) throw error;
+      return data as { ok: boolean; conversation_id: string; rosane_status: string };
+    },
+    onSuccess: (data) => invalidate(data.conversation_id),
+  });
+
+  const release = useMutation({
+    mutationFn: async (input: { conversationId: string; summary?: string | null }) => {
+      const { data, error } = await supabase.rpc("release_conversation", {
+        p_conversation_id: input.conversationId,
+        p_summary: input.summary ?? null,
+      });
+
+      if (error) throw error;
+      return data as { ok: boolean; conversation_id: string; rosane_status: string };
+    },
+    onSuccess: (data) => invalidate(data.conversation_id),
+  });
+
+  const sendManualMessage = useMutation({
+    mutationFn: async (input: { conversationId: string; text: string }) => {
+      const { data, error } = await supabase.functions.invoke("send-conversation-message", {
+        body: {
+          conversation_id: input.conversationId,
+          text: input.text,
+        },
+      });
+
+      if (error) throw error;
+      return data as { sent: boolean; dry_run: boolean; conversation_id: string; message_event_id?: string };
+    },
+    onSuccess: (data) => invalidate(data.conversation_id),
+  });
+
+  return {
+    takeOverConversation: takeOver.mutateAsync,
+    releaseConversation: release.mutateAsync,
+    sendManualMessage: sendManualMessage.mutateAsync,
+    isTakingOver: takeOver.isPending,
+    isReleasing: release.isPending,
+    isSendingManualMessage: sendManualMessage.isPending,
+    actionError: takeOver.error ?? release.error ?? sendManualMessage.error,
+  };
+}

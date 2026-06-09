@@ -5,6 +5,8 @@ import type {
   CancelAppointmentInput,
   CreateAppointmentInput,
   CreateAppointmentOutput,
+  CreateAppointmentSeriesInput,
+  CreateAppointmentSeriesOutput,
   RegisterAppointmentOutcomeInput,
 } from "@iaprafaturar/domain";
 import { supabase } from "@/lib/supabase";
@@ -90,6 +92,29 @@ export function useAppointments(professionalId: string | null, dateKey?: string 
     },
   });
 
+  const createAppointmentSeries = useMutation({
+    mutationFn: async (input: CreateAppointmentSeriesInput) => {
+      const { data, error } = await supabase.rpc("create_appointment_series", {
+        p_client_id: input.clientId,
+        p_service_id: input.serviceId,
+        p_first_scheduled_at: input.firstScheduledAt,
+        p_frequency: input.frequency,
+        p_occurrence_count: input.occurrenceCount,
+        p_ends_at: input.endsAt ?? null,
+        p_adjusted_occurrences: [],
+      });
+
+      if (error) throw error;
+      return data as CreateAppointmentSeriesOutput;
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["crm", "appointments", professionalId] }),
+        queryClient.invalidateQueries({ queryKey: crmKeys.dashboard(professionalId) }),
+      ]);
+    },
+  });
+
   const registerOutcome = useMutation({
     mutationFn: async (input: RegisterAppointmentOutcomeInput) => {
       const { data, error } = await supabase.rpc("register_appointment_outcome", {
@@ -116,6 +141,8 @@ export function useAppointments(professionalId: string | null, dateKey?: string 
     isCreatingAppointment: createAppointment.isPending,
     cancelAppointment: cancelAppointment.mutateAsync,
     isCancellingAppointment: cancelAppointment.isPending,
+    createAppointmentSeries: createAppointmentSeries.mutateAsync,
+    isCreatingAppointmentSeries: createAppointmentSeries.isPending,
     registerOutcome: registerOutcome.mutateAsync,
     isRegisteringOutcome: registerOutcome.isPending,
   };

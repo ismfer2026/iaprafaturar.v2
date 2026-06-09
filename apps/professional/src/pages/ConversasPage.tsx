@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Bot, Check, MessageSquare, ShieldAlert, X } from "lucide-react";
+import { ArrowLeft, Bot, Check, MessageSquare, Send, ShieldAlert, UserCheck, X } from "lucide-react";
 import {
   Badge,
   Button,
@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   useConversationMessages,
   useConversations,
+  useConversationActions,
   useShadowSuggestions,
   type ConversationListItem,
   type ShadowSuggestion,
@@ -121,8 +122,10 @@ export default function ConversasPage() {
   const { professionalId } = useAuth();
   const conversations = useConversations(professionalId);
   const suggestions = useShadowSuggestions(professionalId);
+  const actions = useConversationActions(professionalId);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(false);
+  const [manualText, setManualText] = useState("");
 
   const conversationList = useMemo(() => conversations.data ?? [], [conversations.data]);
 
@@ -149,6 +152,22 @@ export default function ConversasPage() {
 
   async function handleRejectSuggestion(suggestionId: string) {
     await suggestions.rejectSuggestion({ suggestionId, reason: "Rejected from inbox" });
+  }
+
+  async function handleTakeOver() {
+    if (!selectedConversation) return;
+    await actions.takeOverConversation(selectedConversation.id);
+  }
+
+  async function handleRelease() {
+    if (!selectedConversation) return;
+    await actions.releaseConversation({ conversationId: selectedConversation.id });
+  }
+
+  async function handleSendManualMessage() {
+    if (!selectedConversation || !manualText.trim()) return;
+    await actions.sendManualMessage({ conversationId: selectedConversation.id, text: manualText.trim() });
+    setManualText("");
   }
 
   return (
@@ -273,6 +292,38 @@ export default function ConversasPage() {
                   </div>
                   <Badge variant="secondary">{selectedConversation.channel}</Badge>
                 </div>
+                <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant={selectedConversation.rosane_status === "human_takeover" ? "warning" : "secondary"}>
+                      {t(CONVERSATION_STATUS_KEYS[selectedConversation.rosane_status])}
+                    </Badge>
+                    {actions.actionError ? (
+                      <span className="text-xs text-red-600">{t("conversations.actions.error")}</span>
+                    ) : null}
+                  </div>
+                  {selectedConversation.rosane_status === "human_takeover" ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="gap-2"
+                      disabled={actions.isReleasing}
+                      onClick={handleRelease}
+                    >
+                      <Bot className="h-4 w-4" />
+                      {t("conversations.actions.release")}
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      className="gap-2"
+                      disabled={actions.isTakingOver}
+                      onClick={handleTakeOver}
+                    >
+                      <UserCheck className="h-4 w-4" />
+                      {t("conversations.actions.takeOver")}
+                    </Button>
+                  )}
+                </div>
               </div>
 
               <div className="flex-1 space-y-3 overflow-y-auto bg-zinc-50 p-4">
@@ -318,6 +369,33 @@ export default function ConversasPage() {
                     </div>
                   );
                 })}
+              </div>
+              <div className="border-t border-zinc-200 bg-white p-3">
+                <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                  <textarea
+                    className="min-h-20 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm leading-6 text-zinc-800 shadow-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                    placeholder={t("conversations.manual.placeholder")}
+                    value={manualText}
+                    onChange={(event) => setManualText(event.target.value)}
+                    disabled={selectedConversation.rosane_status !== "human_takeover" || actions.isSendingManualMessage}
+                  />
+                  <Button
+                    type="button"
+                    className="h-full min-h-12 gap-2"
+                    disabled={
+                      selectedConversation.rosane_status !== "human_takeover"
+                      || actions.isSendingManualMessage
+                      || !manualText.trim()
+                    }
+                    onClick={handleSendManualMessage}
+                  >
+                    <Send className="h-4 w-4" />
+                    {t("conversations.manual.send")}
+                  </Button>
+                </div>
+                {selectedConversation.rosane_status !== "human_takeover" ? (
+                  <p className="mt-2 text-xs text-zinc-500">{t("conversations.manual.requiresTakeover")}</p>
+                ) : null}
               </div>
             </div>
           )}
