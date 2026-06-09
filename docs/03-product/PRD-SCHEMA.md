@@ -2266,16 +2266,20 @@ DECLARE
   v_base text;
   v_phone text;
 BEGIN
-  -- Verificar se há professional_id no metadata.
-  -- Este caminho só é permitido se o Auth user foi criado com o mesmo UUID.
-  v_professional_id := (NEW.raw_user_meta_data->>'professional_id')::uuid;
-  
-  IF v_professional_id IS NOT NULL THEN
-    IF v_professional_id <> NEW.id THEN
-      RAISE EXCEPTION 'professional_auth_id_mismatch'
-        USING HINT = 'Use public_create_account_for_professional / public-create-account; do not use frontend signUp for public handoff.';
-    END IF;
+  IF COALESCE(NEW.raw_app_meta_data->>'admin_bootstrap', 'false') = 'true' THEN
+    RETURN NEW;
+  END IF;
 
+  -- Verificar se ha professional_id no metadata.
+  -- Este caminho so e permitido se o Auth user foi criado com o mesmo UUID.
+  v_professional_id := NULLIF(NEW.raw_user_meta_data->>'professional_id', '')::uuid;
+
+  IF v_professional_id IS NOT NULL AND v_professional_id IS DISTINCT FROM NEW.id THEN
+    RAISE EXCEPTION 'professional_auth_id_mismatch'
+      USING HINT = 'Use public_create_account_for_professional / public-create-account; do not use frontend signUp for public handoff.';
+  END IF;
+
+  IF v_professional_id IS NOT NULL THEN
     -- Vincular professional existente (fluxo /criar-conta protegido)
     UPDATE public.professionals
     SET user_id = NEW.id
@@ -2328,9 +2332,9 @@ BEGIN
     END IF;
   END IF;
 
-  -- Intencionalmente nao processa referral, afiliado, billing, creditos,
-  -- growth, master_admins ou user_roles.
-  -- Esses fluxos pertencem a fases/modulos próprios e nao podem quebrar criacao Auth.
+  -- Auth trigger intentionally does not process referral, affiliate,
+  -- billing, credits, growth, admin bootstrap, wallets or setup objects.
+  -- Those modules cannot break account creation.
   
   RETURN NEW;
 END;

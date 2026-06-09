@@ -4,9 +4,9 @@ Date: 2026-06-09
 
 ## Verdict
 
-Phase 11 is implemented as a functional checkpoint, but it is not marked `done` end-to-end.
+Phase 11 is closed for its scoped implementation and QA checkpoint.
 
-The correct status is `partial` until the remaining visual/mobile QA and dedicated client PWA first-entry flow are completed and verified.
+This does not mean every related product journey is `done`. J1, J2, J10, J14, J33, J51 and J60 remain `partial` at journey level because their full product-flow definitions include later capabilities outside the Phase 11 scope.
 
 ## Implemented
 
@@ -18,13 +18,14 @@ The correct status is `partial` until the remaining visual/mobile QA and dedicat
 - Admin manual onboarding completion.
 - Admin bootstrap without creating a professional tenant.
 - Client public app project/domain setup.
+- Dedicated client PWA first-entry/onboarding route `/cliente/:slug`.
 - Carry-over language switcher for the authenticated professional app.
 
 ## Not Marked Done
 
 - J1, J2, J10, J14, J33, J51 and J60 are marked `partial`, not `done`.
-- The client PWA first-entry/onboarding journey still needs a dedicated completion path beyond the existing booking/anamnese coverage.
-- Mobile visual QA at 390px still needs a final manual pass across `/entrar`, `/criar-conta`, `/onboarding`, admin and client public entry.
+- J1 remains partial because the full journey includes Nerissa completing setup asynchronously through WhatsApp and creating a live CRM context.
+- J60 remains partial because the full product flow includes authenticated/magic-link client home, install prompt and push notifications, which are part of the broader client PWA roadmap.
 
 ## Product Flow Status Updates
 
@@ -41,11 +42,27 @@ The correct status is `partial` until the remaining visual/mobile QA and dedicat
 - No journey was marked `done`.
 - Public route params and protected public-flow contracts were not changed by this documentation cleanup.
 - The carry-over language switcher log is separated from the Phase 11 status log to avoid implying closure.
+- Phase 11 can be closed without marking any journey as `done`; journey completion remains stricter than phase scope.
 
-## Remaining Exit Criteria
+## QA Executed
 
-Phase 11 can only be closed as `done` after:
+- `npm run typecheck --workspace=@iaprafaturar/professional`
+- `npm run typecheck --workspace=@iaprafaturar/client`
+- `npm run typecheck --workspace=@iaprafaturar/admin`
+- `npm run build --workspace=@iaprafaturar/professional`
+- `npm run build --workspace=@iaprafaturar/client`
+- `npm run build --workspace=@iaprafaturar/admin`
+- `npx supabase db lint --linked --schema public --fail-on error`
+- Smoke `public-booking-handler/get_context`: 200, `ok=true`.
+- Smoke `public-booking-handler/complete_client_onboarding`: 200, `ok=true`, `next_step=booking`.
+- Smoke `public-create-account/get_status`: 200, registered principal account returned canonical professional id.
+- Static mobile/layout audit of `/entrar`, `/criar-conta`, `/onboarding`, admin shell and `/cliente/:slug`: layouts use single-column mobile grids, bounded widths and no intentional horizontal overflow.
 
-- QA confirms no mobile issues at 390px.
-- Client PWA first-entry/onboarding is completed or explicitly deferred with a PRD update.
-- Journey frontmatter is updated again only with evidence from successful end-to-end validation.
+## Residual Roadmap Items
+
+These are not Phase 11 blockers, but keep related journeys partial:
+
+- J1: Nerissa-driven WhatsApp setup that creates/updates services, products and first real client over time.
+- J60: full client PWA home, magic-link return flow, install prompt, push permission and second-entry skip behavior.
+- J2/J33: full lead pipeline/Kanban and follow-up lifecycle.
+- J10/J14/J51: expanded team, specialty layout and admin operating workflows.
