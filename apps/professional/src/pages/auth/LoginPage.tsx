@@ -81,7 +81,7 @@ export default function LoginPage() {
           </p>
           <p>
             {t("auth.noAccount")}{" "}
-            <Link to="/cadastro" className="text-violet-600 hover:underline">
+            <Link to="/entrar" className="text-violet-600 hover:underline">
               {t("auth.createFreeAccount")}
             </Link>
           </p>

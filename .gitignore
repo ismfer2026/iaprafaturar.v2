@@ -49,3 +49,5 @@ docs/**/*.txt
 
 # Exceção: skills são tooling do projeto — versionadas
 # .claude/skills/ → vai ao git
+
+.vercel

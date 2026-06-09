@@ -1,4 +1,5 @@
 import type {
+  PublicBookingCompleteClientOnboardingOutput,
   PublicBookingContextOutput,
   PublicBookingCreateAppointmentOutput,
   PublicBookingErrorOutput
@@ -16,6 +17,18 @@ export interface CreatePublicAppointmentInput {
   fullName: string;
   phoneWhatsapp: string;
   email?: string;
+  lang: Locale;
+  ref?: string;
+}
+
+export interface CompleteClientOnboardingInput {
+  slug: string;
+  fullName: string;
+  phoneWhatsapp: string;
+  email?: string;
+  lgpdAccepted: true;
+  contactPreference: "whatsapp" | "email" | "both";
+  remindersOptIn: boolean;
   lang: Locale;
   ref?: string;
 }
@@ -64,5 +77,34 @@ export async function createPublicAppointment(
     throw error;
   }
   if (!data) throw new Error("empty_public_appointment_response");
+  return data;
+}
+
+export async function completeClientOnboarding(
+  input: CompleteClientOnboardingInput
+): Promise<PublicBookingCompleteClientOnboardingOutput | PublicBookingErrorOutput> {
+  const { data, error } = await supabase.functions.invoke<
+    PublicBookingCompleteClientOnboardingOutput | PublicBookingErrorOutput
+  >("public-booking-handler", {
+    body: {
+      mode: "complete_client_onboarding",
+      slug: input.slug,
+      full_name: input.fullName,
+      phone_whatsapp: input.phoneWhatsapp,
+      ...(input.email ? { email: input.email } : {}),
+      lgpd_accepted: input.lgpdAccepted,
+      contact_preference: input.contactPreference,
+      reminders_opt_in: input.remindersOptIn,
+      lang: input.lang,
+      ...(input.ref ? { ref: input.ref } : {})
+    }
+  });
+
+  if (error) {
+    const errorBody = await readFunctionErrorBody<PublicBookingErrorOutput>(error);
+    if (errorBody) return errorBody;
+    throw error;
+  }
+  if (!data) throw new Error("empty_public_client_onboarding_response");
   return data;
 }

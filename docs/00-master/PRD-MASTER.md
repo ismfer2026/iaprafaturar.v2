@@ -223,6 +223,14 @@ USING (professional_id = auth.uid())
 | **Documentos & Pacotes** | Orçamentos, contratos, pacotes | 7 |
 | **Growth** | Campanhas, indicação, reativação, RFM | 8 |
 | **Admin Analytics Completo** | Dashboard MRR, churn, Nexus, health scores | 9 |
+| **Relatórios do Profissional** | Analytics operacional do profissional | 10 |
+| **Onboardings Comerciais e Operacionais** | Profissional, cliente, lead e setup mínimo para vender | 11 |
+| **Receita Operacional Cliente** | Rotas cliente, comunicação, agenda, Rosane operadora | 12 |
+| **Pacotes, Orçamentos e Cobrança** | Fluxos que convertem atendimento em receita | 13 |
+| **PWA Cliente Completo e Recorrência** | Portal cliente, pacotes ativos, recorrência e remarcação | 14 |
+| **Financeiro Operacional Avançado** | PDV, conciliação, gateways e configurações financeiras | 15 |
+| **Growth Comercial Completo** | Funil, upsell, e-mail, fidelidade e indicação avançada | 16 |
+| **Billing SaaS e Plataforma** | Planos, trial, créditos, afiliados, admin operacional avançado | 17 |
 | **Advanced** | Knowledge Brain, Partner API | Futuro |
 
 > **Admin mínimo técnico (FASE 1) ≠ Admin analytics completo (FASE 9).** Na FASE 1 o admin opera Nerissa e monitora webhooks via Supabase Dashboard. Dashboard de MRR e analytics vem na FASE 9.
@@ -694,6 +702,8 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 
 > EXECUTION-PRD.md (`docs/01-execution/`) segue a ordem definida aqui. Em caso de conflito de sequência, este PRD-MASTER manda.
 > Cada fase entrega algo utilizável. Nenhuma fase é "infraestrutura que só serve para a próxima".
+>
+> **Reordenação pós-FASE 9:** a partir da FASE 11, a prioridade oficial é fechar primeiro as rotas e fluxos que falam com profissionais e clientes, organizam agenda/comunicação e geram receita operacional. Billing SaaS, afiliados, admin avançado e plataforma continuam obrigatórios, mas não devem passar na frente dos onboardings, comunicação, agenda e receita do profissional.
 
 ---
 
@@ -964,11 +974,243 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 
 ---
 
+### FASE 10 — Relatórios do Profissional
+**Status:** entregue antes desta revisão de roadmap.
+**Entrega:** profissional enxerga desempenho operacional e financeiro básico com dados reais.
+
+**Backend:**
+- RPC `get_professional_reports_rpc()` com isolamento por `auth_professional_id()`
+- Métricas de receita, agenda, clientes, serviços e ocupação
+- Exportação CSV client-side
+
+**Frontend:**
+- Página `/relatorios`
+- Entrada em `/mais` no mobile para manter bottom nav com 5 itens
+
+**DoD Fase 10:**
+- [ ] Relatórios carregam sem enviar `professional_id` por payload
+- [ ] Receita realizada/projetada respeita timezone `America/Sao_Paulo`
+- [ ] Exportação CSV funciona no mobile
+- [ ] RPC não possui grant residual para `anon`/`PUBLIC`
+
+---
+
+### FASE 11 — Onboardings Comerciais e Operacionais
+**Duração estimada:** 2-3 semanas
+**Entrega:** profissional, cliente e lead entram na plataforma com dados suficientes para atendimento, comunicação, agenda e venda.
+
+> Esta fase existe porque agenda, comunicação, PWA cliente, Rosane e receita operacional dependem de dados coletados no onboarding. Não construir automação comercial sobre perfil incompleto.
+
+**Jornadas-alvo:** J1, J2, J10 mínimo, J14 mínimo, J33, J51, J60.
+
+**Backend:**
+- Handoff público pré-conta protegido: `/entrar`, `/criar-conta`, `ref`, `lang`, `pid`, `conversation`, `collected_data`
+- Criação Auth controlada por backend/RPC, preservando `auth.users.id = professionals.id = professionals.user_id`
+- A Fase 11 deve portar/evoluir o padrão validado na v1: `/criar-conta` chama backend/RPC, valida `pid + email`, cria Auth com o UUID canônico de `professionals.id` e nunca usa `supabase.auth.signUp` direto no frontend. Se o `handle_new_user` atual da v2 criar `professionals.id` diferente de `auth.users.id`, a fase deve corrigir o trigger antes de liberar o fluxo.
+- Nerissa completa dados mínimos do profissional: nome público, especialidade, serviços, horários, endereço/região, WhatsApp, regras de atendimento, nome/persona da Rosane
+- Onboarding do cliente no PWA: identificação, aceite LGPD, vínculo ao profissional por slug/token/telefone, preferências básicas
+- Admin/manual onboarding para casos de suporte sem quebrar auditoria
+
+**Frontend:**
+- Fluxo público de entrada do profissional sem Auth precoce
+- `/criar-conta` validando `pid + email`
+- `/onboarding` deixa claro o que falta para operar
+- Apps client/professional preservam `ref`, `lang`, slug, token e código durante redirects
+
+**DoD Fase 11:**
+- [ ] `handle_new_user` comum cria profissional autenticado com `professionals.id = professionals.user_id = auth.users.id`
+- [ ] `/criar-conta` protegido usa backend/RPC, preserva `pid + email + ref + lang + conversation + collected_data` e não chama `signUp` no frontend
+- [ ] Lead profissional entra por rota pública sem Auth, conversa com Nerissa e recebe URL de criação de conta
+- [ ] Conta criada preserva o mesmo UUID em `auth.users`, `professionals.id` e `professionals.user_id`
+- [ ] Profissional termina setup mínimo com serviço, horário e WhatsApp configurados
+- [ ] Rosane só fica ativa quando os dados mínimos existem
+- [ ] Cliente novo entra por link público, aceita LGPD, é vinculado ao profissional correto e fica pronto para agendar/comprar
+- [ ] `ref`, `lang`, `conversation`, slug, token e código sobrevivem ao fluxo completo
+- [ ] Nenhum fluxo pré-conta usa billing/créditos
+
+---
+
+### FASE 12 — Receita Operacional Cliente: Comunicação, Agenda e Rosane Operadora
+**Duração estimada:** 3-4 semanas
+**Entrega:** cliente chama, Rosane responde, agenda, confirma, remarca, transfere para humano quando necessário e mantém o histórico operacional.
+
+**Jornadas-alvo:** J3, J4, J8, J16, J24, J30, J39, J56, J59.
+
+**Backend:**
+- Rosane consulta dados reais antes de responder: serviços, preços, horários, regras, cliente, agendamentos e contexto ativo
+- Agendamento por conversa natural com confirmação antes de executar
+- Cancelamento/remarcação por WhatsApp e PWA cliente com regras de janela
+- Handoff humano: profissional assume/devolve conversa com auditoria
+- Agendamento recorrente com série, exceções e cancelamento individual/série
+- Contextos de conversa para follow-up, relacionamento e check-ins proativos
+
+**Frontend:**
+- Inbox com tomada/devolução de conversa
+- Agenda mostra origem e estado de automações
+- UI para regras de atendimento, janela de remarcação e recorrência
+
+**DoD Fase 12:**
+- [ ] Cliente novo manda mensagem e Rosane responde com informação real do banco, sem inventar serviço/preço/horário
+- [ ] Cliente agenda por WhatsApp e o appointment aparece na agenda
+- [ ] Cliente remarca/cancela por WhatsApp/PWA dentro das regras configuradas
+- [ ] Profissional assume uma conversa e Rosane para de responder até devolução explícita
+- [ ] Recorrência cria série correta e permite exceção
+- [ ] Follow-up/check-in respeita opt-out, horário permitido e instância do profissional
+
+---
+
+### FASE 13 — Pacotes, Orçamentos, Documentos e Cobrança Que Geram Receita
+**Duração estimada:** 3-4 semanas
+**Entrega:** profissional transforma interesse em pacote, orçamento, contrato, cobrança aprovada e registro financeiro.
+
+**Jornadas-alvo:** J5, J7, J12, J21, J54, J61.
+
+**Backend:**
+- `/pacote/:slug` público com CTA para Rosane/WhatsApp
+- Alertas de pacote acabando/expirando para cliente e profissional
+- Orçamento com PDF, validade, follow-up D+2 e expiração automática
+- Aprovação pública de orçamento com assinatura digital ou decisão documentada de assinatura própria
+- Contratos/termos enviados por Rosane, com webhook/status de assinatura quando houver provedor externo
+- Cobrança por WhatsApp somente com aprovação prévia do profissional
+- Upsell-agent baseado em elegibilidade, pacote/orçamento e opt-out
+
+**Frontend:**
+- Página pública de pacote
+- Fluxo de orçamento com envio, acompanhamento e conversão em contrato/pacote
+- Perfil do cliente mostra pacotes, documentos, cobranças e pendências
+
+**DoD Fase 13:**
+- [ ] Cliente acessa `/pacote/:slug`, entende oferta e inicia conversa/compra assistida
+- [ ] Registrar sessão pode consumir pacote com confirmação do profissional
+- [ ] Pacote com ≤2 sessões gera alerta para cliente e profissional
+- [ ] Orçamento enviado gera link/PDF e follow-up automático se sem resposta
+- [ ] Orçamento aprovado pode virar contrato ou pacote sem digitação duplicada
+- [ ] Cobrança nunca é enviada automaticamente sem aprovação do profissional
+
+---
+
+### FASE 14 — PWA Cliente Completo
+**Duração estimada:** 2-3 semanas
+**Entrega:** cliente tem portal próprio para acompanhar agenda, histórico, pacotes e ações permitidas sem instalar app nativo.
+
+**Jornadas-alvo:** J15, J28, J29, J31, J32, J60.
+
+**Backend:**
+- Sessão pública/identificação segura do cliente
+- RPCs públicas escopadas por token/slug/telefone, sem `professional_id` vindo do payload
+- Histórico visível ao cliente com regras de privacidade
+- Pacote ativo e saldo visível
+
+**Frontend (apps/client):**
+- Home do cliente
+- Próximo agendamento
+- Histórico de sessões permitido
+- Pacote ativo e CTA de renovação
+- Idioma e brand por profissional
+- Estado offline mínimo para dados já carregados
+
+**DoD Fase 14:**
+- [ ] Cliente acessa portal e vê próximo agendamento
+- [ ] Cliente vê histórico permitido sem dados clínicos privados
+- [ ] Cliente vê pacote ativo, saldo e validade
+- [ ] Autoagendamento dentro do portal funciona sem Auth de profissional
+- [ ] Safari iOS e Android Chrome funcionam em 390px
+
+---
+
+### FASE 15 — Financeiro Operacional Avançado
+**Duração estimada:** 3-4 semanas
+**Entrega:** profissional controla venda presencial, cobrança, conciliação e configurações financeiras sem misturar com billing SaaS da plataforma.
+
+**Jornadas-alvo:** J7, J62, J63, J65, J19 parcial.
+
+**Backend:**
+- Configurações financeiras: bancos, categorias, centros de custo, PIX/manual, gateways
+- PDV para venda de serviços/produtos/pacotes
+- Recibo/comprovante via instância do profissional
+- Conciliação por CSV/OFX com matching auditável
+- Baixa de estoque quando houver produto envolvido
+
+**Frontend:**
+- PDV mobile-first
+- Tela de conciliação
+- Configurações financeiras
+- Extrato com origem PDV/cobrança/pacote
+
+**DoD Fase 15:**
+- [ ] Venda no PDV cria transação financeira auditável
+- [ ] Comprovante pode ser enviado pela instância do profissional
+- [ ] Importação CSV/OFX sugere matches sem aplicar automaticamente sem confirmação
+- [ ] Configurações financeiras afetam lançamentos futuros sem reescrever histórico
+
+---
+
+### FASE 16 — Growth Comercial Completo
+**Duração estimada:** 3-4 semanas
+**Entrega:** crescimento deixa de ser apenas campanha e vira sistema comercial: funil, indicação, reativação, upsell, fidelidade, e-mail e chat público.
+
+**Jornadas-alvo:** J9, J13, J17, J18, J23, J50, J55, J57, J58, J61, J64.
+
+**Backend:**
+- Funil de vendas do profissional: stages, opportunities, histórico e automações
+- Chat público com anti-spam, contexto e handoff
+- E-mail como canal com Resend/SMTP e opt-out
+- Fidelidade e recompensas
+- Upsell-agent com aprovação e métricas
+- Health score cliente explicável e acionável
+
+**Frontend:**
+- `/funil`
+- Campanhas avançadas
+- Fidelidade/recompensas
+- Chat público configurável
+- Métricas de conversão por canal
+
+**DoD Fase 16:**
+- [ ] Lead entra no funil e evolui por estágios com histórico
+- [ ] Campanha segmentada respeita opt-out/cooldown e mostra resultado
+- [ ] Upsell só dispara quando elegível e com canal permitido
+- [ ] Chat público cria conversa rastreável e permite handoff
+- [ ] E-mail respeita consentimento/opt-out e registra auditoria
+
+---
+
+### FASE 17 — Billing SaaS, Plataforma e Admin Operacional Avançado
+**Duração estimada:** 3-4 semanas
+**Entrega:** plataforma monetiza, controla planos/créditos e opera profissionais com segurança.
+
+**Jornadas-alvo:** J11, J34, J35, J37, J38, J47, J48, J49, J52, J53.
+
+**Backend:**
+- Stripe checkout/webhook
+- Trial, modo leitura, upgrade/downgrade e créditos IA
+- Plano `free_internal` somente via admin/service_role
+- Afiliados/embaixadores profissional→profissional
+- Admin actions com auditoria
+- Nexus executa ações com confirmação e escopo permitido
+- Gestão de agentes, versões, prompts e rollback
+
+**Frontend:**
+- `/planos`
+- Admin de planos/status
+- Painel de afiliados/embaixadores
+- Nexus com ações auditáveis
+- Feature requests/melhorias
+
+**DoD Fase 17:**
+- [ ] Stripe é fonte de verdade de assinatura
+- [ ] Trial expira e entra em modo leitura sem perder dados
+- [ ] Créditos IA limitam automações sem bloquear acesso aos dados
+- [ ] Admin consegue conceder `free_internal` sem checkout público
+- [ ] Nexus não executa ação sensível sem confirmação e auditoria
+
+---
+
 ### FASE FUTURA — Advanced
 Sem data. Não bloqueia nenhuma fase anterior.
 - Knowledge Brain (pgvector, GraphRAG, knowledge_nodes)
 - Partner API (api_keys, webhooks, rate limiting)
-- Automações avançadas (funil de vendas profissional, conciliação bancária)
+- Automações avançadas além das FASES 11-17
 - NFS-e integrado
 
 ---

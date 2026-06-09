@@ -21,11 +21,11 @@ export function PublicLayout({ eyebrow, title, subtitle, children, brandColor }:
 
   return (
     <main
-      className="min-h-dvh bg-[#f7fbf9] text-zinc-950"
+      className="min-h-dvh w-full max-w-[100vw] overflow-x-hidden bg-[#f7fbf9] text-zinc-950"
       style={{ "--client-brand": brandColor ?? "#0f766e" } as React.CSSProperties}
     >
-      <div className="mx-auto flex min-h-dvh w-full max-w-5xl flex-col px-4 py-4 sm:px-6 lg:px-8">
-        <header className="flex items-center justify-between gap-3 py-2">
+      <div className="mx-auto flex min-h-dvh w-full max-w-[100vw] flex-col overflow-x-hidden py-4 sm:max-w-5xl sm:px-6 lg:px-8">
+        <header className="public-mobile-frame mx-4 flex max-w-full flex-col items-start justify-between gap-3 py-2 sm:mx-0 sm:flex-row sm:items-center">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-semibold text-white shadow-sm">
               ia
@@ -36,8 +36,8 @@ export function PublicLayout({ eyebrow, title, subtitle, children, brandColor }:
             </div>
           </div>
 
-          <div className="flex items-center gap-1 rounded-full border border-zinc-200 bg-white p-1 shadow-sm">
-            <Languages className="ml-2 h-4 w-4 text-zinc-500" aria-hidden="true" />
+          <div className="flex max-w-full shrink-0 items-center gap-0.5 rounded-full border border-zinc-200 bg-white p-1 shadow-sm">
+            <Languages className="ml-1 h-4 w-4 text-zinc-500" aria-hidden="true" />
             <span className="sr-only">{t("language.label")}</span>
             {locales.map((item) => (
               <Button
@@ -46,7 +46,7 @@ export function PublicLayout({ eyebrow, title, subtitle, children, brandColor }:
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "h-9 rounded-full px-3 text-xs",
+                  "h-9 rounded-full px-2 text-xs",
                   locale === item.value && "bg-brand text-white hover:bg-brand hover:text-white"
                 )}
                 onClick={() => setLocale(item.value)}
@@ -57,13 +57,13 @@ export function PublicLayout({ eyebrow, title, subtitle, children, brandColor }:
           </div>
         </header>
 
-        <section className="grid flex-1 gap-5 py-5 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:py-10">
-          <div className="space-y-4">
+        <section className="public-mobile-frame mx-4 grid max-w-full flex-1 gap-5 py-5 sm:mx-0 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:py-10">
+          <div className="w-full min-w-0 space-y-4">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">{eyebrow}</p>
-            <h1 className="font-display text-4xl font-semibold leading-tight text-zinc-950 sm:text-5xl">{title}</h1>
-            <p className="max-w-xl text-base leading-7 text-zinc-600">{subtitle}</p>
+            <h1 className="break-words font-display text-4xl font-semibold leading-tight text-zinc-950 sm:text-5xl">{title}</h1>
+            <p className="max-w-xl break-words text-base leading-7 text-zinc-600">{subtitle}</p>
           </div>
-          {children}
+          <div className="w-full min-w-0">{children}</div>
         </section>
       </div>
     </main>

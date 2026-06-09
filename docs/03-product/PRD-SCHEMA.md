@@ -37,7 +37,10 @@ $$;
 CREATE TABLE professionals (
   id                          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id                     uuid UNIQUE REFERENCES auth.users(id) ON DELETE SET NULL,
-  -- Invariante: id = user_id = auth.users.id no fluxo de criação de conta
+  -- Invariante obrigatória para profissional autenticado:
+  -- professionals.id = professionals.user_id = auth.users.id.
+  -- Fluxo público /criar-conta deve criar Auth por backend/RPC com id escolhido.
+  -- Frontend público não pode usar supabase.auth.signUp para converter pré-conta.
   
   -- Identidade
   name                        text NOT NULL,
@@ -2238,7 +2241,7 @@ STABLE SECURITY DEFINER
 AS $$
   SELECT COALESCE(
     (auth.jwt() -> 'user_metadata' ->> 'professional_id')::uuid,
-    (SELECT id FROM professionals WHERE user_id = auth.uid() LIMIT 1)
+    (SELECT id FROM public.professionals WHERE user_id = auth.uid() LIMIT 1)
   )
 $$;
 GRANT EXECUTE ON FUNCTION auth_professional_id() TO authenticated;
@@ -2247,55 +2250,87 @@ GRANT EXECUTE ON FUNCTION auth_professional_id() TO authenticated;
 ### handle_new_user (trigger)
 
 ```sql
-CREATE OR REPLACE FUNCTION handle_new_user()
-RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
+-- Trigger canonico da v2.
+-- Substitui a versão inicial das migrations 20260605120500/20260605121100,
+-- que inseria professionals sem id e deixava id DEFAULT gen_random_uuid().
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 DECLARE
   v_professional_id uuid;
-  v_referral_code text;
-  v_plan text := 'trial';
+  v_name text;
+  v_slug text;
+  v_base text;
+  v_phone text;
 BEGIN
-  -- Verificar se há professional_id no metadata
+  -- Verificar se há professional_id no metadata.
+  -- Este caminho só é permitido se o Auth user foi criado com o mesmo UUID.
   v_professional_id := (NEW.raw_user_meta_data->>'professional_id')::uuid;
-  v_referral_code := NEW.raw_user_meta_data->>'referral_code';
   
   IF v_professional_id IS NOT NULL THEN
-    -- Vincular professional existente (fluxo de onboarding público)
-    UPDATE professionals SET user_id = NEW.id WHERE id = v_professional_id AND user_id IS NULL;
+    IF v_professional_id <> NEW.id THEN
+      RAISE EXCEPTION 'professional_auth_id_mismatch'
+        USING HINT = 'Use public_create_account_for_professional / public-create-account; do not use frontend signUp for public handoff.';
+    END IF;
+
+    -- Vincular professional existente (fluxo /criar-conta protegido)
+    UPDATE public.professionals
+    SET user_id = NEW.id
+    WHERE id = NEW.id
+      AND user_id IS NULL;
+
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'professional_invite_not_found_or_already_linked';
+    END IF;
   ELSE
-    -- Verificar se existe professional com mesmo email sem user_id
-    SELECT id INTO v_professional_id FROM professionals
-    WHERE email = NEW.email AND user_id IS NULL LIMIT 1;
+    -- Verificar se existe pré-conta com mesmo email sem user_id.
+    -- Não vincular Auth aleatório a essa linha; o usuário deve usar /criar-conta?pid=...
+    SELECT id INTO v_professional_id
+    FROM public.professionals
+    WHERE lower(email) = lower(NEW.email) AND user_id IS NULL LIMIT 1;
     
     IF v_professional_id IS NULL THEN
-      -- Criar novo professional
+      -- Cadastro autenticado comum: o professional nasce com o mesmo UUID do Auth.
       v_professional_id := NEW.id;  -- invariante: id = user_id
-      INSERT INTO professionals (id, user_id, name, email, plan_type, slug)
+
+      v_name := COALESCE(
+        NULLIF(NEW.raw_user_meta_data->>'name', ''),
+        split_part(NEW.email, '@', 1)
+      );
+
+      v_phone := NULLIF(public.normalize_phone_digits(COALESCE(NEW.raw_user_meta_data->>'phone_whatsapp', '')), '');
+
+      v_base := lower(regexp_replace(
+        extensions.unaccent(v_name), '[^a-z0-9]+', '-', 'g'
+      ));
+      v_slug := v_base;
+
+      WHILE EXISTS (SELECT 1 FROM public.professionals WHERE slug = v_slug) LOOP
+        v_slug := v_base || '-' || substr(md5(random()::text), 1, 4);
+      END LOOP;
+
+      INSERT INTO public.professionals (id, user_id, name, email, slug, phone_whatsapp)
       VALUES (
         NEW.id, NEW.id,
-        COALESCE(NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)),
+        v_name,
         NEW.email,
-        v_plan,
-        lower(regexp_replace(split_part(NEW.email, '@', 1), '[^a-z0-9]', '-', 'g'))
+        v_slug,
+        v_phone
       );
-      
-      -- Criar wallet e categorias padrão
-      INSERT INTO credit_wallets (professional_id, balance) VALUES (NEW.id, 200);
-      PERFORM create_default_categories(NEW.id);
     ELSE
-      UPDATE professionals SET user_id = NEW.id WHERE id = v_professional_id;
+      -- Existe pré-conta por email. Não vincular Auth com UUID diferente.
+      -- O usuário deve usar /criar-conta?pid=... para preservar a invariante.
+      RAISE EXCEPTION 'pre_account_requires_public_create_account'
+        USING HINT = 'Use /criar-conta with pid + email so auth.users.id = professionals.id.';
     END IF;
   END IF;
-  
-  -- Processar referral se existir
-  IF v_referral_code IS NOT NULL THEN
-    PERFORM process_affiliate_referral(v_professional_id, v_referral_code);
-  END IF;
-  
-  -- Verificar se é master admin
-  IF NEW.raw_user_meta_data->>'role' = 'master_admin' THEN
-    INSERT INTO master_admins (user_id, email, name) VALUES (NEW.id, NEW.email, NEW.raw_user_meta_data->>'name');
-    INSERT INTO user_roles (user_id, role) VALUES (NEW.id, 'admin_master');
-  END IF;
+
+  -- Intencionalmente nao processa referral, afiliado, billing, creditos,
+  -- growth, master_admins ou user_roles.
+  -- Esses fluxos pertencem a fases/modulos próprios e nao podem quebrar criacao Auth.
   
   RETURN NEW;
 END;
@@ -2306,7 +2341,9 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
 ```
 
-### create_default_categories (chamada pelo trigger)
+### create_default_categories (setup operacional, não chamada pelo trigger Auth)
+
+> Esta função não deve ser chamada por `handle_new_user`. Criação Auth e onboarding comercial não podem depender de billing/créditos nem criar estruturas financeiras automaticamente. Categorias padrão entram apenas quando o módulo financeiro/setup operacional exigir.
 
 ```sql
 CREATE OR REPLACE FUNCTION create_default_categories(p_professional_id uuid)

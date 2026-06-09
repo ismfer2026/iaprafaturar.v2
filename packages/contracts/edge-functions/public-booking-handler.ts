@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 export const PublicLocaleSchema = z.enum(['pt-BR', 'en-US', 'es-419'])
 
-export const PublicBookingModeSchema = z.enum(['get_context', 'create_appointment'])
+export const PublicBookingModeSchema = z.enum(['get_context', 'create_appointment', 'complete_client_onboarding'])
 
 export const PublicBookingGetContextInputSchema = z.object({
   mode: z.literal('get_context'),
@@ -23,9 +23,23 @@ export const PublicBookingCreateAppointmentInputSchema = z.object({
   ref: z.string().min(1).max(120).optional(),
 }).strict()
 
+export const PublicBookingCompleteClientOnboardingInputSchema = z.object({
+  mode: z.literal('complete_client_onboarding'),
+  slug: z.string().min(1),
+  full_name: z.string().trim().min(1),
+  phone_whatsapp: z.string().min(8),
+  email: z.string().email().optional(),
+  lgpd_accepted: z.literal(true),
+  contact_preference: z.enum(['whatsapp', 'email', 'both']).default('whatsapp'),
+  reminders_opt_in: z.boolean().default(true),
+  lang: PublicLocaleSchema.optional(),
+  ref: z.string().min(1).max(120).optional(),
+}).strict()
+
 export const PublicBookingHandlerInputSchema = z.discriminatedUnion('mode', [
   PublicBookingGetContextInputSchema,
   PublicBookingCreateAppointmentInputSchema,
+  PublicBookingCompleteClientOnboardingInputSchema,
 ])
 
 export const PublicBookingContextOutputSchema = z.object({
@@ -60,6 +74,13 @@ export const PublicBookingCreateAppointmentOutputSchema = z.object({
   next_step: z.literal('confirmation_page'),
 }).strict()
 
+export const PublicBookingCompleteClientOnboardingOutputSchema = z.object({
+  ok: z.literal(true),
+  client_id: z.string().uuid(),
+  professional_slug: z.string().min(1),
+  next_step: z.literal('booking'),
+}).strict()
+
 export const PublicBookingErrorOutputSchema = z.object({
   ok: z.literal(false),
   error: z.enum([
@@ -77,6 +98,7 @@ export type PublicBookingMode = z.infer<typeof PublicBookingModeSchema>
 export type PublicBookingHandlerInput = z.infer<typeof PublicBookingHandlerInputSchema>
 export type PublicBookingContextOutput = z.infer<typeof PublicBookingContextOutputSchema>
 export type PublicBookingCreateAppointmentOutput = z.infer<typeof PublicBookingCreateAppointmentOutputSchema>
+export type PublicBookingCompleteClientOnboardingOutput = z.infer<typeof PublicBookingCompleteClientOnboardingOutputSchema>
 export type PublicBookingErrorOutput = z.infer<typeof PublicBookingErrorOutputSchema>
 
 export function validatePublicBookingHandlerInput(input: unknown): PublicBookingHandlerInput {
@@ -93,3 +115,8 @@ export function validatePublicBookingCreateAppointmentOutput(
   return PublicBookingCreateAppointmentOutputSchema.parse(input)
 }
 
+export function validatePublicBookingCompleteClientOnboardingOutput(
+  input: unknown,
+): PublicBookingCompleteClientOnboardingOutput {
+  return PublicBookingCompleteClientOnboardingOutputSchema.parse(input)
+}

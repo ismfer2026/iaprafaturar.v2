@@ -5,6 +5,7 @@ import { Skeleton } from "@iaprafaturar/ui";
 import { I18nProvider } from "@/i18n";
 
 const PublicBookingPage = lazy(() => import("@/pages/PublicBookingPage"));
+const PublicClientOnboardingPage = lazy(() => import("@/pages/PublicClientOnboardingPage"));
 const PublicAnamnesePage = lazy(() => import("@/pages/PublicAnamnesePage"));
 const PublicNotFoundPage = lazy(() => import("@/pages/PublicNotFoundPage"));
 
@@ -35,6 +36,7 @@ function AppRoutes() {
     <BrowserRouter>
       <Suspense fallback={<PageLoader />}>
         <Routes>
+          <Route path="/cliente/:slug" element={<PublicClientOnboardingPage />} />
           <Route path="/agendar/:slug" element={<PublicBookingPage />} />
           <Route path="/anamnese/:token" element={<PublicAnamnesePage />} />
           <Route path="/" element={<Navigate to="/agendar/demo" replace />} />

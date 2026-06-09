@@ -8,7 +8,8 @@ import AppShell from "@/components/layout/AppShell";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 
 const LoginPage = lazy(() => import("@/pages/auth/LoginPage"));
-const CadastroPage = lazy(() => import("@/pages/auth/CadastroPage"));
+const PublicEntrarPage = lazy(() => import("@/pages/auth/PublicEntrarPage"));
+const PublicCreateAccountPage = lazy(() => import("@/pages/auth/PublicCreateAccountPage"));
 const OnboardingPage = lazy(() => import("@/pages/OnboardingPage"));
 const DashboardPage = lazy(() => import("@/pages/DashboardPage"));
 const AgendaPage = lazy(() => import("@/pages/AgendaPage"));
@@ -51,7 +52,9 @@ function AppRoutes() {
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/cadastro" element={<CadastroPage />} />
+            <Route path="/entrar" element={<PublicEntrarPage />} />
+            <Route path="/cadastro" element={<PublicEntrarPage />} />
+            <Route path="/criar-conta" element={<PublicCreateAccountPage />} />
 
             <Route element={<ProtectedRoute />}>
               <Route path="/onboarding" element={<OnboardingPage />} />

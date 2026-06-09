@@ -24,6 +24,8 @@
     "./edge-functions/professional-whatsapp-connection.ts": "./edge-functions/professional-whatsapp-connection.ts",
     "./edge-functions/public-booking-handler": "./edge-functions/public-booking-handler.ts",
     "./edge-functions/public-booking-handler.ts": "./edge-functions/public-booking-handler.ts",
+    "./edge-functions/public-create-account": "./edge-functions/public-create-account.ts",
+    "./edge-functions/public-create-account.ts": "./edge-functions/public-create-account.ts",
     "./edge-functions/anamnese-public-handler": "./edge-functions/anamnese-public-handler.ts",
     "./edge-functions/anamnese-public-handler.ts": "./edge-functions/anamnese-public-handler.ts",
     "./edge-functions/appointment-confirmation-agent": "./edge-functions/appointment-confirmation-agent.ts",

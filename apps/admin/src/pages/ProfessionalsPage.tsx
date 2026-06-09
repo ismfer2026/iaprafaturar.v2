@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Badge, Card, CardContent, Input, Skeleton } from "@iaprafaturar/ui";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Badge, Button, Card, CardContent, Input, Skeleton } from "@iaprafaturar/ui";
 import { useI18n } from "@/i18n";
 import { supabase } from "@/lib/supabase";
 
@@ -33,9 +33,22 @@ async function loadProfessionals(search: string): Promise<ProfessionalRow[]> {
 export default function ProfessionalsPage() {
   const { t } = useI18n();
   const [search, setSearch] = useState("");
+  const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ["admin-professionals", search],
     queryFn: () => loadProfessionals(search)
+  });
+  const completeOnboarding = useMutation({
+    mutationFn: async (professionalId: string) => {
+      const { error } = await supabase.rpc("admin_complete_professional_onboarding", {
+        p_professional_id: professionalId,
+        p_reason: "manual_admin_phase11"
+      });
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["admin-professionals"] });
+    }
   });
 
   const rows = query.data ?? [];
@@ -78,6 +91,21 @@ export default function ProfessionalsPage() {
                 <Badge variant="secondary">{row.total_score ?? 0}/100</Badge>
                 <Badge variant="secondary">{row.active_clients} {t("professionals.clients")}</Badge>
                 <Badge variant="secondary">{row.total_sessions} {t("professionals.sessions")}</Badge>
+              </div>
+              <div className="flex items-center justify-between gap-3 border-t border-zinc-100 pt-3">
+                <Badge variant={row.onboarding_completed ? "success" : "secondary"}>
+                  {row.onboarding_completed ? t("professionals.onboarding.completed") : t("professionals.onboarding.pending")}
+                </Badge>
+                {!row.onboarding_completed ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={completeOnboarding.isPending}
+                    onClick={() => completeOnboarding.mutate(row.id)}
+                  >
+                    {t("professionals.onboarding.complete")}
+                  </Button>
+                ) : null}
               </div>
             </CardContent>
           </Card>

@@ -1,6 +1,7 @@
 import {
   validatePublicBookingHandlerInput,
   validatePublicBookingCreateAppointmentOutput,
+  validatePublicBookingCompleteClientOnboardingOutput,
   type PublicBookingCreateAppointmentOutput,
 } from '@iaprafaturar/contracts/edge-functions/public-booking-handler.ts'
 
@@ -52,6 +53,10 @@ function mapError(error: unknown): { status: number; body: unknown } {
   }
 
   if (message.includes('full_name_required') || message.includes('phone_whatsapp_required')) {
+    return { status: 400, body: { ok: false, error: 'invalid_input' } }
+  }
+
+  if (message.includes('invalid_input') || message.includes('lgpd_required')) {
     return { status: 400, body: { ok: false, error: 'invalid_input' } }
   }
 
@@ -120,6 +125,23 @@ Deno.serve(async (request) => {
 
       if (error) throw error
       return publicJsonResponse(data)
+    }
+
+    if (input.mode === 'complete_client_onboarding') {
+      const { data, error } = await supabase.rpc('complete_public_client_onboarding', {
+        p_slug: input.slug,
+        p_full_name: input.full_name,
+        p_phone_whatsapp: input.phone_whatsapp,
+        p_email: input.email ?? null,
+        p_lgpd_accepted: input.lgpd_accepted,
+        p_contact_preference: input.contact_preference,
+        p_reminders_opt_in: input.reminders_opt_in,
+        p_lang: input.lang ?? 'pt-BR',
+        p_ref: input.ref ?? null,
+      })
+
+      if (error) throw error
+      return publicJsonResponse(validatePublicBookingCompleteClientOnboardingOutput(data))
     }
 
     const { data, error } = await supabase.rpc('create_public_appointment', {

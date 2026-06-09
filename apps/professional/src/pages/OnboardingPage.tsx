@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AlertCircle,
@@ -17,10 +18,12 @@ import {
   CardTitle,
   Skeleton,
   cn,
+  Input,
 } from "@iaprafaturar/ui";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboardingSetup, type OnboardingItemStatus } from "@/hooks/useOnboardingSetup";
 import { useI18n } from "@/i18n";
+import { supabase } from "@/lib/supabase";
 
 const DEFAULT_ASSISTANT_NAME = "Rosane";
 
@@ -41,6 +44,14 @@ export default function OnboardingPage() {
     whatsappConnected,
   } = useAuth();
   const setupQuery = useOnboardingSetup(professionalId);
+  const [businessName, setBusinessName] = useState("");
+  const [phoneWhatsapp, setPhoneWhatsapp] = useState("");
+  const [businessHours, setBusinessHours] = useState("");
+  const [agentName, setAgentName] = useState(DEFAULT_ASSISTANT_NAME);
+  const [serviceName, setServiceName] = useState("");
+  const [servicePrice, setServicePrice] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const name = (session?.user?.user_metadata?.["name"] as string | undefined) ?? t("onboarding.defaultName");
   const assistantName =
@@ -48,12 +59,64 @@ export default function OnboardingPage() {
   const assistantParams = { assistantName };
   const progress = Math.min(100, Math.max(0, setupQuery.data?.progressPercent ?? 0));
   const currentStep = setupQuery.data?.session?.current_step ?? "profile_basics";
+  const hasActiveService = Boolean(setupQuery.data?.services?.length);
+
+  useEffect(() => {
+    if (!setupQuery.data) return;
+    setBusinessName(setupQuery.data.profile.business_name ?? setupQuery.data.profile.name ?? "");
+    setPhoneWhatsapp(setupQuery.data.profile.phone_whatsapp ?? "");
+    setAgentName(setupQuery.data.agent?.agent_name ?? DEFAULT_ASSISTANT_NAME);
+
+    const hours = setupQuery.data.profile.settings?.["business_hours"];
+    if (typeof hours === "object" && hours !== null && "summary" in hours) {
+      setBusinessHours(String((hours as { summary?: unknown }).summary ?? ""));
+    }
+  }, [setupQuery.data]);
 
   function statusLabel(status: OnboardingItemStatus) {
     if (status === "completed") return t("onboarding.status.completed");
     if (status === "in_progress") return t("onboarding.status.inProgress");
     if (status === "skipped") return t("onboarding.status.skipped");
     return t("onboarding.status.pending");
+  }
+
+  async function handleSaveEssentials(event: React.FormEvent) {
+    event.preventDefault();
+    setFormError(null);
+    setIsSaving(true);
+
+    try {
+      if (!hasActiveService && serviceName.trim()) {
+        const parsedPrice = Number(servicePrice.replace(",", "."));
+        const { error: serviceError } = await supabase.rpc("create_service", {
+          p_name: serviceName.trim(),
+          p_duration_minutes: 60,
+          p_price: Number.isFinite(parsedPrice) ? parsedPrice : 0,
+          p_category_id: null,
+          p_description: null,
+        });
+
+        if (serviceError) throw serviceError;
+      }
+
+      const { data, error } = await supabase.rpc("update_professional_onboarding_essentials", {
+        p_business_name: businessName.trim() || null,
+        p_phone_whatsapp: phoneWhatsapp.trim() || null,
+        p_business_hours: businessHours.trim() ? { summary: businessHours.trim() } : {},
+        p_agent_name: agentName.trim() || DEFAULT_ASSISTANT_NAME,
+      });
+
+      if (error) throw error;
+      await setupQuery.refetch();
+
+      if (typeof data === "object" && data && "completed" in data && data.completed === false) {
+        setFormError(t("onboarding.form.incomplete"));
+      }
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : t("common.error.generic"));
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   if (!professionalId || setupQuery.isLoading) {
@@ -148,6 +211,87 @@ export default function OnboardingPage() {
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("onboarding.form.title")}</CardTitle>
+            <CardDescription>{t("onboarding.form.description", assistantParams)}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSaveEssentials} className="space-y-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="space-y-1.5">
+                  <span className="text-sm font-medium text-zinc-700">{t("onboarding.form.businessName")}</span>
+                  <Input
+                    value={businessName}
+                    onChange={(event) => setBusinessName(event.target.value)}
+                    placeholder={t("onboarding.form.businessNamePlaceholder")}
+                  />
+                </label>
+                <label className="space-y-1.5">
+                  <span className="text-sm font-medium text-zinc-700">WhatsApp</span>
+                  <Input
+                    type="tel"
+                    value={phoneWhatsapp}
+                    onChange={(event) => setPhoneWhatsapp(event.target.value)}
+                    placeholder="(11) 99999-9999"
+                  />
+                </label>
+              </div>
+
+              <label className="block space-y-1.5">
+                <span className="text-sm font-medium text-zinc-700">{t("onboarding.form.hours")}</span>
+                <Input
+                  value={businessHours}
+                  onChange={(event) => setBusinessHours(event.target.value)}
+                  placeholder={t("onboarding.form.hoursPlaceholder")}
+                />
+              </label>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="space-y-1.5">
+                  <span className="text-sm font-medium text-zinc-700">{t("onboarding.form.agentName")}</span>
+                  <Input
+                    value={agentName}
+                    onChange={(event) => setAgentName(event.target.value)}
+                    placeholder={DEFAULT_ASSISTANT_NAME}
+                  />
+                </label>
+                <label className="space-y-1.5">
+                  <span className="text-sm font-medium text-zinc-700">{t("onboarding.form.firstService")}</span>
+                  <Input
+                    value={hasActiveService ? setupQuery.data?.services?.[0]?.name ?? "" : serviceName}
+                    disabled={hasActiveService}
+                    onChange={(event) => setServiceName(event.target.value)}
+                    placeholder={t("onboarding.form.firstServicePlaceholder")}
+                  />
+                </label>
+              </div>
+
+              {!hasActiveService ? (
+                <label className="block space-y-1.5">
+                  <span className="text-sm font-medium text-zinc-700">{t("onboarding.form.servicePrice")}</span>
+                  <Input
+                    inputMode="decimal"
+                    value={servicePrice}
+                    onChange={(event) => setServicePrice(event.target.value)}
+                    placeholder="120"
+                  />
+                </label>
+              ) : null}
+
+              {formError ? (
+                <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                  {formError}
+                </p>
+              ) : null}
+
+              <Button type="submit" className="w-full" size="lg" disabled={isSaving}>
+                {isSaving ? t("onboarding.form.saving") : t("onboarding.form.save")}
+              </Button>
+            </form>
           </CardContent>
         </Card>
 
