@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { BarChart3, Box, DollarSign, FileText, Settings, Sparkles } from "lucide-react";
 import { Card, CardContent, cn } from "@iaprafaturar/ui";
 import { useI18n, type TranslationKey } from "@/i18n";
+import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 
 const moreItems = [
   {
@@ -64,6 +65,8 @@ export default function MorePage() {
         <h1 className="mt-1 text-2xl font-semibold text-zinc-950">{t("more.title")}</h1>
         <p className="mt-1 text-sm text-zinc-500">{t("more.subtitle")}</p>
       </header>
+
+      <LanguageSwitcher />
 
       <section className="grid gap-3 sm:grid-cols-2">
         {moreItems.map(({ to, icon: Icon, titleKey, descriptionKey, tone }) => (

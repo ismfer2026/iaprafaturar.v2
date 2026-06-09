@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@iaprafaturar/ui";
 import { useI18n, type TranslationKey } from "@/i18n";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 const navItems = [
   { to: "/dashboard", icon: LayoutDashboard, labelKey: "nav.dashboard" },
@@ -37,8 +38,9 @@ export default function AppShell() {
   return (
     <div className="flex h-screen">
       <aside className="hidden w-56 flex-shrink-0 flex-col border-r border-zinc-200 bg-white md:flex">
-        <div className="flex h-14 items-center border-b border-zinc-200 px-4">
+        <div className="flex min-h-24 flex-col justify-center gap-3 border-b border-zinc-200 px-4 py-3">
           <span className="text-sm font-semibold text-violet-700">iaprafaturar</span>
+          <LanguageSwitcher compact />
         </div>
 
         <nav className="flex-1 space-y-0.5 overflow-y-auto p-2">

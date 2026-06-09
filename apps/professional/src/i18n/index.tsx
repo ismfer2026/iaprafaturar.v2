@@ -20,6 +20,8 @@ const ptBR = {
   "common.minutes.short": "min",
   "common.error.generic": "Não foi possível concluir a ação.",
 
+  "language.label": "Idioma",
+
   "nav.dashboard": "Dashboard",
   "nav.agenda": "Agenda",
   "nav.clients": "Clientes",
@@ -586,6 +588,7 @@ const enUS: Record<TranslationKey, string> = {
   "common.noDate": "No date",
   "common.minutes.short": "min",
   "common.error.generic": "Unable to complete the action.",
+  "language.label": "Language",
   "nav.dashboard": "Dashboard",
   "nav.agenda": "Schedule",
   "nav.clients": "Clients",
@@ -1137,6 +1140,7 @@ const es419: Record<TranslationKey, string> = {
   "common.none": "Ninguno",
   "common.noContact": "Sin contacto registrado",
   "common.noDate": "Sin fecha",
+  "language.label": "Idioma",
   "nav.agenda": "Agenda",
   "nav.clients": "Clientes",
   "nav.finance": "Finanzas",
