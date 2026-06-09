@@ -18,11 +18,14 @@ function toIsoFromLocal(value: string): string {
   return date.toISOString();
 }
 
-function actionErrorKey(error: string | undefined) {
+function actionErrorKey(error: string | undefined, mode: ActionMode) {
   if (error === "appointment_not_found") return "appointmentActions.error.notFound";
   if (error === "token_expired") return "appointmentActions.error.expired";
-  if (error === "cancel_window_closed") return "appointmentActions.error.cancelWindow";
-  if (error === "reschedule_window_closed") return "appointmentActions.error.rescheduleWindow";
+  if (error === "window_closed") {
+    return mode === "cancel" ? "appointmentActions.error.cancelWindow" : "appointmentActions.error.rescheduleWindow";
+  }
+  if (error === "already_cancelled") return "appointmentActions.error.alreadyCancelled";
+  if (error === "invalid_status") return "appointmentActions.error.invalidStatus";
   if (error === "slot_unavailable") return "appointmentActions.error.slotUnavailable";
   if (error === "scheduled_at_must_be_future") return "appointmentActions.error.futureTime";
   return "appointmentActions.error.submit";
@@ -51,7 +54,7 @@ export default function PublicAppointmentActionsPage() {
     },
     onSuccess(data) {
       if (!data.ok) {
-        setFormError(t(actionErrorKey(data.error)));
+        setFormError(t(actionErrorKey(data.error, mode)));
         return;
       }
       setSuccessKey(mode === "cancel" ? "appointmentActions.success.cancel" : "appointmentActions.success.reschedule");
