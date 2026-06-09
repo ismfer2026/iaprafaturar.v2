@@ -45,6 +45,41 @@ function addDays(date: Date, amount: number) {
   return next;
 }
 
+function addMonths(date: Date, amount: number) {
+  const next = new Date(date);
+  next.setMonth(next.getMonth() + amount);
+  return next;
+}
+
+function monthlyWeekOccurrence(firstDate: Date, monthOffset: number) {
+  const targetMonth = new Date(firstDate);
+  targetMonth.setDate(1);
+  targetMonth.setMonth(targetMonth.getMonth() + monthOffset);
+
+  const targetWeekday = firstDate.getDay();
+  const weekOrdinal = Math.floor((firstDate.getDate() - 1) / 7) + 1;
+  const firstWeekday = targetMonth.getDay();
+  const dayOffset = (targetWeekday - firstWeekday + 7) % 7;
+  const candidate = new Date(targetMonth);
+  candidate.setDate(1 + dayOffset + (weekOrdinal - 1) * 7);
+  candidate.setHours(firstDate.getHours(), firstDate.getMinutes(), 0, 0);
+
+  if (candidate.getMonth() !== targetMonth.getMonth()) {
+    candidate.setDate(candidate.getDate() - 7);
+  }
+
+  return candidate;
+}
+
+function toDateTimeLocalValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
 function formatDay(date: Date, locale: Locale) {
   return new Intl.DateTimeFormat(locale, {
     weekday: "long",
@@ -91,6 +126,7 @@ export default function AgendaPage() {
   const [isRecurring, setIsRecurring] = useState(false);
   const [seriesFrequency, setSeriesFrequency] = useState<"weekly" | "biweekly" | "monthly_day" | "monthly_week">("weekly");
   const [seriesOccurrenceCount, setSeriesOccurrenceCount] = useState("4");
+  const [seriesAdjustments, setSeriesAdjustments] = useState<Record<number, string>>({});
   const [isSessionFormOpen, setIsSessionFormOpen] = useState(false);
   const [clinicalEvolution, setClinicalEvolution] = useState("");
   const [sessionNotes, setSessionNotes] = useState("");
@@ -112,6 +148,35 @@ export default function AgendaPage() {
   const activeClientPackages = useMemo(() => {
     return (appointmentClientPackagesQuery.data ?? []).filter((item) => item.status === "ativo" && item.sessions_remaining > 0);
   }, [appointmentClientPackagesQuery.data]);
+
+  const recurringPreview = useMemo(() => {
+    if (!isRecurring) return [];
+    const count = Number(seriesOccurrenceCount);
+    if (!Number.isInteger(count) || count < 1 || count > 52) return [];
+
+    const first = new Date(`${dateKey}T${time}:00`);
+    if (Number.isNaN(first.getTime())) return [];
+
+    return Array.from({ length: count }, (_, arrayIndex) => {
+      const index = arrayIndex + 1;
+      const baseDate = (() => {
+        if (seriesFrequency === "weekly") return addDays(first, arrayIndex * 7);
+        if (seriesFrequency === "biweekly") return addDays(first, arrayIndex * 14);
+        if (seriesFrequency === "monthly_day") return addMonths(first, arrayIndex);
+        return monthlyWeekOccurrence(first, arrayIndex);
+      })();
+      const adjusted = seriesAdjustments[index];
+      const date = adjusted ? new Date(adjusted) : baseDate;
+
+      return {
+        index,
+        baseDate,
+        value: adjusted ?? toDateTimeLocalValue(baseDate),
+        scheduledAt: date.toISOString(),
+        adjusted: Boolean(adjusted),
+      };
+    });
+  }, [dateKey, isRecurring, seriesAdjustments, seriesFrequency, seriesOccurrenceCount, time]);
 
   function resetSessionForm() {
     setClinicalEvolution("");
@@ -167,6 +232,9 @@ export default function AgendaPage() {
           firstScheduledAt: scheduledAt,
           frequency: seriesFrequency,
           occurrenceCount: count,
+          adjustedOccurrences: recurringPreview
+            .filter((item) => item.adjusted)
+            .map((item) => ({ index: item.index, scheduledAt: item.scheduledAt })),
         });
 
         if (!result.ok) {
@@ -199,6 +267,7 @@ export default function AgendaPage() {
       setIsRecurring(false);
       setSeriesFrequency("weekly");
       setSeriesOccurrenceCount("4");
+      setSeriesAdjustments({});
       setIsNewOpen(false);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : t("agenda.error.create"));
@@ -210,6 +279,16 @@ export default function AgendaPage() {
     await appointmentsQuery.cancelAppointment({
       appointmentId: selectedAppointment.id,
       reason: t("agenda.cancelReason"),
+    });
+    setSelectedAppointment(null);
+  }
+
+  async function handleCancelSeries(scope: "from_here" | "all") {
+    if (!selectedAppointment?.series_id) return;
+    await appointmentsQuery.cancelAppointmentSeries({
+      seriesId: selectedAppointment.series_id,
+      scope,
+      fromAppointmentId: scope === "from_here" ? selectedAppointment.id : null,
     });
     setSelectedAppointment(null);
   }
@@ -488,9 +567,37 @@ export default function AgendaPage() {
                       <Input
                         value={seriesOccurrenceCount}
                         inputMode="numeric"
-                        onChange={(event) => setSeriesOccurrenceCount(event.target.value)}
+                        onChange={(event) => {
+                          setSeriesOccurrenceCount(event.target.value);
+                          setSeriesAdjustments({});
+                        }}
                       />
                     </label>
+                  </div>
+                ) : null}
+
+                {isRecurring && recurringPreview.length > 0 ? (
+                  <div className="mt-3 space-y-2">
+                    <p className="text-sm font-semibold text-zinc-950">{t("agenda.recurring.preview")}</p>
+                    <div className="space-y-2">
+                      {recurringPreview.map((item) => (
+                        <label key={item.index} className="grid gap-1 rounded-lg border border-zinc-200 bg-white p-2">
+                          <span className="text-xs font-medium text-zinc-500">
+                            {t("agenda.recurring.occurrence", { count: item.index })}
+                          </span>
+                          <Input
+                            type="datetime-local"
+                            value={item.value}
+                            onChange={(event) =>
+                              setSeriesAdjustments((current) => ({
+                                ...current,
+                                [item.index]: event.target.value,
+                              }))
+                            }
+                          />
+                        </label>
+                      ))}
+                    </div>
                   </div>
                 ) : null}
               </div>
@@ -580,6 +687,30 @@ export default function AgendaPage() {
                       disabled={appointmentsQuery.isRegisteringOutcome}
                     >
                       {t("agenda.markNoShow")}
+                    </Button>
+                  </div>
+                ) : null}
+
+                {selectedAppointment.series_id ? (
+                  <div className="grid gap-2 rounded-lg border border-violet-200 bg-violet-50 p-3">
+                    <p className="text-sm font-semibold text-violet-950">{t("agenda.recurring.manage")}</p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="border-violet-200 bg-white text-violet-700 hover:bg-violet-50"
+                      onClick={() => handleCancelSeries("from_here")}
+                      disabled={appointmentsQuery.isCancellingAppointmentSeries}
+                    >
+                      {t("agenda.recurring.cancelFromHere")}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="border-red-200 bg-white text-red-700 hover:bg-red-50"
+                      onClick={() => handleCancelSeries("all")}
+                      disabled={appointmentsQuery.isCancellingAppointmentSeries}
+                    >
+                      {t("agenda.recurring.cancelAll")}
                     </Button>
                   </div>
                 ) : null}

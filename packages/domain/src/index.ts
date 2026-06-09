@@ -30,6 +30,8 @@ export type {
   CreateAppointmentSeriesInput,
   CreateAppointmentSeriesOutput,
   CancelAppointmentInput,
+  CancelAppointmentSeriesInput,
+  CancelAppointmentSeriesOutput,
   AppointmentStatusOutput,
   RegisterAppointmentOutcomeInput,
 } from "./types/appointment";

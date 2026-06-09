@@ -23,7 +23,14 @@ function publicJsonResponse(body: unknown, init: ResponseInit = {}): Response {
 }
 
 function mapError(error: unknown): { status: number; body: unknown } {
-  if (error instanceof Error && error.name === 'ZodError') {
+  if (error instanceof SyntaxError) {
+    return { status: 400, body: { ok: false, error: 'invalid_input' } }
+  }
+
+  if (
+    (error instanceof Error && error.name === 'ZodError')
+    || typeof error === 'object' && error !== null && Array.isArray((error as { issues?: unknown }).issues)
+  ) {
     return { status: 400, body: { ok: false, error: 'invalid_input' } }
   }
 

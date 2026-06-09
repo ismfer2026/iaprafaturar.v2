@@ -3,6 +3,8 @@ import type {
   Appointment,
   AppointmentStatusOutput,
   CancelAppointmentInput,
+  CancelAppointmentSeriesInput,
+  CancelAppointmentSeriesOutput,
   CreateAppointmentInput,
   CreateAppointmentOutput,
   CreateAppointmentSeriesInput,
@@ -101,11 +103,43 @@ export function useAppointments(professionalId: string | null, dateKey?: string 
         p_frequency: input.frequency,
         p_occurrence_count: input.occurrenceCount,
         p_ends_at: input.endsAt ?? null,
-        p_adjusted_occurrences: [],
+        p_adjusted_occurrences: (input.adjustedOccurrences ?? []).map((item) => ({
+          index: item.index,
+          scheduled_at: item.scheduledAt,
+        })),
       });
 
       if (error) throw error;
-      return data as CreateAppointmentSeriesOutput;
+      const output = data as CreateAppointmentSeriesOutput;
+
+      if (output.ok && output.series_id) {
+        await supabase.functions.invoke("send-appointment-series-summary", {
+          body: {
+            series_id: output.series_id,
+          },
+        });
+      }
+
+      return output;
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["crm", "appointments", professionalId] }),
+        queryClient.invalidateQueries({ queryKey: crmKeys.dashboard(professionalId) }),
+      ]);
+    },
+  });
+
+  const cancelAppointmentSeries = useMutation({
+    mutationFn: async (input: CancelAppointmentSeriesInput) => {
+      const { data, error } = await supabase.rpc("cancel_appointment_series", {
+        p_series_id: input.seriesId,
+        p_scope: input.scope,
+        p_from_appointment_id: input.fromAppointmentId ?? null,
+      });
+
+      if (error) throw error;
+      return data as CancelAppointmentSeriesOutput;
     },
     onSuccess: async () => {
       await Promise.all([
@@ -143,6 +177,8 @@ export function useAppointments(professionalId: string | null, dateKey?: string 
     isCancellingAppointment: cancelAppointment.isPending,
     createAppointmentSeries: createAppointmentSeries.mutateAsync,
     isCreatingAppointmentSeries: createAppointmentSeries.isPending,
+    cancelAppointmentSeries: cancelAppointmentSeries.mutateAsync,
+    isCancellingAppointmentSeries: cancelAppointmentSeries.isPending,
     registerOutcome: registerOutcome.mutateAsync,
     isRegisteringOutcome: registerOutcome.isPending,
   };

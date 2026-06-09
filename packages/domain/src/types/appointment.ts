@@ -57,6 +57,7 @@ export interface CreateAppointmentSeriesInput {
   frequency: AppointmentSeriesFrequency;
   occurrenceCount: number;
   endsAt?: string | null;
+  adjustedOccurrences?: Array<{ index: number; scheduledAt: string }>;
 }
 
 export interface CreateAppointmentSeriesOutput {
@@ -76,6 +77,19 @@ export interface CancelAppointmentInput {
 export interface AppointmentStatusOutput {
   appointment_id: string;
   status: AppointmentStatus;
+}
+
+export interface CancelAppointmentSeriesInput {
+  seriesId: string;
+  scope: "from_here" | "all";
+  fromAppointmentId?: string | null;
+}
+
+export interface CancelAppointmentSeriesOutput {
+  ok: boolean;
+  series_id: string;
+  cancelled_count: number;
+  scope: "from_here" | "all";
 }
 
 export type AppointmentOutcome = "realizado" | "falta";
