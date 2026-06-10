@@ -32,6 +32,8 @@
     "./edge-functions/public-quote-handler.ts": "./edge-functions/public-quote-handler.ts",
     "./edge-functions/quote-dispatcher": "./edge-functions/quote-dispatcher.ts",
     "./edge-functions/quote-dispatcher.ts": "./edge-functions/quote-dispatcher.ts",
+    "./edge-functions/billing-collection-agent": "./edge-functions/billing-collection-agent.ts",
+    "./edge-functions/billing-collection-agent.ts": "./edge-functions/billing-collection-agent.ts",
     "./edge-functions/public-appointment-actions": "./edge-functions/public-appointment-actions.ts",
     "./edge-functions/public-appointment-actions.ts": "./edge-functions/public-appointment-actions.ts",
     "./edge-functions/public-create-account": "./edge-functions/public-create-account.ts",

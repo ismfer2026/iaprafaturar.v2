@@ -127,7 +127,16 @@ export function useFinancialTransactions(professionalId: string | null, filters:
       });
 
       if (error) throw error;
-      return data as ApproveBillingCollectionOutput;
+      const approval = data as ApproveBillingCollectionOutput;
+
+      const { error: functionError } = await supabase.functions.invoke("billing-collection-agent", {
+        body: {
+          transaction_id: input.transactionId,
+        },
+      });
+
+      if (functionError) throw functionError;
+      return approval;
     },
     onSuccess: invalidateFinance,
   });

@@ -184,10 +184,10 @@ function TransactionCard({
               variant="outline"
               className="gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
               onClick={() => onApproveCollection(transaction)}
-              disabled={isBusy || Boolean(transaction.collection_approved_at)}
+              disabled={isBusy || Boolean(transaction.collection_sent_at)}
             >
               <ReceiptText className="h-4 w-4" />
-              {transaction.collection_approved_at ? t("finance.action.collectionApproved") : t("finance.action.approveCollection")}
+              {transaction.collection_sent_at ? t("finance.action.collectionSent") : t("finance.action.approveCollection")}
             </Button>
           </div>
         ) : null}
