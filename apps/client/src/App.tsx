@@ -8,6 +8,8 @@ const PublicBookingPage = lazy(() => import("@/pages/PublicBookingPage"));
 const PublicClientOnboardingPage = lazy(() => import("@/pages/PublicClientOnboardingPage"));
 const PublicAnamnesePage = lazy(() => import("@/pages/PublicAnamnesePage"));
 const PublicAppointmentActionsPage = lazy(() => import("@/pages/PublicAppointmentActionsPage"));
+const PublicPackagePage = lazy(() => import("@/pages/PublicPackagePage"));
+const PublicQuotePage = lazy(() => import("@/pages/PublicQuotePage"));
 const PublicNotFoundPage = lazy(() => import("@/pages/PublicNotFoundPage"));
 
 const queryClient = new QueryClient({
@@ -41,6 +43,8 @@ function AppRoutes() {
           <Route path="/agendar/:slug" element={<PublicBookingPage />} />
           <Route path="/agendamento/:token" element={<PublicAppointmentActionsPage />} />
           <Route path="/anamnese/:token" element={<PublicAnamnesePage />} />
+          <Route path="/pacote/:slug" element={<PublicPackagePage />} />
+          <Route path="/orcamento/:token" element={<PublicQuotePage />} />
           <Route path="/" element={<Navigate to="/agendar/demo" replace />} />
           <Route path="*" element={<PublicNotFoundPage />} />
         </Routes>
