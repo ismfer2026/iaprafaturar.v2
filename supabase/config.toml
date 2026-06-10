@@ -389,6 +389,15 @@ verify_jwt = false
 [functions.public-appointment-actions]
 verify_jwt = false
 
+[functions.quote-dispatcher]
+verify_jwt = false
+
+[functions.package-alert-agent]
+verify_jwt = false
+
+[functions.upsell-agent]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327
