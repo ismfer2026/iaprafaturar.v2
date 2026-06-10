@@ -36,6 +36,8 @@
     "./edge-functions/billing-collection-agent.ts": "./edge-functions/billing-collection-agent.ts",
     "./edge-functions/package-alert-agent": "./edge-functions/package-alert-agent.ts",
     "./edge-functions/package-alert-agent.ts": "./edge-functions/package-alert-agent.ts",
+    "./edge-functions/upsell-agent": "./edge-functions/upsell-agent.ts",
+    "./edge-functions/upsell-agent.ts": "./edge-functions/upsell-agent.ts",
     "./edge-functions/public-appointment-actions": "./edge-functions/public-appointment-actions.ts",
     "./edge-functions/public-appointment-actions.ts": "./edge-functions/public-appointment-actions.ts",
     "./edge-functions/public-create-account": "./edge-functions/public-create-account.ts",
