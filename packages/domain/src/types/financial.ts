@@ -37,6 +37,9 @@ export interface FinancialTransaction {
   source: "manual" | "pdv" | "pacote" | "assinatura" | "gateway";
   notes: string | null;
   conciliacao_item_id: string | null;
+  collection_approved_at?: string | null;
+  collection_sent_at?: string | null;
+  collection_message_event_id?: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -96,4 +99,14 @@ export interface CancelFinancialTransactionInput {
 export interface CancelFinancialTransactionOutput {
   transaction_id: string;
   status: "cancelado";
+}
+
+export interface ApproveBillingCollectionOutput {
+  ok: true;
+  transaction_id: string;
+  client_id: string;
+  phone_whatsapp: string | null;
+  amount: number;
+  description: string;
+  message?: string | null;
 }

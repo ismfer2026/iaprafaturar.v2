@@ -3,6 +3,7 @@ import type {
   AnamneseTemplate,
   ClientPackageWithDetails,
   ContractWithClient,
+  ConvertApprovedQuoteOutput,
   CreateContractFromModeloInput,
   CreateContractOutput,
   CreateModeloInput,
@@ -18,6 +19,7 @@ import type {
   SellClientPackageInput,
   SellClientPackageOutput,
   SendQuoteDryRunOutput,
+  SendQuoteForApprovalOutput,
   ServicePackageWithService,
   UpdateAnamneseTemplateInput,
   UpdateAnamneseTemplateOutput,
@@ -262,12 +264,49 @@ export function useQuotes(professionalId: string | null, status?: QuoteStatus | 
     onSuccess: invalidateQuotes,
   });
 
+  const sendQuoteForApproval = useMutation({
+    mutationFn: async (quoteId: string) => {
+      const { data, error } = await supabase.rpc("send_quote_for_approval", {
+        p_quote_id: quoteId,
+      });
+
+      if (error) throw error;
+      return data as SendQuoteForApprovalOutput;
+    },
+    onSuccess: invalidateQuotes,
+  });
+
+  const convertApprovedQuote = useMutation({
+    mutationFn: async (input: { quoteId: string; target: "contract" | "package"; servicePackageId?: string | null }) => {
+      const { data, error } = await supabase.rpc("convert_approved_quote", {
+        p_quote_id: input.quoteId,
+        p_target: input.target,
+        p_service_package_id: input.servicePackageId ?? null,
+      });
+
+      if (error) throw error;
+      return data as ConvertApprovedQuoteOutput;
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        invalidateQuotes(),
+        queryClient.invalidateQueries({ queryKey: ["crm", "contracts", professionalId] }),
+        queryClient.invalidateQueries({ queryKey: ["crm", "client-packages", professionalId] }),
+        queryClient.invalidateQueries({ queryKey: ["crm", "financial-transactions", professionalId] }),
+      ]);
+    },
+  });
+
   return {
     ...query,
     createQuote: createQuote.mutateAsync,
     isCreatingQuote: createQuote.isPending,
     sendQuoteDryRun: sendQuoteDryRun.mutateAsync,
     isSendingQuoteDryRun: sendQuoteDryRun.isPending,
+    sendQuoteForApproval: sendQuoteForApproval.mutateAsync,
+    isSendingQuoteForApproval: sendQuoteForApproval.isPending,
+    convertApprovedQuote: convertApprovedQuote.mutateAsync,
+    isConvertingApprovedQuote: convertApprovedQuote.isPending,
   };
 }
 

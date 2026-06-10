@@ -1,7 +1,7 @@
 import type { FinancialPaymentMethod } from "./financial";
 
 export type ClientPackageStatus = "ativo" | "esgotado" | "expirado" | "cancelado";
-export type QuoteStatus = "rascunho" | "enviado" | "aprovado" | "rejeitado" | "expirado";
+export type QuoteStatus = "rascunho" | "enviado" | "aprovado" | "rejeitado" | "expirado" | "convertido";
 export type ModeloType =
   | "contrato"
   | "termo_lgpd"
@@ -125,6 +125,14 @@ export interface Quote {
   expires_at: string | null;
   notes: string | null;
   sent_at: string | null;
+  public_token?: string | null;
+  public_token_expires_at?: string | null;
+  approved_at?: string | null;
+  rejected_at?: string | null;
+  expired_at?: string | null;
+  followup_sent_at?: string | null;
+  pdf_url?: string | null;
+  metadata?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -151,6 +159,21 @@ export interface SendQuoteDryRunOutput {
   quote_id: string;
   status: "enviado";
   dry_run: true;
+}
+
+export interface SendQuoteForApprovalOutput {
+  quote_id: string;
+  status: "enviado";
+  public_token: string;
+  public_token_expires_at: string;
+}
+
+export interface ConvertApprovedQuoteOutput {
+  ok: true;
+  target: "contract" | "package";
+  contract_id?: string;
+  client_package_id?: string;
+  financial_transaction_id?: string;
 }
 
 export interface Modelo {

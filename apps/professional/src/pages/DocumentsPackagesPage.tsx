@@ -53,6 +53,7 @@ const QUOTE_STATUS_KEYS: Record<QuoteStatus, TranslationKey> = {
   aprovado: "docs.quote.status.aprovado",
   rejeitado: "docs.quote.status.rejeitado",
   expirado: "docs.quote.status.expirado",
+  convertido: "docs.quote.status.convertido",
 };
 
 const CLIENT_PACKAGE_STATUS_KEYS: Record<ClientPackageStatus, TranslationKey> = {
@@ -102,6 +103,11 @@ function parseJsonObject(value: string): Record<string, unknown> {
     throw new Error("invalid_json");
   }
   return parsed as Record<string, unknown>;
+}
+
+function publicQuoteLink(token: string) {
+  const baseUrl = import.meta.env["VITE_CLIENT_APP_URL"] as string | undefined;
+  return `${(baseUrl ?? "https://app.iaprafaturar.com.br").replace(/\/$/, "")}/orcamento/${token}`;
 }
 
 export default function DocumentsPackagesPage() {
@@ -463,17 +469,40 @@ export default function DocumentsPackagesPage() {
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-lg font-semibold text-zinc-950">{formatCurrency(quote.total_amount, locale)}</p>
-                  {quote.status === "rascunho" ? (
-                    <Button
-                      variant="outline"
-                      className="gap-2"
-                      disabled={quotesQuery.isSendingQuoteDryRun}
-                      onClick={() => quotesQuery.sendQuoteDryRun(quote.id)}
-                    >
-                      <Send className="h-4 w-4" />
-                      {t("docs.quote.sendDryRun")}
-                    </Button>
-                  ) : null}
+                  <div className="flex flex-wrap justify-end gap-2">
+                    {quote.public_token ? (
+                      <Button
+                        variant="outline"
+                        className="gap-2"
+                        onClick={() => navigator.clipboard.writeText(publicQuoteLink(quote.public_token as string))}
+                      >
+                        <Send className="h-4 w-4" />
+                        {t("docs.quote.copyPublicLink")}
+                      </Button>
+                    ) : null}
+                    {quote.status === "rascunho" ? (
+                      <Button
+                        variant="outline"
+                        className="gap-2"
+                        disabled={quotesQuery.isSendingQuoteForApproval}
+                        onClick={() => quotesQuery.sendQuoteForApproval(quote.id)}
+                      >
+                        <Send className="h-4 w-4" />
+                        {t("docs.quote.sendApproval")}
+                      </Button>
+                    ) : null}
+                    {quote.status === "aprovado" ? (
+                      <Button
+                        variant="outline"
+                        className="gap-2"
+                        disabled={quotesQuery.isConvertingApprovedQuote}
+                        onClick={() => quotesQuery.convertApprovedQuote({ quoteId: quote.id, target: "contract" })}
+                      >
+                        <FileSignature className="h-4 w-4" />
+                        {t("docs.quote.convertContract")}
+                      </Button>
+                    ) : null}
+                  </div>
                 </div>
               </CardContent>
             </Card>

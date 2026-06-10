@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
+  ApproveBillingCollectionOutput,
   CancelFinancialTransactionInput,
   CancelFinancialTransactionOutput,
   CreateFinancialTransactionInput,
@@ -118,6 +119,19 @@ export function useFinancialTransactions(professionalId: string | null, filters:
     onSuccess: invalidateFinance,
   });
 
+  const approveBillingCollection = useMutation({
+    mutationFn: async (input: { transactionId: string; message?: string | null }) => {
+      const { data, error } = await supabase.rpc("approve_billing_collection", {
+        p_financial_transaction_id: input.transactionId,
+        p_message: input.message ?? null,
+      });
+
+      if (error) throw error;
+      return data as ApproveBillingCollectionOutput;
+    },
+    onSuccess: invalidateFinance,
+  });
+
   return {
     ...query,
     createTransaction: createTransaction.mutateAsync,
@@ -129,6 +143,9 @@ export function useFinancialTransactions(professionalId: string | null, filters:
     cancelTransaction: cancelTransaction.mutateAsync,
     isCancellingTransaction: cancelTransaction.isPending,
     cancelTransactionError: cancelTransaction.error,
+    approveBillingCollection: approveBillingCollection.mutateAsync,
+    isApprovingBillingCollection: approveBillingCollection.isPending,
+    approveBillingCollectionError: approveBillingCollection.error,
   };
 }
 

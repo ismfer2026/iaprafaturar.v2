@@ -62,6 +62,7 @@ export type {
   MarkTransactionPaidOutput,
   CancelFinancialTransactionInput,
   CancelFinancialTransactionOutput,
+  ApproveBillingCollectionOutput,
 } from "./types/financial";
 
 export type {
@@ -97,6 +98,8 @@ export type {
   SellClientPackageInput,
   SellClientPackageOutput,
   SendQuoteDryRunOutput,
+  SendQuoteForApprovalOutput,
+  ConvertApprovedQuoteOutput,
   ServicePackage,
   ServicePackageWithService,
   UpdateAnamneseTemplateInput,

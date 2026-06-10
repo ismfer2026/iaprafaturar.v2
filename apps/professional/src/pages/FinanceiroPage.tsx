@@ -127,11 +127,13 @@ function TransactionCard({
   transaction,
   onMarkPaid,
   onCancel,
+  onApproveCollection,
   isBusy,
 }: {
   transaction: FinancialTransactionWithClient;
   onMarkPaid: (transaction: FinancialTransactionWithClient) => void;
   onCancel: (transaction: FinancialTransactionWithClient) => void;
+  onApproveCollection: (transaction: FinancialTransactionWithClient) => void;
   isBusy: boolean;
 }) {
   const { locale, t } = useI18n();
@@ -160,7 +162,7 @@ function TransactionCard({
         </div>
 
         {transaction.status === "pendente" ? (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             <Button
               className="gap-2"
               onClick={() => onMarkPaid(transaction)}
@@ -177,6 +179,15 @@ function TransactionCard({
             >
               <XCircle className="h-4 w-4" />
               {t("finance.action.cancel")}
+            </Button>
+            <Button
+              variant="outline"
+              className="gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+              onClick={() => onApproveCollection(transaction)}
+              disabled={isBusy || Boolean(transaction.collection_approved_at)}
+            >
+              <ReceiptText className="h-4 w-4" />
+              {transaction.collection_approved_at ? t("finance.action.collectionApproved") : t("finance.action.approveCollection")}
             </Button>
           </div>
         ) : null}
@@ -264,6 +275,16 @@ export default function FinanceiroPage() {
     await transactionsQuery.cancelTransaction({
       transactionId: transaction.id,
       reason: t("finance.action.cancelReason"),
+    });
+  }
+
+  async function handleApproveCollection(transaction: FinancialTransactionWithClient) {
+    await transactionsQuery.approveBillingCollection({
+      transactionId: transaction.id,
+      message: t("finance.collection.defaultMessage", {
+        amount: formatCurrency(transaction.net_amount, locale),
+        description: transaction.description,
+      }),
     });
   }
 
@@ -389,7 +410,12 @@ export default function FinanceiroPage() {
                 transaction={transaction}
                 onMarkPaid={handleMarkPaid}
                 onCancel={handleCancel}
-                isBusy={transactionsQuery.isMarkingPaid || transactionsQuery.isCancellingTransaction}
+                onApproveCollection={handleApproveCollection}
+                isBusy={
+                  transactionsQuery.isMarkingPaid ||
+                  transactionsQuery.isCancellingTransaction ||
+                  transactionsQuery.isApprovingBillingCollection
+                }
               />
             ))}
           </section>
