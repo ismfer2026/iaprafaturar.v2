@@ -31,3 +31,17 @@
 - `npx supabase functions deploy public-chat-handler --import-map supabase\functions\deno.json`
 - `npx supabase functions deploy email-dispatcher --import-map supabase\functions\deno.json`
 - `npx supabase functions deploy upsell-agent --import-map supabase\functions\deno.json`
+
+## Revisao corretiva
+
+- `20260611124500_fix_phase16_loyalty_upsell_integrity.sql` torna `record_referral_reward_delivered` idempotente por `referral_event_id`, evitando credito duplicado de pontos em chamadas repetidas ou concorrentes.
+- `upsell_metrics` agora tem trigger append-only (`prevent_upsell_metrics_change`) alinhada ao padrao de eventos/auditoria da fase.
+- `GrowthPage.tsx` renderiza apenas o painel de acao da aba ativa, evitando multiplos CTAs primarios simultaneos em mobile.
+- Strings novas da GrowthPage foram movidas para i18n em `pt-BR`, `en-US` e `es-419`.
+
+Validacoes da revisao:
+
+- `npm run typecheck --workspace @iaprafaturar/professional`
+- `npm run build --workspace @iaprafaturar/professional`
+- `npx supabase db push`
+- `npx supabase migration list` confirmou `20260611124500` local/remoto.

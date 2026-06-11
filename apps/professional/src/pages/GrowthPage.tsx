@@ -14,7 +14,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Skeleton, cn } from "@iaprafaturar/ui";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClients } from "@/hooks/useClients";
-import { useI18n } from "@/i18n";
+import { useI18n, type TranslationKey } from "@/i18n";
 import { supabase } from "@/lib/supabase";
 
 type GrowthTab = "overview" | "campaigns" | "risk" | "loyalty" | "email" | "chat" | "upsell" | "rfm";
@@ -82,15 +82,15 @@ function riskTone(risk: HealthRow["risk_level"]) {
   return "border-red-200 bg-red-50 text-red-700";
 }
 
-const tabs: Array<{ value: GrowthTab; label: string }> = [
-  { value: "overview", label: "Visao geral" },
-  { value: "campaigns", label: "Campanhas" },
-  { value: "risk", label: "Reativacao" },
-  { value: "loyalty", label: "Fidelidade" },
-  { value: "email", label: "E-mail" },
-  { value: "chat", label: "Chat publico" },
-  { value: "upsell", label: "Upsell" },
-  { value: "rfm", label: "RFM" },
+const tabs: Array<{ value: GrowthTab; labelKey: TranslationKey }> = [
+  { value: "overview", labelKey: "growth.tab.overview" },
+  { value: "campaigns", labelKey: "growth.tab.campaigns" },
+  { value: "risk", labelKey: "growth.tab.risk" },
+  { value: "loyalty", labelKey: "growth.tab.loyalty" },
+  { value: "email", labelKey: "growth.tab.email" },
+  { value: "chat", labelKey: "growth.tab.chat" },
+  { value: "upsell", labelKey: "growth.tab.upsell" },
+  { value: "rfm", labelKey: "growth.tab.rfm" },
 ];
 
 async function loadGrowth(professionalId: string) {
@@ -147,7 +147,7 @@ export default function GrowthPage() {
   const [campaignForm, setCampaignForm] = useState({ name: "", segmentType: "all", messageTemplate: "" });
   const [selectedCampaignId, setSelectedCampaignId] = useState("");
   const [emailForm, setEmailForm] = useState({ clientId: "", subject: "", body: "" });
-  const [chatConfig, setChatConfig] = useState({ enabled: true, welcomeMessage: "Ola! Como posso ajudar?", handoffMode: "shadow", rateLimit: "12" });
+  const [chatConfig, setChatConfig] = useState({ enabled: true, welcomeMessage: t("growth.chat.defaultWelcome"), handoffMode: "shadow", rateLimit: "12" });
   const [loyaltyForm, setLoyaltyForm] = useState({ clientId: "", points: "50", rewardType: "manual_credit" });
 
   const query = useQuery({
@@ -164,6 +164,7 @@ export default function GrowthPage() {
   const referrals = query.data?.referrals ?? [];
   const commercial = query.data?.commercial;
   const publicSlug = window.location.origin.includes("app.") ? "https://cliente.iaprafaturar.com.br/chat/SEU-SLUG" : "/chat/SEU-SLUG";
+  const hasActionPanel = tab === "campaigns" || tab === "email" || tab === "chat" || tab === "loyalty";
 
   const summary = useMemo(() => {
     const averageHealth = healthRows.length
@@ -195,7 +196,7 @@ export default function GrowthPage() {
       if (health.error) throw health.error;
     },
     onSuccess: () => {
-      setMessage("Scores recalculados com formula v2.");
+      setMessage(t("growth.success.scoresV2"));
       invalidate();
     },
     onError: () => setMessage(t("growth.error.scores")),
@@ -229,10 +230,10 @@ export default function GrowthPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      setMessage("Campanha segmentada processada respeitando opt-out e cooldown.");
+      setMessage(t("growth.success.campaignRun"));
       invalidate();
     },
-    onError: () => setMessage("Nao foi possivel processar a campanha."),
+    onError: () => setMessage(t("growth.error.campaignRun")),
   });
 
   const queueEmail = useMutation({
@@ -247,11 +248,11 @@ export default function GrowthPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      setMessage("E-mail enfileirado em dry-run com consentimento verificado.");
+      setMessage(t("growth.success.emailQueued"));
       setEmailForm({ clientId: "", subject: "", body: "" });
       invalidate();
     },
-    onError: () => setMessage("Nao foi possivel enfileirar o e-mail."),
+    onError: () => setMessage(t("growth.error.emailQueue")),
   });
 
   const saveChatConfig = useMutation({
@@ -267,10 +268,10 @@ export default function GrowthPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      setMessage("Chat publico atualizado.");
+      setMessage(t("growth.success.chatSaved"));
       invalidate();
     },
-    onError: () => setMessage("Nao foi possivel atualizar o chat publico."),
+    onError: () => setMessage(t("growth.error.chatSave")),
   });
 
   const redeemLoyalty = useMutation({
@@ -284,11 +285,11 @@ export default function GrowthPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      setMessage("Recompensa resgatada no ledger de fidelidade.");
+      setMessage(t("growth.success.loyaltyRedeemed"));
       setLoyaltyForm({ clientId: "", points: "50", rewardType: "manual_credit" });
       invalidate();
     },
-    onError: () => setMessage("Nao foi possivel resgatar a recompensa."),
+    onError: () => setMessage(t("growth.error.loyaltyRedeem")),
   });
 
   function submitCampaign(event: FormEvent<HTMLFormElement>) {
@@ -307,7 +308,7 @@ export default function GrowthPage() {
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-violet-700">{t("growth.eyebrow")}</p>
           <h1 className="mt-1 text-2xl font-semibold text-zinc-950">{t("growth.title")}</h1>
-          <p className="mt-1 max-w-2xl text-sm text-zinc-500">Campanhas, reativacao, fidelidade, e-mail, chat publico e upsell em uma visao operacional.</p>
+          <p className="mt-1 max-w-2xl text-sm text-zinc-500">{t("growth.subtitle.full")}</p>
         </div>
         <Button type="button" variant="outline" onClick={() => refreshScores.mutate()} disabled={refreshScores.isPending}>
           <RefreshCw className="mr-2 h-4 w-4" />
@@ -321,9 +322,9 @@ export default function GrowthPage() {
         <MetricCard icon={HeartPulse} label={t("growth.metric.health")} value={`${summary.averageHealth}/100`} />
         <MetricCard icon={Users} label={t("growth.metric.riskClients")} value={String(summary.riskClients)} />
         <MetricCard icon={Megaphone} label={t("growth.metric.campaigns")} value={String(summary.campaigns)} />
-        <MetricCard icon={Gift} label="Pontos ledger" value={String(summary.loyaltyPoints)} />
-        <MetricCard icon={Mail} label="E-mails fila" value={String(summary.emailQueued)} />
-        <MetricCard icon={TrendingUp} label="Indicacoes" value={String(summary.referrals)} />
+        <MetricCard icon={Gift} label={t("growth.metric.loyaltyPoints")} value={String(summary.loyaltyPoints)} />
+        <MetricCard icon={Mail} label={t("growth.metric.emailQueue")} value={String(summary.emailQueued)} />
+        <MetricCard icon={TrendingUp} label={t("growth.metric.referrals")} value={String(summary.referrals)} />
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-1">
@@ -337,7 +338,7 @@ export default function GrowthPage() {
               tab === item.value ? "border-violet-600 bg-violet-600 text-white" : "border-zinc-200 bg-white text-zinc-600",
             )}
           >
-            {item.label}
+            {t(item.labelKey)}
           </button>
         ))}
       </div>
@@ -346,7 +347,7 @@ export default function GrowthPage() {
       {query.isError ? <EmptyState title={t("growth.error.load")} description={t("common.error.generic")} /> : null}
 
       {!query.isLoading && !query.isError ? (
-        <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
+        <div className={cn("grid gap-4", hasActionPanel && "lg:grid-cols-[1fr_380px]")}>
           <div className="space-y-3">
             {(tab === "overview" || tab === "risk") && riskRows.map((row) => <ClientHealthCard key={row.id} row={row} />)}
 
@@ -354,15 +355,15 @@ export default function GrowthPage() {
               <Stack>
                 {campaigns.map((campaign) => <CampaignCard key={campaign.id} campaign={campaign} />)}
                 {commercial?.campaign_results.map((item) => (
-                  <InfoRow key={item.id} title={item.campaign_name ?? "Resultado"} subtitle={`${item.channel} · elegiveis ${item.eligible_count} · opt-out ${item.blocked_opt_out} · cooldown ${item.blocked_cooldown}`} right={new Date(item.created_at).toLocaleDateString()} />
+                  <InfoRow key={item.id} title={item.campaign_name ?? t("growth.info.result")} subtitle={`${item.channel} · ${t("growth.info.eligible")} ${item.eligible_count} · opt-out ${item.blocked_opt_out} · cooldown ${item.blocked_cooldown}`} right={new Date(item.created_at).toLocaleDateString()} />
                 ))}
               </Stack>
             )}
 
             {tab === "loyalty" && (
               <Stack>
-                {commercial?.loyalty.map((item) => <InfoRow key={item.id} title={item.client_name ?? "Cliente"} subtitle={`${item.reason} · ${item.source}`} right={`${item.points_delta} pts`} />)}
-                {referrals.map((event) => <InfoRow key={event.id} title={event.event_type} subtitle="Evento de indicacao" right={new Date(event.created_at).toLocaleDateString()} />)}
+                {commercial?.loyalty.map((item) => <InfoRow key={item.id} title={item.client_name ?? t("growth.info.client")} subtitle={`${item.reason} · ${item.source}`} right={`${item.points_delta} pts`} />)}
+                {referrals.map((event) => <InfoRow key={event.id} title={event.event_type} subtitle={t("growth.info.referralEvent")} right={new Date(event.created_at).toLocaleDateString()} />)}
               </Stack>
             )}
 
@@ -375,26 +376,27 @@ export default function GrowthPage() {
             {tab === "chat" && (
               <Card className="rounded-lg">
                 <CardContent className="space-y-3 p-4">
-                  <InfoRow title="Link publico do chat" subtitle={publicSlug} right={commercial?.public_chat_config?.enabled ? "ativo" : "pendente"} />
-                  <p className="text-sm text-zinc-500">O handler publico cria conversa rastreavel, lead e oportunidade no funil, com rate limit e handoff.</p>
+                  <InfoRow title={t("growth.chat.publicLink")} subtitle={publicSlug} right={commercial?.public_chat_config?.enabled ? t("common.active") : t("common.pending")} />
+                  <p className="text-sm text-zinc-500">{t("growth.chat.handlerDescription")}</p>
                 </CardContent>
               </Card>
             )}
 
             {tab === "upsell" && (
               <Stack>
-                {commercial?.upsell_metrics.map((metric) => <InfoRow key={`${metric.event_type}-${metric.reason}`} title={metric.event_type} subtitle={metric.reason ?? "sem motivo"} right={String(metric.count)} />)}
+                {commercial?.upsell_metrics.map((metric) => <InfoRow key={`${metric.event_type}-${metric.reason}`} title={metric.event_type} subtitle={metric.reason ?? t("growth.info.noReason")} right={String(metric.count)} />)}
               </Stack>
             )}
 
             {(tab === "overview" || tab === "rfm") && rfmRows.map((row) => <InfoRow key={row.id} title={clientName(row.clients)} subtitle={row.segment} right={row.rfm_code} />)}
           </div>
 
-          <div className="space-y-4">
+          {hasActionPanel ? <div className="space-y-4">
+            {tab === "campaigns" ? (
             <Card className="rounded-lg">
               <CardHeader>
                 <CardTitle>{t("growth.form.campaignTitle")}</CardTitle>
-                <CardDescription>Cria campanha e roda segmentacao com opt-out/cooldown.</CardDescription>
+                <CardDescription>{t("growth.campaign.description")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <form className="space-y-3" onSubmit={submitCampaign}>
@@ -411,48 +413,55 @@ export default function GrowthPage() {
                   </label>
                   <Button className="w-full" type="submit" disabled={createCampaign.isPending}>{t("growth.action.newCampaign")}</Button>
                 </form>
-                <SelectField label="Campanha para segmentar" value={selectedCampaignId} onChange={setSelectedCampaignId} options={[{ value: "", label: "Selecione" }, ...campaigns.map((item) => ({ value: item.id, label: item.name }))]} />
+                <SelectField label={t("growth.campaign.select")} value={selectedCampaignId} onChange={setSelectedCampaignId} options={[{ value: "", label: t("common.select") }, ...campaigns.map((item) => ({ value: item.id, label: item.name }))]} />
                 <div className="grid grid-cols-2 gap-2">
-                  <Button type="button" variant="outline" disabled={!selectedCampaignId || runCampaign.isPending} onClick={() => runCampaign.mutate({ channel: "whatsapp", dryRun: true })}>Dry WhatsApp</Button>
-                  <Button type="button" variant="outline" disabled={!selectedCampaignId || runCampaign.isPending} onClick={() => runCampaign.mutate({ channel: "email", dryRun: true })}>Dry e-mail</Button>
+                  <Button type="button" variant="outline" disabled={!selectedCampaignId || runCampaign.isPending} onClick={() => runCampaign.mutate({ channel: "whatsapp", dryRun: true })}>{t("growth.campaign.dryWhatsapp")}</Button>
+                  <Button type="button" variant="outline" disabled={!selectedCampaignId || runCampaign.isPending} onClick={() => runCampaign.mutate({ channel: "email", dryRun: true })}>{t("growth.campaign.dryEmail")}</Button>
                 </div>
               </CardContent>
             </Card>
+            ) : null}
 
+            {tab === "email" ? (
             <Card className="rounded-lg">
-              <CardHeader><CardTitle>E-mail</CardTitle><CardDescription>Fila dry-run; envio real depende de chave Resend e config.</CardDescription></CardHeader>
+              <CardHeader><CardTitle>{t("growth.email.title")}</CardTitle><CardDescription>{t("growth.email.description")}</CardDescription></CardHeader>
               <CardContent>
                 <form className="space-y-3" onSubmit={submitEmail}>
-                  <SelectField label="Cliente" value={emailForm.clientId} onChange={(clientId) => setEmailForm((current) => ({ ...current, clientId }))} options={[{ value: "", label: "Selecione" }, ...clients.map((client) => ({ value: client.id, label: client.full_name }))]} />
-                  <Field label="Assunto"><Input value={emailForm.subject} onChange={(event) => setEmailForm((current) => ({ ...current, subject: event.target.value }))} required /></Field>
+                  <SelectField label={t("growth.email.client")} value={emailForm.clientId} onChange={(clientId) => setEmailForm((current) => ({ ...current, clientId }))} options={[{ value: "", label: t("common.select") }, ...clients.map((client) => ({ value: client.id, label: client.full_name }))]} />
+                  <Field label={t("growth.email.subject")}><Input value={emailForm.subject} onChange={(event) => setEmailForm((current) => ({ ...current, subject: event.target.value }))} required /></Field>
                   <label className="block space-y-1">
-                    <span className="text-xs font-semibold text-zinc-600">Corpo</span>
+                    <span className="text-xs font-semibold text-zinc-600">{t("growth.email.body")}</span>
                     <textarea className="min-h-24 w-full rounded-md border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100" value={emailForm.body} onChange={(event) => setEmailForm((current) => ({ ...current, body: event.target.value }))} required />
                   </label>
-                  <Button className="w-full" type="submit" disabled={queueEmail.isPending}>Enfileirar dry-run</Button>
+                  <Button className="w-full" type="submit" disabled={queueEmail.isPending}>{t("growth.email.queueDryRun")}</Button>
                 </form>
               </CardContent>
             </Card>
+            ) : null}
 
+            {tab === "chat" ? (
             <Card className="rounded-lg">
-              <CardHeader><CardTitle>Chat publico</CardTitle><CardDescription>Configuracao do widget publico.</CardDescription></CardHeader>
+              <CardHeader><CardTitle>{t("growth.chat.title")}</CardTitle><CardDescription>{t("growth.chat.description")}</CardDescription></CardHeader>
               <CardContent className="space-y-3">
-                <Field label="Mensagem inicial"><Input value={chatConfig.welcomeMessage} onChange={(event) => setChatConfig((current) => ({ ...current, welcomeMessage: event.target.value }))} /></Field>
-                <SelectField label="Handoff" value={chatConfig.handoffMode} onChange={(handoffMode) => setChatConfig((current) => ({ ...current, handoffMode }))} options={[{ value: "shadow", label: "Shadow" }, { value: "active", label: "Ativo" }, { value: "human_takeover", label: "Humano" }]} />
-                <Field label="Limite por hora"><Input value={chatConfig.rateLimit} onChange={(event) => setChatConfig((current) => ({ ...current, rateLimit: event.target.value }))} /></Field>
-                <Button className="w-full" type="button" disabled={saveChatConfig.isPending} onClick={() => saveChatConfig.mutate()}>Salvar chat</Button>
+                <Field label={t("growth.chat.initialMessage")}><Input value={chatConfig.welcomeMessage} onChange={(event) => setChatConfig((current) => ({ ...current, welcomeMessage: event.target.value }))} /></Field>
+                <SelectField label={t("growth.chat.handoff")} value={chatConfig.handoffMode} onChange={(handoffMode) => setChatConfig((current) => ({ ...current, handoffMode }))} options={[{ value: "shadow", label: t("growth.chat.handoff.shadow") }, { value: "active", label: t("growth.chat.handoff.active") }, { value: "human_takeover", label: t("growth.chat.handoff.human") }]} />
+                <Field label={t("growth.chat.rateLimit")}><Input value={chatConfig.rateLimit} onChange={(event) => setChatConfig((current) => ({ ...current, rateLimit: event.target.value }))} /></Field>
+                <Button className="w-full" type="button" disabled={saveChatConfig.isPending} onClick={() => saveChatConfig.mutate()}>{t("growth.chat.save")}</Button>
               </CardContent>
             </Card>
+            ) : null}
 
+            {tab === "loyalty" ? (
             <Card className="rounded-lg">
-              <CardHeader><CardTitle>Resgate de fidelidade</CardTitle><CardDescription>Debita pontos em ledger imutavel.</CardDescription></CardHeader>
+              <CardHeader><CardTitle>{t("growth.loyalty.title")}</CardTitle><CardDescription>{t("growth.loyalty.description")}</CardDescription></CardHeader>
               <CardContent className="space-y-3">
-                <SelectField label="Cliente" value={loyaltyForm.clientId} onChange={(clientId) => setLoyaltyForm((current) => ({ ...current, clientId }))} options={[{ value: "", label: "Selecione" }, ...clients.map((client) => ({ value: client.id, label: `${client.full_name} · ${client.loyalty_points} pts` }))]} />
-                <Field label="Pontos"><Input value={loyaltyForm.points} onChange={(event) => setLoyaltyForm((current) => ({ ...current, points: event.target.value }))} /></Field>
-                <Button className="w-full" type="button" disabled={!loyaltyForm.clientId || redeemLoyalty.isPending} onClick={() => redeemLoyalty.mutate()}>Resgatar</Button>
+                <SelectField label={t("growth.loyalty.client")} value={loyaltyForm.clientId} onChange={(clientId) => setLoyaltyForm((current) => ({ ...current, clientId }))} options={[{ value: "", label: t("common.select") }, ...clients.map((client) => ({ value: client.id, label: `${client.full_name} · ${client.loyalty_points} pts` }))]} />
+                <Field label={t("growth.loyalty.points")}><Input value={loyaltyForm.points} onChange={(event) => setLoyaltyForm((current) => ({ ...current, points: event.target.value }))} /></Field>
+                <Button className="w-full" type="button" disabled={!loyaltyForm.clientId || redeemLoyalty.isPending} onClick={() => redeemLoyalty.mutate()}>{t("growth.loyalty.redeem")}</Button>
               </CardContent>
             </Card>
-          </div>
+            ) : null}
+          </div> : null}
         </div>
       ) : null}
     </div>
