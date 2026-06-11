@@ -1167,11 +1167,11 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 - Métricas de conversão por canal
 
 **DoD Fase 16:**
-- [ ] Lead entra no funil e evolui por estágios com histórico
-- [ ] Campanha segmentada respeita opt-out/cooldown e mostra resultado
-- [ ] Upsell só dispara quando elegível e com canal permitido
-- [ ] Chat público cria conversa rastreável e permite handoff
-- [ ] E-mail respeita consentimento/opt-out e registra auditoria
+- [x] Lead entra no funil e evolui por estágios com histórico
+- [x] Campanha segmentada respeita opt-out/cooldown e mostra resultado
+- [x] Upsell só dispara quando elegível e com canal permitido
+- [x] Chat público cria conversa rastreável e permite handoff
+- [x] E-mail respeita consentimento/opt-out e registra auditoria
 
 ---
 

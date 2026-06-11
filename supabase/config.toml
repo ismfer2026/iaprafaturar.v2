@@ -404,6 +404,12 @@ verify_jwt = false
 [functions.upsell-agent]
 verify_jwt = false
 
+[functions.public-chat-handler]
+verify_jwt = false
+
+[functions.email-dispatcher]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

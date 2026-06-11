@@ -11,6 +11,7 @@ const PublicAppointmentActionsPage = lazy(() => import("@/pages/PublicAppointmen
 const PublicPackagePage = lazy(() => import("@/pages/PublicPackagePage"));
 const PublicQuotePage = lazy(() => import("@/pages/PublicQuotePage"));
 const ClientPortalPage = lazy(() => import("@/pages/ClientPortalPage"));
+const PublicChatPage = lazy(() => import("@/pages/PublicChatPage"));
 const PublicNotFoundPage = lazy(() => import("@/pages/PublicNotFoundPage"));
 
 const queryClient = new QueryClient({
@@ -46,6 +47,7 @@ function AppRoutes() {
           <Route path="/anamnese/:token" element={<PublicAnamnesePage />} />
           <Route path="/pacote/:slug" element={<PublicPackagePage />} />
           <Route path="/orcamento/:token" element={<PublicQuotePage />} />
+          <Route path="/chat/:slug" element={<PublicChatPage />} />
           <Route path="/portal/home" element={<ClientPortalPage />} />
           <Route path="/portal/historico" element={<ClientPortalPage />} />
           <Route path="/portal/pacotes" element={<ClientPortalPage />} />
