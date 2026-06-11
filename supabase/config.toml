@@ -383,6 +383,9 @@ deno_version = 2
 [functions.public-booking-handler]
 verify_jwt = false
 
+[functions.client-portal-handler]
+verify_jwt = false
+
 [functions.anamnese-public-handler]
 verify_jwt = false
 
@@ -393,6 +396,9 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.package-alert-agent]
+verify_jwt = false
+
+[functions.finance-receipt-agent]
 verify_jwt = false
 
 [functions.upsell-agent]

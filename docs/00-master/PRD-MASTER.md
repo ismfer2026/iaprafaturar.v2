@@ -1138,10 +1138,10 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 - Extrato com origem PDV/cobrança/pacote
 
 **DoD Fase 15:**
-- [ ] Venda no PDV cria transação financeira auditável
-- [ ] Comprovante pode ser enviado pela instância do profissional
-- [ ] Importação CSV/OFX sugere matches sem aplicar automaticamente sem confirmação
-- [ ] Configurações financeiras afetam lançamentos futuros sem reescrever histórico
+- [x] Venda no PDV cria transação financeira auditável
+- [x] Comprovante pode ser enviado pela instância do profissional
+- [x] Importação CSV/OFX sugere matches sem aplicar automaticamente sem confirmação
+- [x] Configurações financeiras afetam lançamentos futuros sem reescrever histórico
 
 ---
 

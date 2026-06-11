@@ -4,15 +4,12 @@ import { Bell, ShieldCheck, UserRound, type LucideIcon } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Skeleton, cn } from "@iaprafaturar/ui";
 import { useI18n } from "@/i18n";
-import {
-  completeClientOnboarding,
-  getPublicBookingContext
-} from "@/lib/public-booking-api";
-import { buildPublicSearchParams, readRefParam } from "@/lib/public-flow-state";
+import { getPublicBookingContext } from "@/lib/public-booking-api";
+import { startClientPortalSession } from "@/lib/client-portal-api";
+import { readRefParam } from "@/lib/public-flow-state";
 import { PublicLayout } from "./PublicLayout";
 import type {
-  PublicBookingContextOutput,
-  PublicBookingErrorOutput
+  PublicBookingContextOutput
 } from "@iaprafaturar/contracts/edge-functions/public-booking-handler";
 
 type ContactPreference = "whatsapp" | "email" | "both";
@@ -21,7 +18,7 @@ function isContext(data: unknown): data is PublicBookingContextOutput {
   return Boolean(data && typeof data === "object" && "professional" in data);
 }
 
-function getOnboardingErrorKey(error: PublicBookingErrorOutput["error"]) {
+function getOnboardingErrorKey(error: string) {
   if (error === "not_found") return "clientOnboarding.error.load";
   if (error === "invalid_input") return "clientOnboarding.error.invalidInput";
   return "clientOnboarding.error.submit";
@@ -51,16 +48,12 @@ export default function PublicClientOnboardingPage() {
   const context = isContext(contextQuery.data) ? contextQuery.data : null;
 
   const submitMutation = useMutation({
-    mutationFn: () => completeClientOnboarding({
+    mutationFn: () => startClientPortalSession({
       slug,
       fullName,
       phoneWhatsapp,
       ...(email.trim() ? { email: email.trim() } : {}),
-      lgpdAccepted: true,
-      contactPreference,
-      remindersOptIn,
-      lang: locale,
-      ...(ref ? { ref } : {})
+      lang: locale
     }),
     onSuccess(data) {
       if ("ok" in data && data.ok === false) {
@@ -68,7 +61,7 @@ export default function PublicClientOnboardingPage() {
         return;
       }
 
-      navigate(`/agendar/${slug}?${buildPublicSearchParams({ lang: locale, ...(ref ? { ref } : {}) })}`);
+      navigate(`/portal/${data.session_token}`, { replace: true });
     },
     onError() {
       setFormError(t("clientOnboarding.error.submit"));

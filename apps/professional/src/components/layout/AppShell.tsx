@@ -2,6 +2,7 @@ import { Outlet, NavLink } from "react-router-dom";
 import {
   BarChart3,
   CalendarDays,
+  Columns3,
   DollarSign,
   LayoutDashboard,
   MoreHorizontal,
@@ -20,6 +21,7 @@ const navItems = [
   { to: "/clientes", icon: Users, labelKey: "nav.clients" },
   { to: "/financeiro", icon: DollarSign, labelKey: "nav.finance" },
   { to: "/conversas", icon: MessageSquare, labelKey: "nav.conversations" },
+  { to: "/funil", icon: Columns3, labelKey: "nav.funnel" },
   { to: "/growth", icon: TrendingUp, labelKey: "nav.growth" },
   { to: "/relatorios", icon: BarChart3, labelKey: "nav.reports" },
 ] satisfies Array<{ to: string; icon: typeof LayoutDashboard; labelKey: TranslationKey }>;

@@ -10,6 +10,7 @@ const PublicAnamnesePage = lazy(() => import("@/pages/PublicAnamnesePage"));
 const PublicAppointmentActionsPage = lazy(() => import("@/pages/PublicAppointmentActionsPage"));
 const PublicPackagePage = lazy(() => import("@/pages/PublicPackagePage"));
 const PublicQuotePage = lazy(() => import("@/pages/PublicQuotePage"));
+const ClientPortalPage = lazy(() => import("@/pages/ClientPortalPage"));
 const PublicNotFoundPage = lazy(() => import("@/pages/PublicNotFoundPage"));
 
 const queryClient = new QueryClient({
@@ -45,6 +46,12 @@ function AppRoutes() {
           <Route path="/anamnese/:token" element={<PublicAnamnesePage />} />
           <Route path="/pacote/:slug" element={<PublicPackagePage />} />
           <Route path="/orcamento/:token" element={<PublicQuotePage />} />
+          <Route path="/portal/home" element={<ClientPortalPage />} />
+          <Route path="/portal/historico" element={<ClientPortalPage />} />
+          <Route path="/portal/pacotes" element={<ClientPortalPage />} />
+          <Route path="/portal/agendar" element={<ClientPortalPage />} />
+          <Route path="/portal/onboarding" element={<ClientPortalPage />} />
+          <Route path="/portal/:token" element={<ClientPortalPage />} />
           <Route path="/" element={<Navigate to="/agendar/demo" replace />} />
           <Route path="*" element={<PublicNotFoundPage />} />
         </Routes>

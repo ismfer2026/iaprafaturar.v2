@@ -21,6 +21,7 @@ const FinanceiroPage = lazy(() => import("@/pages/FinanceiroPage"));
 const ConversasPage = lazy(() => import("@/pages/ConversasPage"));
 const DocumentsPackagesPage = lazy(() => import("@/pages/DocumentsPackagesPage"));
 const GrowthPage = lazy(() => import("@/pages/GrowthPage"));
+const FunilPage = lazy(() => import("@/pages/FunilPage"));
 const ReportsPage = lazy(() => import("@/pages/ReportsPage"));
 const MorePage = lazy(() => import("@/pages/MorePage"));
 
@@ -69,6 +70,7 @@ function AppRoutes() {
                 <Route path="/servicos" element={<ServicesPage />} />
                 <Route path="/financeiro" element={<FinanceiroPage />} />
                 <Route path="/conversas" element={<ConversasPage />} />
+                <Route path="/funil" element={<FunilPage />} />
                 <Route path="/growth" element={<GrowthPage />} />
                 <Route path="/relatorios" element={<ReportsPage />} />
                 <Route path="/documentos-pacotes" element={<DocumentsPackagesPage />} />

@@ -28,6 +28,9 @@ export const crmKeys = {
     ] as const,
   financialSummary: (professionalId: string | null, dateFrom?: string | null, dateTo?: string | null) =>
     ["crm", "financial-summary", professionalId, dateFrom ?? "open", dateTo ?? "open"] as const,
+  financeSettings: (professionalId: string | null) => ["crm", "finance-settings", professionalId] as const,
+  reconciliationItems: (professionalId: string | null) => ["crm", "reconciliation-items", professionalId] as const,
+  funnelBoard: (professionalId: string | null) => ["crm", "funnel-board", professionalId] as const,
   conversations: (professionalId: string | null) => ["crm", "conversations", professionalId] as const,
   conversationMessages: (professionalId: string | null, conversationId: string | null) =>
     ["crm", "conversation-messages", professionalId, conversationId] as const,

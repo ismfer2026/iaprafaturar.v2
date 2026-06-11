@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { BarChart3, Box, DollarSign, FileText, Settings, Sparkles } from "lucide-react";
+import { BarChart3, Box, Columns3, DollarSign, FileText, Settings, Sparkles } from "lucide-react";
 import { Card, CardContent, cn } from "@iaprafaturar/ui";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
@@ -18,6 +18,13 @@ const moreItems = [
     titleKey: "growth.title",
     descriptionKey: "more.growth.description",
     tone: "bg-violet-50 text-violet-700",
+  },
+  {
+    to: "/funil",
+    icon: Columns3,
+    titleKey: "funnel.title",
+    descriptionKey: "more.funnel.description",
+    tone: "bg-teal-50 text-teal-700",
   },
   {
     to: "/relatorios",

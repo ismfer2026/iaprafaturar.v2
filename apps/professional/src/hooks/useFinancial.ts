@@ -3,14 +3,19 @@ import type {
   ApproveBillingCollectionOutput,
   CancelFinancialTransactionInput,
   CancelFinancialTransactionOutput,
+  CreatePosSaleInput,
+  CreatePosSaleOutput,
   CreateFinancialTransactionInput,
   CreateFinancialTransactionOutput,
+  FinanceSettings,
   FinancialSummary,
   FinancialTransactionStatus,
   FinancialTransactionType,
   FinancialTransactionWithClient,
+  ImportReconciliationInput,
   MarkTransactionPaidInput,
   MarkTransactionPaidOutput,
+  ReconciliationItem,
 } from "@iaprafaturar/domain";
 import { supabase } from "@/lib/supabase";
 import { crmKeys } from "./queryKeys";
@@ -78,6 +83,8 @@ export function useFinancialTransactions(professionalId: string | null, filters:
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["crm", "financial-transactions", professionalId] }),
       queryClient.invalidateQueries({ queryKey: ["crm", "financial-summary", professionalId] }),
+      queryClient.invalidateQueries({ queryKey: crmKeys.financeSettings(professionalId) }),
+      queryClient.invalidateQueries({ queryKey: crmKeys.reconciliationItems(professionalId) }),
       queryClient.invalidateQueries({ queryKey: crmKeys.dashboard(professionalId) }),
       queryClient.invalidateQueries({ queryKey: ["crm", "sessions", professionalId] }),
     ]);
@@ -141,6 +148,38 @@ export function useFinancialTransactions(professionalId: string | null, filters:
     onSuccess: invalidateFinance,
   });
 
+  const createPosSale = useMutation({
+    mutationFn: async (input: CreatePosSaleInput) => {
+      const { data, error } = await supabase.rpc("create_pos_sale", {
+        p_client_id: input.clientId ?? null,
+        p_items: input.items,
+        p_payment_method: input.paymentMethod,
+        p_discount_amount: input.discountAmount ?? 0,
+        p_bank_account_id: input.bankAccountId ?? null,
+        p_category_id: input.categoryId ?? null,
+        p_cost_center_id: input.costCenterId ?? null,
+        p_notes: input.notes ?? null,
+      });
+
+      if (error) throw error;
+      return data as CreatePosSaleOutput;
+    },
+    onSuccess: invalidateFinance,
+  });
+
+  const markReceiptSent = useMutation({
+    mutationFn: async (transactionId: string) => {
+      const { data, error } = await supabase.functions.invoke("finance-receipt-agent", {
+        body: {
+          transaction_id: transactionId,
+        },
+      });
+      if (error) throw error;
+      return data as { ok: boolean; transaction_id: string; status: string; message_event_id?: string | null };
+    },
+    onSuccess: invalidateFinance,
+  });
+
   return {
     ...query,
     createTransaction: createTransaction.mutateAsync,
@@ -155,6 +194,11 @@ export function useFinancialTransactions(professionalId: string | null, filters:
     approveBillingCollection: approveBillingCollection.mutateAsync,
     isApprovingBillingCollection: approveBillingCollection.isPending,
     approveBillingCollectionError: approveBillingCollection.error,
+    createPosSale: createPosSale.mutateAsync,
+    isCreatingPosSale: createPosSale.isPending,
+    createPosSaleError: createPosSale.error,
+    markReceiptSent: markReceiptSent.mutateAsync,
+    isMarkingReceiptSent: markReceiptSent.isPending,
   };
 }
 
@@ -178,4 +222,130 @@ export function useFinancialSummary(
       return data as FinancialSummary;
     },
   });
+}
+
+export function useFinanceSettings(professionalId: string | null) {
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
+    queryKey: crmKeys.financeSettings(professionalId),
+    enabled: Boolean(professionalId),
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_finance_settings");
+      if (error) throw error;
+      return data as FinanceSettings;
+    },
+  });
+
+  const saveSettings = useMutation({
+    mutationFn: async (input: Partial<FinanceSettings>) => {
+      const { data, error } = await supabase.rpc("upsert_finance_settings", {
+        p_bank_accounts: input.bankAccounts ?? [],
+        p_categories: input.categories ?? [],
+        p_cost_centers: input.costCenters ?? [],
+        p_gateways: input.gateways ?? [],
+      });
+      if (error) throw error;
+      return data as FinanceSettings;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: crmKeys.financeSettings(professionalId) });
+    },
+  });
+
+  const saveProduct = useMutation({
+    mutationFn: async (input: {
+      productId?: string | null;
+      name: string;
+      sku?: string | null;
+      unitPrice: number;
+      stockQuantity: number;
+      minStock?: number;
+      isActive?: boolean;
+    }) => {
+      const { data, error } = await supabase.rpc("upsert_product", {
+        p_product_id: input.productId ?? null,
+        p_name: input.name,
+        p_sku: input.sku ?? null,
+        p_unit_price: input.unitPrice,
+        p_stock_quantity: input.stockQuantity,
+        p_min_stock: input.minStock ?? 0,
+        p_is_active: input.isActive ?? true,
+      });
+      if (error) throw error;
+      return data as { product_id: string };
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: crmKeys.financeSettings(professionalId) });
+    },
+  });
+
+  return {
+    ...query,
+    saveSettings: saveSettings.mutateAsync,
+    isSavingSettings: saveSettings.isPending,
+    saveProduct: saveProduct.mutateAsync,
+    isSavingProduct: saveProduct.isPending,
+  };
+}
+
+export function useReconciliation(professionalId: string | null) {
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
+    queryKey: crmKeys.reconciliationItems(professionalId),
+    enabled: Boolean(professionalId),
+    queryFn: async () => {
+      if (!professionalId) throw new Error("professionalId is required");
+      const { data, error } = await supabase
+        .from("finance_reconciliation_items")
+        .select("*")
+        .eq("professional_id", professionalId)
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      return (data ?? []) as ReconciliationItem[];
+    },
+  });
+
+  const invalidate = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: crmKeys.reconciliationItems(professionalId) }),
+      queryClient.invalidateQueries({ queryKey: ["crm", "financial-transactions", professionalId] }),
+    ]);
+  };
+
+  const importItems = useMutation({
+    mutationFn: async (input: ImportReconciliationInput) => {
+      const { data, error } = await supabase.rpc("import_reconciliation_items", {
+        p_bank_account_id: input.bankAccountId ?? null,
+        p_file_name: input.fileName,
+        p_file_type: input.fileType,
+        p_items: input.items,
+      });
+      if (error) throw error;
+      return data as { import_id: string; item_count: number; auto_applied: false };
+    },
+    onSuccess: invalidate,
+  });
+
+  const confirmMatch = useMutation({
+    mutationFn: async (input: { reconciliationItemId: string; transactionId: string }) => {
+      const { data, error } = await supabase.rpc("confirm_reconciliation_match", {
+        p_reconciliation_item_id: input.reconciliationItemId,
+        p_financial_transaction_id: input.transactionId,
+      });
+      if (error) throw error;
+      return data as { reconciliation_item_id: string; transaction_id: string; status: "confirmed" };
+    },
+    onSuccess: invalidate,
+  });
+
+  return {
+    ...query,
+    importItems: importItems.mutateAsync,
+    isImportingItems: importItems.isPending,
+    confirmMatch: confirmMatch.mutateAsync,
+    isConfirmingMatch: confirmMatch.isPending,
+  };
 }
