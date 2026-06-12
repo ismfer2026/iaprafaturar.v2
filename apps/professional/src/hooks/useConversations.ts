@@ -16,6 +16,19 @@ export interface ConversationListItem {
   client_name: string | null;
 }
 
+export const URGENT_THRESHOLD_HOURS = 2;
+
+export function isConversationUrgent(
+  conversation: Pick<ConversationListItem, "unread_count" | "last_message_at">,
+  now: Date = new Date(),
+): boolean {
+  if (conversation.unread_count <= 0) return false;
+  if (!conversation.last_message_at) return false;
+
+  const elapsedMs = now.getTime() - new Date(conversation.last_message_at).getTime();
+  return elapsedMs > URGENT_THRESHOLD_HOURS * 60 * 60 * 1000;
+}
+
 export interface ConversationMessage {
   id: string;
   conversation_id: string | null;

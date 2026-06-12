@@ -13,6 +13,7 @@ import {
 } from "@iaprafaturar/ui";
 import { useAuth } from "@/contexts/AuthContext";
 import {
+  isConversationUrgent,
   useConversationMessages,
   useConversations,
   useConversationActions,
@@ -129,6 +130,15 @@ export default function ConversasPage() {
 
   const conversationList = useMemo(() => conversations.data ?? [], [conversations.data]);
 
+  const orderedConversationList = useMemo(() => {
+    const urgent: ConversationListItem[] = [];
+    const rest: ConversationListItem[] = [];
+    for (const conversation of conversationList) {
+      (isConversationUrgent(conversation) ? urgent : rest).push(conversation);
+    }
+    return [...urgent, ...rest];
+  }, [conversationList]);
+
   useEffect(() => {
     if (!selectedConversationId && conversationList.length > 0) {
       setSelectedConversationId(conversationList[0]?.id ?? null);
@@ -139,6 +149,8 @@ export default function ConversasPage() {
     () => conversationList.find((conversation) => conversation.id === selectedConversationId) ?? null,
     [conversationList, selectedConversationId],
   );
+
+  const isSelectedUrgent = selectedConversation ? isConversationUrgent(selectedConversation) : false;
 
   const messages = useConversationMessages(professionalId, selectedConversationId);
   const selectedSuggestion = useMemo(
@@ -211,11 +223,12 @@ export default function ConversasPage() {
             </Card>
           ) : null}
 
-          {conversationList.map((conversation) => {
+          {orderedConversationList.map((conversation) => {
             const isSelected = conversation.id === selectedConversationId;
             const hasSuggestion = (suggestions.data ?? []).some(
               (suggestion) => suggestion.conversation_id === conversation.id,
             );
+            const isUrgent = isConversationUrgent(conversation);
 
             return (
               <button
@@ -227,6 +240,7 @@ export default function ConversasPage() {
                 }}
                 className={cn(
                   "block w-full rounded-lg border bg-white p-4 text-left shadow-sm transition-colors",
+                  isUrgent && "border-l-4 border-l-rose-500",
                   isSelected
                     ? "border-violet-300 ring-2 ring-violet-100"
                     : "border-zinc-200 hover:border-zinc-300",
@@ -246,8 +260,14 @@ export default function ConversasPage() {
                   </span>
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <Badge variant={conversation.rosane_status === "shadow" ? "warning" : "secondary"}>
-                    {t(CONVERSATION_STATUS_KEYS[conversation.rosane_status])}
+                  <Badge
+                    variant={
+                      isUrgent ? "urgent" : conversation.rosane_status === "shadow" ? "warning" : "secondary"
+                    }
+                  >
+                    {isUrgent
+                      ? t("conversations.status.urgent")
+                      : t(CONVERSATION_STATUS_KEYS[conversation.rosane_status])}
                   </Badge>
                   {hasSuggestion ? <Badge variant="warning">{t("conversations.shadow.badge")}</Badge> : null}
                 </div>
@@ -294,8 +314,18 @@ export default function ConversasPage() {
                 </div>
                 <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant={selectedConversation.rosane_status === "human_takeover" ? "warning" : "secondary"}>
-                      {t(CONVERSATION_STATUS_KEYS[selectedConversation.rosane_status])}
+                    <Badge
+                      variant={
+                        isSelectedUrgent
+                          ? "urgent"
+                          : selectedConversation.rosane_status === "human_takeover"
+                            ? "warning"
+                            : "secondary"
+                      }
+                    >
+                      {isSelectedUrgent
+                        ? t("conversations.status.urgent")
+                        : t(CONVERSATION_STATUS_KEYS[selectedConversation.rosane_status])}
                     </Badge>
                     {actions.actionError ? (
                       <span className="text-xs text-red-600">{t("conversations.actions.error")}</span>

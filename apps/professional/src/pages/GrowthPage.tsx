@@ -4,7 +4,6 @@ import {
   HeartPulse,
   Mail,
   Megaphone,
-  MessageSquare,
   RefreshCw,
   TrendingUp,
   Users,
@@ -157,7 +156,7 @@ export default function GrowthPage() {
   });
 
   const clients = clientsQuery.data ?? [];
-  const healthRows = query.data?.health ?? [];
+  const healthRows = useMemo(() => query.data?.health ?? [], [query.data?.health]);
   const riskRows = healthRows.filter((row) => row.risk_level === "risk" || row.risk_level === "churn");
   const rfmRows = query.data?.rfm ?? [];
   const campaigns = query.data?.campaigns ?? [];

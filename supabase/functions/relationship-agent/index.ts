@@ -10,7 +10,7 @@ import { jsonResponse } from '../_shared/http.ts'
 import { claimIdempotency } from '../_shared/idempotency.ts'
 import { assertInternalAuth } from '../_shared/internal-auth.ts'
 import { getConnectedProfessionalWhatsappInstance } from '../_shared/professional-instance.ts'
-import { getRosaneAgentConfig } from '../_shared/rosane-agent-config.ts'
+import { getRosaneAgentConfig, isWithinWorkingHours } from '../_shared/rosane-agent-config.ts'
 import { sendMessageCore } from '../_shared/send-message-core.ts'
 import { createServiceClient } from '../_shared/supabase.ts'
 
@@ -118,6 +118,17 @@ Deno.serve(async (request) => {
       }
 
       try {
+        let config = configCache.get(client.professional_id)
+        if (!config) {
+          config = await getRosaneAgentConfig(supabase, client.professional_id)
+          configCache.set(client.professional_id, config)
+        }
+
+        if (!isWithinWorkingHours(config.workingHours, config.respondOutsideHours)) {
+          skipped += 1
+          continue
+        }
+
         let settings = settingsCache.get(client.professional_id)
         if (settings === undefined) {
           const { data: professionalSettings, error: settingsError } = await supabase
@@ -168,12 +179,6 @@ Deno.serve(async (request) => {
         if (!claim.claimed) {
           skipped += 1
           continue
-        }
-
-        let config = configCache.get(client.professional_id)
-        if (!config) {
-          config = await getRosaneAgentConfig(supabase, client.professional_id)
-          configCache.set(client.professional_id, config)
         }
 
         const conversation = await resolveOrCreateWhatsappConversation(supabase, {

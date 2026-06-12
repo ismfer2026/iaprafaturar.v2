@@ -84,14 +84,14 @@ CRM com IA para profissionais de saúde e beleza (fisioterapeutas, dentistas, nu
 |---|---|---|
 | Claude Sonnet 4.6 | `claude-sonnet-4-6` | Rosane (conversas, agentes) |
 | Claude Haiku 4.5 | `claude-haiku-4-5-20251001` | Classificação, respostas rápidas |
-| Claude Opus 4.8 | `claude-opus-4-8` | Síntese de persona, análise profunda |
+| Claude Opus 4.8 | `claude-opus-4-8` | Análise profunda, segmentação de público (personas) |
 | text-embedding-ada-002 | OpenAI | Embeddings para RAG/memória |
 
 Seleção por tarefa:
 - Classificação de intenção → Haiku
 - Resposta ao cliente → Sonnet
 - Análise semanal de negócio → Opus
-- Síntese de persona → Opus
+- Segmentação de público (personas, ver seção 2 do PRD-MASTER) → Opus
 
 ### WhatsApp
 
@@ -316,27 +316,24 @@ Entregas:
 **Objetivo**: Rosane automatiza o ciclo completo — confirmar, lembrar, pós-atendimento, NPS.
 
 Entregas:
-- Edge Functions: `lembrete-agent`, `appointment-confirmation-agent`, `relacionamento-agent`
-- Edge Functions: `pos-atendimento-agent`, `objecoes-agent`, `cadastro-agent`
+- Edge Functions: `lembrete-agent`, `appointment-confirmation-agent`, `relacionamento-agent`, `pos-atendimento-agent`
 - Crons: D-1 lembretes (`lembrete-d1`), D+1 pós-atendimento, confirmação (`agenda-confirmacao`)
-- Tabelas: `rlhf_rules`, `rlhf_diffs`, `personas`, `anamnese_templates`, `anamnese_fichas`
 - `shadow_suggestions` com interface de aprovação
 - `professional_agents`: configuração completa (tom, horário, agentes ativos, casual)
-- Crons RLHF: `rlhf-extraction` (2h), `rlhf-drift-analysis` (6h), `persona-synthesis` (3h), `persona-rollback-monitor` (*/15), `drift-decay-enforce`
 - Inbox omnichannel: hierarquia (urgente/rose, shadow/amber, normal) — J3
 - Shadow mode UI: aprovar/editar/ignorar inline — J24
 - Configurações → Assistente (Rosane): shadow mode toggle, agentes ativos, horário
 - Página /agentes no CRM — J20, J21
-- Fluxo público `/anamnese/:token` — J5
 
 ### FASE 6 — PWA Cliente (Semanas 15–16)
 **Objetivo**: Cliente agenda, preenche anamnese e recebe confirmações sem instalar nada.
 
 Entregas:
 - `apps/client` configurado como PWA com manifest dinâmico por slug
-- Tabelas: `registration_links`, `registration_sessions`, `client_pwa_sessions`
+- Tabelas: `registration_links`, `registration_sessions`, `client_pwa_sessions`, `anamnese_templates`, `anamnese_fichas`
 - Public endpoints: GET `/agendar/:slug`, POST `/appointments/public`
 - Edge Function: `anamnese-public-handler`
+- Fluxo público `/anamnese/:token` — J5
 - Magic link auth (OTP WhatsApp → link → auto-login)
 - `/agendar/:slug` — brand color da clínica, serviços, horários — J32
 - Home do cliente: agenda, histórico — J28, J29
@@ -424,6 +421,7 @@ Sem data. Não bloqueia nenhuma fase anterior.
 - Partner API (`api_keys`, webhooks, rate limiting)
 - Automações avançadas (funil de vendas profissional, conciliação bancária OFX/CSV avançada)
 - NFS-e integrado
+- Sistema de aprendizado por feedback (RLHF): `rlhf_rules`, `rlhf_diffs`, `personas` (tabela de prompts dinâmicos), crons de extração/drift/síntese/rollback de persona. Não faz parte do escopo do PRD-MASTER atual — avaliar como iniciativa futura se houver demanda por personalização automática do tom da Rosane por clínica.
 
 ---
 
@@ -466,11 +464,6 @@ _Auditado contra os 33 crons ativos de produção v1 (2026-06-04). v2 mantém 33
 
 | Job | Função / SQL | Schedule | Descrição |
 |---|---|---|---|
-| `rlhf-extraction` | `rlhf-extraction` | `0 2 * * *` | Extrai diffs de shadow suggestions → rlhf_diffs |
-| `rlhf-drift-analysis` | `rlhf-drift-analysis` | `0 6 * * *` | Analisa drift entre persona atual e sugestões recentemente rejeitadas |
-| `persona-synthesis` | `persona-synthesis` | `0 3 * * *` | Sintetiza nova persona a partir de rlhf_rules acumuladas |
-| `persona-rollback-monitor` | SQL inline (UPDATE personas) | `*/15 * * * *` | Reverte persona se 3+ rejeições em 15 min durante rollback window |
-| `drift-decay-enforce` | SQL inline (UPDATE professionals) | `0 10 * * *` | Força shadow_mode_forced=true se alerta de drift sem resolução há 7+ dias |
 | `audit-conversations` | `audit-conversations` | `0 1 * * *` | Auditoria de conversas (anomalias, compliance, PII check) |
 
 ### 8.5 Inteligência e Analytics
@@ -515,9 +508,7 @@ ALTER TABLE appointments
   ADD COLUMN feedback_status      text;           -- agenda-confirmacao verifica este campo
 
 -- professionals
-ALTER TABLE professionals
-  ADD COLUMN shadow_mode_forced   boolean DEFAULT false;  -- drift-decay-enforce ativa
-  -- Nota: account_type = alias de plan_type. Usar plan_type diretamente no v2.
+-- Nota: account_type = alias de plan_type. Usar plan_type diretamente no v2.
 
 -- professional_agents
 ALTER TABLE professional_agents
@@ -529,12 +520,6 @@ ALTER TABLE professional_agents
 ALTER TABLE clients
   ADD COLUMN opted_out_casual  boolean DEFAULT false,
   ADD COLUMN last_casual_at    timestamptz;
-
--- personas
-ALTER TABLE personas
-  ADD COLUMN rollback_until             timestamptz,
-  ADD COLUMN previous_synthesized_rules text,
-  ADD COLUMN prompt_version             integer DEFAULT 1;
 
 -- credit_wallets
 ALTER TABLE credit_wallets
@@ -549,7 +534,7 @@ CREATE TABLE professional_alerts (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   professional_id uuid NOT NULL REFERENCES professionals(id) ON DELETE RESTRICT,
   type            text NOT NULL,
-  -- 'rlhf_drift_alert' | 'health_score_drop' | 'trial_expiring'
+  -- 'health_score_drop' | 'trial_expiring'
   -- 'low_credits' | 'whatsapp_disconnected' | 'appointment_no_show_spike'
   title           text NOT NULL,
   body            text,

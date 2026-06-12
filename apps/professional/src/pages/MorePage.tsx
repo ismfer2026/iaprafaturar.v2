@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
-import { BarChart3, Box, Columns3, CreditCard, DollarSign, FileText, Settings, Sparkles } from "lucide-react";
-import { Card, CardContent, cn } from "@iaprafaturar/ui";
+import { BarChart3, Box, Columns3, CreditCard, DollarSign, FileText, LogOut, Settings, Sparkles } from "lucide-react";
+import { Button, Card, CardContent, cn } from "@iaprafaturar/ui";
+import { useAuth } from "@/contexts/AuthContext";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 
@@ -71,6 +72,7 @@ const moreItems = [
 
 export default function MorePage() {
   const { t } = useI18n();
+  const { signOut } = useAuth();
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 px-4 py-5 sm:px-6">
@@ -99,6 +101,11 @@ export default function MorePage() {
           </Link>
         ))}
       </section>
+
+      <Button type="button" variant="outline" className="w-full justify-center gap-2 sm:w-fit" onClick={() => void signOut()}>
+        <LogOut className="h-4 w-4" />
+        {t("more.signOut")}
+      </Button>
     </div>
   );
 }
