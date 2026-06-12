@@ -95,6 +95,7 @@ export const professionalRoutes: ProfessionalRouteDefinition[] = [
     icon: Box,
     moreNav: { descriptionKey: "more.services.description", tone: "bg-zinc-100 text-zinc-700" },
   },
+  { path: "/servicos/novo", component: ServicesPage, ownerPhase: 19 },
   {
     path: "/financeiro",
     component: FinanceiroPage,

@@ -1,5 +1,5 @@
-import { useMemo, useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { ArrowLeft, Clock, Pencil, Plus, Trash2 } from "lucide-react";
 import {
   Badge,
@@ -47,12 +47,16 @@ function formatCurrency(value: number, locale: string) {
 
 export default function ServicesPage() {
   const { locale, t } = useI18n();
-  const { professionalId } = useAuth();
+  const { professionalId, role } = useAuth();
+  const location = useLocation();
   const servicesQuery = useServices(professionalId);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [form, setForm] = useState<ServiceFormState>(EMPTY_FORM);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const isGestor = role === "gestor";
+  const isNewRoute = location.pathname === "/servicos/novo";
 
   const activeServices = useMemo(() => {
     return (servicesQuery.data?.services ?? []).filter((service) => service.is_active);
@@ -64,6 +68,15 @@ export default function ServicesPage() {
     setFormError(null);
     setIsSheetOpen(true);
   }
+
+  useEffect(() => {
+    if (isNewRoute && isGestor) {
+      setEditingService(null);
+      setForm(EMPTY_FORM);
+      setFormError(null);
+      setIsSheetOpen(true);
+    }
+  }, [isNewRoute, isGestor]);
 
   function openEditSheet(service: Service) {
     setEditingService(service);
@@ -132,6 +145,23 @@ export default function ServicesPage() {
     await servicesQuery.deactivateService(serviceId);
   }
 
+  if (isNewRoute && !isGestor) {
+    return (
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-5 px-4 py-5 md:px-6">
+        <Button asChild variant="ghost" className="w-fit gap-2 px-0">
+          <Link to="/servicos">
+            <ArrowLeft className="h-4 w-4" />
+            {t("services.back")}
+          </Link>
+        </Button>
+        <div className="rounded-lg border border-dashed border-zinc-300 bg-white p-6 text-center">
+          <h2 className="text-base font-semibold text-zinc-950">{t("services.blocked.title")}</h2>
+          <p className="mt-1 text-sm text-zinc-500">{t("services.blocked.description")}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-5 px-4 py-5 md:px-6">
       <header className="space-y-4">
@@ -148,10 +178,12 @@ export default function ServicesPage() {
             <h1 className="mt-1 text-3xl font-semibold tracking-tight text-zinc-950">{t("services.title")}</h1>
             <p className="mt-1 text-sm text-zinc-500">{t("services.subtitle")}</p>
           </div>
-          <Button className="shrink-0 gap-2" onClick={openCreateSheet}>
-            <Plus className="h-4 w-4" />
-            {t("common.new")}
-          </Button>
+          {isGestor ? (
+            <Button className="shrink-0 gap-2" onClick={openCreateSheet}>
+              <Plus className="h-4 w-4" />
+              {t("common.new")}
+            </Button>
+          ) : null}
         </div>
       </header>
 
@@ -172,10 +204,12 @@ export default function ServicesPage() {
         <div className="rounded-lg border border-dashed border-zinc-300 bg-white p-6 text-center">
           <h2 className="text-base font-semibold text-zinc-950">{t("services.empty.title")}</h2>
           <p className="mt-1 text-sm text-zinc-500">{t("services.empty.description")}</p>
-          <Button className="mt-4 gap-2" onClick={openCreateSheet}>
-            <Plus className="h-4 w-4" />
-            {t("services.new")}
-          </Button>
+          {isGestor ? (
+            <Button className="mt-4 gap-2" onClick={openCreateSheet}>
+              <Plus className="h-4 w-4" />
+              {t("services.new")}
+            </Button>
+          ) : null}
         </div>
       ) : null}
 
@@ -210,21 +244,23 @@ export default function ServicesPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <Button variant="outline" className="gap-2" onClick={() => openEditSheet(service)}>
-                    <Pencil className="h-4 w-4" />
-                    {t("services.editAction")}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="gap-2 border-red-200 text-red-700 hover:bg-red-50"
-                    onClick={() => handleDeactivate(service.id)}
-                    disabled={servicesQuery.isDeactivatingService}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    {t("services.deactivate")}
-                  </Button>
-                </div>
+                {isGestor ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="outline" className="gap-2" onClick={() => openEditSheet(service)}>
+                      <Pencil className="h-4 w-4" />
+                      {t("services.editAction")}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="gap-2 border-red-200 text-red-700 hover:bg-red-50"
+                      onClick={() => handleDeactivate(service.id)}
+                      disabled={servicesQuery.isDeactivatingService}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      {t("services.deactivate")}
+                    </Button>
+                  </div>
+                ) : null}
               </CardContent>
             </Card>
           ))}
