@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Bot, CalendarClock, FileSignature, MessageCircle, Save, ShieldCheck, SlidersHorizontal, Users } from "lucide-react";
+import { ArrowLeft, Bot, CalendarClock, MessageCircle, Save, ShieldCheck } from "lucide-react";
 import {
   Badge,
   Button,
@@ -27,7 +27,7 @@ const AGENT_OPTIONS = [
 
 export default function ConfiguracoesPage() {
   const { t } = useI18n();
-  const { professionalId, role } = useAuth();
+  const { professionalId } = useAuth();
   const settings = useAssistantSettings(professionalId);
   const [form, setForm] = useState<AssistantSettingsInput>({
     agentName: "Rosane",
@@ -90,6 +90,13 @@ export default function ConfiguracoesPage() {
 
   return (
     <div className="space-y-4 p-4 pb-24 md:pb-4">
+      <Button asChild variant="ghost" className="w-fit gap-2 px-0">
+        <Link to="/configuracoes">
+          <ArrowLeft className="h-4 w-4" />
+          {t("team.back")}
+        </Link>
+      </Button>
+
       <header>
         <p className="text-sm font-medium text-violet-700">{t("settings.eyebrow")}</p>
         <h1 className="mt-1 text-2xl font-semibold text-zinc-950">{t("settings.title", assistantParams)}</h1>
@@ -100,65 +107,6 @@ export default function ConfiguracoesPage() {
         <div className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">
           {t("settings.error.load")}
         </div>
-      )}
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 text-violet-700">
-                <SlidersHorizontal className="h-5 w-5" />
-              </div>
-              <div>
-                <CardTitle>{t("settings.services.title")}</CardTitle>
-                <CardDescription>{t("settings.services.description")}</CardDescription>
-              </div>
-            </div>
-            <Button asChild variant="outline">
-              <Link to="/servicos">{t("common.open")}</Link>
-            </Button>
-          </div>
-        </CardHeader>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-700">
-                <FileSignature className="h-5 w-5" />
-              </div>
-              <div>
-                <CardTitle>{t("settings.documentsPackages.title")}</CardTitle>
-                <CardDescription>{t("settings.documentsPackages.description")}</CardDescription>
-              </div>
-            </div>
-            <Button asChild variant="outline">
-              <Link to="/documentos/pacotes">{t("common.open")}</Link>
-            </Button>
-          </div>
-        </CardHeader>
-      </Card>
-
-      {role === "gestor" && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-indigo-700">
-                  <Users className="h-5 w-5" />
-                </div>
-                <div>
-                  <CardTitle>{t("settings.team.title")}</CardTitle>
-                  <CardDescription>{t("settings.team.description")}</CardDescription>
-                </div>
-              </div>
-              <Button asChild variant="outline">
-                <Link to="/configuracoes/equipe">{t("common.open")}</Link>
-              </Button>
-            </div>
-          </CardHeader>
-        </Card>
       )}
 
       <Card>

@@ -45,4 +45,6 @@ export const crmKeys = {
     ["crm", "contracts", professionalId, clientId ?? "all"] as const,
   anamneseTemplates: (professionalId: string | null) => ["crm", "anamnese-templates", professionalId] as const,
   teamMembers: (professionalId: string | null) => ["crm", "team-members", professionalId] as const,
+  notificationSettings: (professionalId: string | null) => ["crm", "notification-settings", professionalId] as const,
+  scheduleSettings: (professionalId: string | null) => ["crm", "schedule-settings", professionalId] as const,
 };

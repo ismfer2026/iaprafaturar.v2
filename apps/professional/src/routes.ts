@@ -43,7 +43,10 @@ const OnboardingPage = lazy(() => import("@/pages/OnboardingPage"));
 const DashboardPage = lazy(() => import("@/pages/DashboardPage"));
 const AgendaPage = lazy(() => import("@/pages/AgendaPage"));
 const ConfiguracoesPage = lazy(() => import("@/pages/ConfiguracoesPage"));
+const ConfiguracoesIndexPage = lazy(() => import("@/pages/ConfiguracoesIndexPage"));
 const ConfiguracoesEquipePage = lazy(() => import("@/pages/ConfiguracoesEquipePage"));
+const ConfiguracoesNotificacoesPage = lazy(() => import("@/pages/ConfiguracoesNotificacoesPage"));
+const ConfiguracoesAgendaPage = lazy(() => import("@/pages/ConfiguracoesAgendaPage"));
 const ClientsPage = lazy(() => import("@/pages/ClientsPage"));
 const ClientProfilePage = lazy(() => import("@/pages/ClientProfilePage"));
 const ServicesPage = lazy(() => import("@/pages/ServicesPage"));
@@ -174,13 +177,15 @@ export const professionalRoutes: ProfessionalRouteDefinition[] = [
   },
   {
     path: "/configuracoes",
-    component: ConfiguracoesPage,
+    component: ConfiguracoesIndexPage,
     ownerPhase: 19,
     labelKey: "nav.settings",
     icon: Settings,
     moreNav: { descriptionKey: "more.settings.description", tone: "bg-slate-100 text-slate-700" },
   },
   { path: "/configuracoes/equipe", component: ConfiguracoesEquipePage, ownerPhase: 19 },
+  { path: "/configuracoes/notificacoes", component: ConfiguracoesNotificacoesPage, ownerPhase: 19 },
+  { path: "/configuracoes/agenda", component: ConfiguracoesAgendaPage, ownerPhase: 19 },
   {
     path: "/mais",
     component: MorePage,

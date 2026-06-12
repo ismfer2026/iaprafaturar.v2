@@ -109,6 +109,28 @@ export type {
 } from "./types/whatsapp-events";
 
 export type {
+  SettingsRole,
+  NotificationChannels,
+  NotificationEvents,
+  NotificationQuietHours,
+  NotificationSettings,
+  NotificationSettingsValue,
+  ProfessionalNotificationSettings,
+  UpsertNotificationSettingsOutput,
+  UpsertMyNotificationPreferencesOutput,
+  Weekday,
+  TimeInterval,
+  BusinessHoursException,
+  BusinessHours,
+  BusinessHoursValue,
+  ScheduleTeamMemberSummary,
+  ProfessionalScheduleSettings,
+  UpsertBusinessHoursOutput,
+  UpsertTeamMemberBusinessHoursInput,
+  UpsertTeamMemberBusinessHoursOutput,
+} from "./types/settings";
+
+export type {
   AnamneseTemplate,
   ClientPackage,
   ClientPackageStatus,
