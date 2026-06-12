@@ -1,4 +1,5 @@
-import { Activity, AlertTriangle, CalendarDays, DollarSign, ReceiptText, Users, WalletCards } from "lucide-react";
+import { Activity, AlertTriangle, CalendarDays, ClipboardList, DollarSign, ReceiptText, Stethoscope, TrendingUp, Users, WalletCards } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Badge, Card, CardContent, CardHeader, CardTitle, Skeleton } from "@iaprafaturar/ui";
 import type { DashboardAppointment, DashboardAttentionItem } from "@iaprafaturar/domain";
 import { useAuth } from "@/contexts/AuthContext";
@@ -53,6 +54,33 @@ function AppointmentRow({ appointment }: { appointment: DashboardAppointment }) 
 
 function AttentionRow({ item }: { item: DashboardAttentionItem }) {
   const { locale, t } = useI18n();
+
+  if (item.reason === "anamnese_pending_review") {
+    const content = (
+      <div className="flex gap-3">
+        <Stethoscope className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-700" />
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-amber-950">
+            {item.client_name ?? t("dashboard.appointment.defaultClient")}
+          </p>
+          <p className="mt-1 text-sm text-amber-800">{t("dashboard.attention.anamnesePending")}</p>
+        </div>
+      </div>
+    );
+
+    if (!item.client_id) {
+      return <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-3">{content}</div>;
+    }
+
+    return (
+      <Link
+        to={`/clientes/${item.client_id}/anamnese`}
+        className="block rounded-lg border border-amber-200 bg-amber-50 px-3 py-3"
+      >
+        {content}
+      </Link>
+    );
+  }
 
   return (
     <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-3">
@@ -184,6 +212,34 @@ export default function DashboardPage() {
                 {formatCurrency(pulse.monthExpensesPaid, locale)}
               </p>
               <p className="text-sm text-zinc-500">{t("dashboard.pulse.monthExpensesPaid")}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="grid gap-3 md:grid-cols-2">
+        <Card className="rounded-lg border-zinc-200">
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-50 text-violet-700">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-2xl font-semibold text-zinc-950">
+                {pulse.openOpportunitiesCount} · {formatCurrency(pulse.openOpportunitiesValue, locale)}
+              </p>
+              <p className="text-sm text-zinc-500">{t("dashboard.pulse.openOpportunities")}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-lg border-zinc-200">
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 text-amber-700">
+              <ClipboardList className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-2xl font-semibold text-zinc-950">{pulse.pendingAnamneseReviewCount}</p>
+              <p className="text-sm text-zinc-500">{t("dashboard.pulse.pendingAnamneseReview")}</p>
             </div>
           </CardContent>
         </Card>

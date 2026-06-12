@@ -16,8 +16,8 @@ export interface DashboardAttentionItem {
   client_id: string | null;
   client_name: string | null;
   scheduled_at: string;
-  status: AppointmentStatus;
-  reason: "appointment_overdue";
+  status: AppointmentStatus | null;
+  reason: "appointment_overdue" | "anamnese_pending_review";
 }
 
 export interface DashboardPulse {
@@ -27,6 +27,9 @@ export interface DashboardPulse {
   monthRevenuePaid: number;
   monthRevenuePending: number;
   monthExpensesPaid: number;
+  openOpportunitiesCount: number;
+  openOpportunitiesValue: number;
+  pendingAnamneseReviewCount: number;
 }
 
 export interface DashboardSummary {
