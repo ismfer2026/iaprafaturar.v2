@@ -3,7 +3,7 @@
 ## Implementado
 
 - Billing SaaS: `platform_plans`, `platform_billing_products`, `professional_subscriptions`, `subscription_events`, `processed_stripe_events`.
-- Stripe: `platform-create-checkout-session` e `platform-stripe-webhook` com bloqueio de `free_internal` publico e idempotencia por evento Stripe.
+- Stripe: `platform-checkout` e `platform-stripe-webhook` com bloqueio de `free_internal` publico e idempotencia por evento Stripe.
 - Trial/read-only: `professional_access_states`, `entitlement_snapshots`, `platform_can_write` e triggers de bloqueio em tabelas principais.
 - Creditos IA: wallets, transacoes, reservas, usage events e RPCs `reserve_ai_credits`, `commit_ai_credits`, `release_ai_credits`.
 - Admin: concessao `free_internal`, adicao de creditos e paginas `/planos`, `/embaixadores`, `/agentes`, `/melhorias`.
@@ -27,10 +27,10 @@
 - `npm run typecheck --workspace @iaprafaturar/admin`
 - `npm run build --workspace @iaprafaturar/professional`
 - `npm run build --workspace @iaprafaturar/admin`
-- `deno check supabase\functions\platform-create-checkout-session\index.ts`
+- `deno check supabase\functions\platform-checkout\index.ts`
 - `deno check supabase\functions\platform-stripe-webhook\index.ts`
 - `npx supabase db push`
-- `npx supabase functions deploy platform-create-checkout-session --import-map supabase\functions\deno.json`
+- `npx supabase functions deploy platform-checkout --import-map supabase\functions\deno.json`
 - `npx supabase functions deploy platform-stripe-webhook --import-map supabase\functions\deno.json`
 - `npx supabase functions deploy admin-ai-gateway --import-map supabase\functions\deno.json`
 

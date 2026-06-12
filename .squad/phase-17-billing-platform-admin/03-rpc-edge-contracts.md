@@ -4,7 +4,7 @@
 
 Edge Functions:
 
-- `platform-create-checkout-session`
+- `platform-checkout`
   - auth: profissional autenticado.
   - input: `plan_slug | credit_pack_slug`, billing cycle, success/cancel URL.
   - regra: nao aceita `free_internal`.
