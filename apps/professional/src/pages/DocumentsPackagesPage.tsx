@@ -15,7 +15,7 @@ import {
   Skeleton,
   cn,
 } from "@iaprafaturar/ui";
-import type { ClientPackageStatus, ContractStatus, FinancialPaymentMethod, ModeloType, QuoteItem, QuoteStatus } from "@iaprafaturar/domain";
+import type { AnamneseTemplate, ClientPackageStatus, ContractStatus, FinancialPaymentMethod, ModeloType, QuoteItem, QuoteStatus } from "@iaprafaturar/domain";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClients } from "@/hooks/useClients";
 import {
@@ -128,7 +128,8 @@ function publicQuoteLink(token: string) {
 
 export default function DocumentsPackagesPage() {
   const { locale, t } = useI18n();
-  const { professionalId } = useAuth();
+  const { professionalId, role } = useAuth();
+  const isGestor = role === "gestor";
   const location = useLocation();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>(() => documentTabFromPath(location.pathname));
@@ -161,6 +162,25 @@ export default function DocumentsPackagesPage() {
   const modelos = useMemo(() => modelosQuery.data ?? [], [modelosQuery.data]);
   const contracts = useMemo(() => contractsQuery.data ?? [], [contractsQuery.data]);
   const anamneseTemplates = useMemo(() => anamneseTemplatesQuery.data ?? [], [anamneseTemplatesQuery.data]);
+
+  const currentAnamneseTemplates = useMemo(
+    () => anamneseTemplates.filter((template) => template.is_current),
+    [anamneseTemplates],
+  );
+
+  const anamneseTemplateHistory = useMemo(() => {
+    const map = new Map<string, AnamneseTemplate[]>();
+    for (const template of anamneseTemplates) {
+      if (template.is_current) continue;
+      const list = map.get(template.root_template_id) ?? [];
+      list.push(template);
+      map.set(template.root_template_id, list);
+    }
+    for (const list of map.values()) {
+      list.sort((a, b) => b.version - a.version);
+    }
+    return map;
+  }, [anamneseTemplates]);
 
   const [packageForm, setPackageForm] = useState({
     name: "",
@@ -205,13 +225,13 @@ export default function DocumentsPackagesPage() {
   });
 
   const selectedTemplate = useMemo(() => {
-    return anamneseTemplates.find((template) => template.id === anamneseForm.templateId) ?? null;
-  }, [anamneseForm.templateId, anamneseTemplates]);
+    return currentAnamneseTemplates.find((template) => template.id === anamneseForm.templateId) ?? null;
+  }, [anamneseForm.templateId, currentAnamneseTemplates]);
 
   function openSheet(mode: SheetMode) {
     setFormError(null);
     if (mode === "anamnese") {
-      const template = anamneseTemplates[0];
+      const template = currentAnamneseTemplates[0];
       setAnamneseForm({
         templateId: template?.id ?? "",
         name: template?.name ?? "",
@@ -357,15 +377,37 @@ export default function DocumentsPackagesPage() {
     if (!anamneseForm.templateId) return setFormError(t("docs.error.templateRequired"));
     if (!anamneseForm.name.trim()) return setFormError(t("docs.error.nameRequired"));
 
+    let fields: Record<string, unknown>;
+    try {
+      fields = parseJsonObject(anamneseForm.fields);
+    } catch {
+      setFormError(t("docs.error.jsonInvalid"));
+      return;
+    }
+
     try {
       await anamneseTemplatesQuery.updateAnamneseTemplate({
         templateId: anamneseForm.templateId,
         name: anamneseForm.name.trim(),
-        fields: parseJsonObject(anamneseForm.fields),
+        fields,
       });
       setSheetMode(null);
     } catch (err) {
-      setFormError(err instanceof Error && err.message === "invalid_json" ? t("docs.error.jsonInvalid") : friendlyErrorMessage(err, t, "docs.error.save"));
+      if (err instanceof Error && err.message.startsWith("anamnese_template_has_fichas")) {
+        try {
+          await anamneseTemplatesQuery.createAnamneseTemplateVersion({
+            templateId: anamneseForm.templateId,
+            name: anamneseForm.name.trim(),
+            fields,
+          });
+          setSheetMode(null);
+          return;
+        } catch (versionErr) {
+          setFormError(friendlyErrorMessage(versionErr, t, "docs.error.save"));
+          return;
+        }
+      }
+      setFormError(friendlyErrorMessage(err, t, "docs.error.save"));
     }
   }
 
@@ -576,23 +618,52 @@ export default function DocumentsPackagesPage() {
 
       {activeTab === "anamnese" ? (
         <section className="space-y-4">
-          <Button className="gap-2" onClick={() => openSheet("anamnese")} disabled={!anamneseTemplates.length}>
-            <Stethoscope className="h-4 w-4" />
-            {t("docs.anamnese.edit")}
-          </Button>
-          {anamneseTemplates.map((template) => (
-            <Card key={template.id} className="rounded-lg border-zinc-200">
-              <CardContent className="space-y-2 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-base font-semibold text-zinc-950">{template.name}</h2>
-                  {template.is_default ? <Badge>{t("docs.anamnese.default")}</Badge> : null}
-                </div>
-                <pre className="max-h-44 overflow-auto rounded-md bg-zinc-50 p-3 text-xs text-zinc-600">
-                  {JSON.stringify(template.fields, null, 2)}
-                </pre>
-              </CardContent>
-            </Card>
-          ))}
+          {isGestor ? (
+            <Button className="gap-2" onClick={() => openSheet("anamnese")} disabled={!currentAnamneseTemplates.length}>
+              <Stethoscope className="h-4 w-4" />
+              {t("docs.anamnese.edit")}
+            </Button>
+          ) : null}
+          {currentAnamneseTemplates.map((template) => {
+            const history = anamneseTemplateHistory.get(template.root_template_id) ?? [];
+            return (
+              <Card key={template.id} className="rounded-lg border-zinc-200">
+                <CardContent className="space-y-2 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-base font-semibold text-zinc-950">{template.name}</h2>
+                      <Badge className="border border-zinc-200 bg-white text-zinc-600">
+                        {t("docs.anamnese.version", { version: template.version })}
+                      </Badge>
+                    </div>
+                    {template.is_default ? <Badge>{t("docs.anamnese.default")}</Badge> : null}
+                  </div>
+                  <pre className="max-h-44 overflow-auto rounded-md bg-zinc-50 p-3 text-xs text-zinc-600">
+                    {JSON.stringify(template.fields, null, 2)}
+                  </pre>
+                  {history.length ? (
+                    <details className="rounded-md border border-zinc-200 p-2">
+                      <summary className="cursor-pointer text-sm font-medium text-zinc-700">
+                        {t("docs.anamnese.history.title")}
+                      </summary>
+                      <ul className="mt-2 space-y-1 text-xs text-zinc-500">
+                        {history.map((version) => (
+                          <li key={version.id} className="flex items-center justify-between gap-2">
+                            <span>{t("docs.anamnese.version", { version: version.version })}</span>
+                            <span>
+                              {version.published_at
+                                ? new Date(version.published_at).toLocaleDateString(locale)
+                                : "-"}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  ) : null}
+                </CardContent>
+              </Card>
+            );
+          })}
         </section>
       ) : null}
 
@@ -682,18 +753,18 @@ export default function DocumentsPackagesPage() {
               <SheetHeader><SheetTitle>{t("docs.anamnese.edit")}</SheetTitle></SheetHeader>
               <div className="space-y-4 px-4 py-2">
                 <SelectInput label={t("docs.form.template")} value={anamneseForm.templateId} onChange={(templateId) => {
-                  const template = anamneseTemplates.find((item) => item.id === templateId);
+                  const template = currentAnamneseTemplates.find((item) => item.id === templateId);
                   setAnamneseForm({
                     templateId,
                     name: template?.name ?? "",
                     fields: template ? JSON.stringify(template.fields, null, 2) : "",
                   });
-                }} options={anamneseTemplates.map((template) => ({ value: template.id, label: template.name }))} />
+                }} options={currentAnamneseTemplates.map((template) => ({ value: template.id, label: template.name }))} />
                 <TextInput label={t("docs.form.name")} value={anamneseForm.name} onChange={(name) => setAnamneseForm((current) => ({ ...current, name }))} />
                 <TextAreaInput label={t("docs.form.fieldsJson")} value={anamneseForm.fields || (selectedTemplate ? JSON.stringify(selectedTemplate.fields, null, 2) : "")} onChange={(fields) => setAnamneseForm((current) => ({ ...current, fields }))} rows={12} />
                 <FormError message={formError} />
               </div>
-              <SheetFooter><SheetActions onCancel={() => setSheetMode(null)} isBusy={anamneseTemplatesQuery.isUpdatingAnamneseTemplate} /></SheetFooter>
+              <SheetFooter><SheetActions onCancel={() => setSheetMode(null)} isBusy={anamneseTemplatesQuery.isUpdatingAnamneseTemplate || anamneseTemplatesQuery.isCreatingAnamneseTemplateVersion} /></SheetFooter>
             </form>
           ) : null}
         </SheetContent>

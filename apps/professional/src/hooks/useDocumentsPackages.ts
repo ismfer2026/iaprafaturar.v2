@@ -4,6 +4,8 @@ import type {
   ClientPackageWithDetails,
   ContractWithClient,
   ConvertApprovedQuoteOutput,
+  CreateAnamneseTemplateVersionInput,
+  CreateAnamneseTemplateVersionOutput,
   CreateContractFromModeloInput,
   CreateContractOutput,
   CreateModeloInput,
@@ -451,6 +453,7 @@ export function useAnamneseTemplates(professionalId: string | null) {
         p_template_id: input.templateId,
         p_name: input.name,
         p_fields: input.fields,
+        p_is_default: input.isDefault ?? false,
       });
 
       if (error) throw error;
@@ -461,9 +464,28 @@ export function useAnamneseTemplates(professionalId: string | null) {
     },
   });
 
+  const createAnamneseTemplateVersion = useMutation({
+    mutationFn: async (input: CreateAnamneseTemplateVersionInput) => {
+      const { data, error } = await supabase.rpc("create_anamnese_template_version", {
+        p_template_id: input.templateId,
+        p_name: input.name,
+        p_fields: input.fields,
+        p_is_default: input.isDefault ?? false,
+      });
+
+      if (error) throw error;
+      return data as CreateAnamneseTemplateVersionOutput;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: crmKeys.anamneseTemplates(professionalId) });
+    },
+  });
+
   return {
     ...query,
     updateAnamneseTemplate: updateAnamneseTemplate.mutateAsync,
     isUpdatingAnamneseTemplate: updateAnamneseTemplate.isPending,
+    createAnamneseTemplateVersion: createAnamneseTemplateVersion.mutateAsync,
+    isCreatingAnamneseTemplateVersion: createAnamneseTemplateVersion.isPending,
   };
 }

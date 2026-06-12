@@ -251,6 +251,11 @@ export interface AnamneseTemplate {
   name: string;
   fields: Record<string, unknown>;
   is_default: boolean;
+  version: number;
+  previous_version_id: string | null;
+  root_template_id: string;
+  published_at: string | null;
+  is_current: boolean;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -260,9 +265,23 @@ export interface UpdateAnamneseTemplateInput {
   templateId: string;
   name: string;
   fields: Record<string, unknown>;
+  isDefault?: boolean;
 }
 
 export interface UpdateAnamneseTemplateOutput {
   template_id: string;
   template: AnamneseTemplate;
+}
+
+export interface CreateAnamneseTemplateVersionInput {
+  templateId: string;
+  name: string;
+  fields: Record<string, unknown>;
+  isDefault?: boolean;
+}
+
+export interface CreateAnamneseTemplateVersionOutput {
+  template_id: string;
+  template: AnamneseTemplate;
+  previous_version_id: string;
 }

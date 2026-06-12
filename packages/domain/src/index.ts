@@ -116,6 +116,8 @@ export type {
   Contract,
   ContractStatus,
   ContractWithClient,
+  CreateAnamneseTemplateVersionInput,
+  CreateAnamneseTemplateVersionOutput,
   CreateContractFromModeloInput,
   CreateContractOutput,
   CreateModeloInput,
