@@ -77,15 +77,14 @@ Rotas públicas voltadas ao cliente, como agendamento, anamnese, pacote, orçame
 | `/growth` | `GrowthHub` | gestor | J37, J58 |
 | `/planos` | `Planos` | gestor | J11 |
 | `/mais` | `Mais` | operacional | navegação |
-| `/configuracoes` | `Configuracoes` | gestor | J18 |
-| `/configuracoes/anamnese` | `AnamneseBuilder` | gestor | J5 |
-| `/configuracoes/agenda` | `ConfiguracoesAgenda` | gestor | J18 |
-| `/configuracoes/servicos` | `ConfiguracoesServicos` | gestor | J18 |
-| `/configuracoes/notificacoes` | `ConfiguracoesNotificacoes` | gestor | J18 |
-| `/configuracoes/equipe` | `ConfiguracoesEquipe` | gestor | J18 |
-| `/configuracoes/clinica` | `ConfiguracoesClinica` | gestor | J18 |
+| `/configuracoes` | `ConfiguracoesIndexPage` | operacional | J18 |
+| `/configuracoes/agenda` | `ConfiguracoesAgendaPage` | operacional (seções de clínica/equipe só gestor) | J18 |
+| `/configuracoes/notificacoes` | `ConfiguracoesNotificacoesPage` | operacional (seção de clínica só gestor) | J18 |
+| `/configuracoes/equipe` | `ConfiguracoesEquipePage` | gestor | J18 |
 
 > `/pacotes`, `/orcamentos*`, `/contratos*`, `/documentos-pacotes`, `/configuracoes/assistente`, `/configuracoes/pagamento`, `/configuracoes/plano` e `/upgrade` são aliases/redirects de compatibilidade, não telas paralelas.
+>
+> **Decisão da Fase 19 (PR 19.7):** `/configuracoes` passou a ser um índice de sub-rotas (Equipe, Notificações, Agenda, Serviços, Documentos, Assistente) em vez de uma tela monolítica. As rotas `/configuracoes/anamnese`, `/configuracoes/servicos` e `/configuracoes/clinica` previstas originalmente NÃO foram criadas como telas paralelas — a funcionalidade equivalente já existe e foi ampliada em `/documentos/pacotes` (builder/versionamento de templates de anamnese, PR 19.5), `/servicos` + `/servicos/novo` (catálogo, escrita gestor-only, PR 19.4) e `/agentes` (identidade/comportamento do assistente). O card "Assistente" do índice de configurações aponta para `/agentes`.
 
 ---
 

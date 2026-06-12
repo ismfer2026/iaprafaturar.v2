@@ -2106,6 +2106,8 @@ USING (professional_id = auth_professional_id())
 WITH CHECK (professional_id = auth_professional_id());
 ```
 
+> **Nota de implementação (Fase 19 — PR 19.7, C19-03):** as preferências de notificação (canais, eventos, quiet hours) NÃO usam `notification_preferences`. Ficam em `professionals.settings.notifications` (clínica) e `team_members.notifications` (por colaborador), jsonb com `schema_version`, validadas e lidas via `get_professional_notification_settings()` / `upsert_professional_notification_settings()` / `upsert_my_notification_preferences()` (`supabase/migrations/20260612160000_phase19_settings_notifications_schedule.sql`). As tabelas `professional_notifications`, `notification_preferences` e `professional_push_tokens` permanecem como referência futura, não implementadas nesta fase.
+
 ---
 
 ## 13. Admin / Nerissa
@@ -2226,6 +2228,8 @@ ALTER TABLE platform_settings ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "platform_settings_read" ON platform_settings FOR SELECT TO authenticated USING (true);
 REVOKE INSERT, UPDATE, DELETE ON platform_settings FROM authenticated;
 ```
+
+> **Nota de implementação (Fase 19 — PR 19.7, C19-04):** o horário de funcionamento (clínica e por colaborador, com timezone, dias da semana e exceções) NÃO usa `settings_entries`. Fica em `professionals.settings.business_hours` (clínica) e `team_members.business_hours` (por colaborador), jsonb com `schema_version`, lido/gravado via `get_professional_schedule_settings()` / `upsert_professional_business_hours()` / `upsert_team_member_business_hours()` (`supabase/migrations/20260612160000_phase19_settings_notifications_schedule.sql`). A UI de `/configuracoes/agenda` preserva o array `exceptions` (datas com horário especial) ao salvar, mas ainda não oferece edição dessas exceções — dívida registrada no encerramento da Fase 19.
 
 ---
 

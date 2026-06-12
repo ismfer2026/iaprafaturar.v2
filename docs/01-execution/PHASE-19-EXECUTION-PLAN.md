@@ -1,6 +1,6 @@
 # Fase 19 — Plano de Execução
 
-Status: `em andamento`  
+Status: `concluída`  
 Decision Owner: Ismael  
 App responsável: `apps/professional`  
 Estimativa: 3-4 semanas
@@ -258,4 +258,17 @@ Nenhum PR 19.1-19.8 pode começar enquanto:
 - [x] Componentes, hooks e RPCs mapeados
 - [x] Complexidade do Kanban registrada
 - [x] Decision Owner autoriza início do PR 19.0
+
+## Encerramento (PR 19.8)
+
+- [x] Testes de role, tenant, IDOR, URL direta, redirects, mobile 390px, i18n e estados de UX revisados (gestor vê seções de clínica/equipe; `operacional` vê apenas as próprias preferências/horários e telas gestor-only como `/configuracoes/equipe` e `/servicos/novo` mostram estado bloqueado).
+- [x] `npm run typecheck`, `npm run lint`, `npm run build` e `git diff --check` aprovados em todos os workspaces.
+- [x] PRD-MASTER (DoD Fase 19), PRD-FRONTEND (tabela de rotas `/configuracoes/*`) e PRD-SCHEMA (notas de implementação C19-03/C19-04) sincronizados.
+
+### Dívidas remanescentes
+
+- `business_hours.exceptions` (datas com horário especial) tem schema/validação/persistência completos via `upsert_professional_business_hours`/`upsert_team_member_business_hours`, mas `/configuracoes/agenda` ainda não tem UI para editar exceções — apenas preserva o array existente ao salvar.
+- `/configuracoes/anamnese`, `/configuracoes/servicos` e `/configuracoes/clinica` previstos no PRD-MASTER não foram criados como rotas paralelas: a funcionalidade equivalente já existe em `/documentos/pacotes` (versionamento de templates, PR 19.5), `/servicos` + `/servicos/novo` (catálogo gestor-only, PR 19.4) e `/agentes` (identidade/comportamento do assistente). PRD-FRONTEND e PRD-MASTER foram atualizados para refletir essa consolidação.
+
+**Status final: Fase 19 concluída — PR 19.0 a 19.8 entregues.**
 

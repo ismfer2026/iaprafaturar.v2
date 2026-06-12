@@ -1335,7 +1335,7 @@ Se já existir artefato equivalente, a tarefa deve ampliá-lo ou substituí-lo c
 ---
 
 ### FASE 19 — Paridade Profissional Operacional
-**Status:** em andamento — execução iniciada via PR 19.0 conforme `docs/01-execution/PHASE-19-EXECUTION-PLAN.md`
+**Status:** concluída — PR 19.0 a 19.8 executados conforme `docs/01-execution/PHASE-19-EXECUTION-PLAN.md`
 **Duração estimada:** 3-4 semanas
 **Entrega:** fechar a operação diária do profissional sem duplicar contratos ou rotas.
 
@@ -1351,9 +1351,9 @@ Se já existir artefato equivalente, a tarefa deve ampliá-lo ou substituí-lo c
 **Rotas e aliases obrigatórios:**
 - `/clientes/:id/anamnese`: visão e histórico de fichas do cliente
 - `/servicos/novo`: rota acionável que abre o mesmo formulário/sheet do catálogo; não criar segundo formulário
-- `/configuracoes/anamnese`: builder e versionamento de templates
+- Versionamento de templates de anamnese ampliado em `/documentos/pacotes` (não criar `/configuracoes/anamnese` paralelo)
 - `/documentos/pacotes`, `/documentos/orcamentos`, `/documentos/contratos`, `/documentos/anamnese`; aliases legados só por redirect
-- `/configuracoes/agenda`, `/configuracoes/servicos`, `/configuracoes/notificacoes`, `/configuracoes/equipe` e `/configuracoes/clinica`
+- `/configuracoes` é índice de sub-rotas; `/configuracoes/agenda`, `/configuracoes/notificacoes` e `/configuracoes/equipe` existem; `/configuracoes/servicos` e `/configuracoes/clinica` não são telas paralelas (cobertas por `/servicos` e `/agentes`)
 - `/configuracoes/assistente` redireciona para `/agentes`
 - `/configuracoes/pagamento` redireciona para `/financeiro/configuracoes`
 - `/configuracoes/plano` redireciona para `/planos`
@@ -1372,17 +1372,22 @@ Se já existir artefato equivalente, a tarefa deve ampliá-lo ou substituí-lo c
 - Ocultar ação no frontend não substitui autorização no DB/RPC
 
 **DoD Fase 19:**
-- [ ] Fluxos operacionais principais funcionam sem rotas duplicadas
-- [ ] Toda escrita multi-tabela usa RPC/Edge Function aprovada
-- [ ] Perfil do cliente reúne histórico, financeiro, pacotes, documentos e anamnese permitida
-- [ ] Documentos/pacotes possuem URLs navegáveis
-- [ ] Mapa profissional atualizado com decisão final de cada recurso
-- [ ] Todas as rotas e redirects de configurações definidos acima funcionam por URL direta
-- [ ] `/configuracoes/anamnese` cria e versiona templates sem alterar fichas já respondidas
-- [ ] `/clientes/:id/anamnese` mostra histórico permitido e ações auditáveis
-- [ ] Criação/edição de serviços e configurações respeitam roles; `operacional` não executa ação de `gestor`
-- [ ] `/servicos/novo` reutiliza o formulário do catálogo e bloqueia acesso sem role `gestor`
-- [ ] `/funil` reutiliza os contratos e componentes existentes, sem implementação paralela
+- [x] Fluxos operacionais principais funcionam sem rotas duplicadas
+- [x] Toda escrita multi-tabela usa RPC/Edge Function aprovada
+- [x] Perfil do cliente reúne histórico, financeiro, pacotes, documentos e anamnese permitida
+- [x] Documentos/pacotes possuem URLs navegáveis
+- [x] Mapa profissional atualizado com decisão final de cada recurso
+- [x] Todas as rotas e redirects de configurações definidos acima funcionam por URL direta
+- [x] Versionamento de templates de anamnese (`/documentos/pacotes`) cria nova versão sem alterar fichas já respondidas
+- [x] `/clientes/:id/anamnese` mostra histórico permitido e ações auditáveis
+- [x] Criação/edição de serviços e configurações respeitam roles; `operacional` não executa ação de `gestor`
+- [x] `/servicos/novo` reutiliza o formulário do catálogo e bloqueia acesso sem role `gestor`
+- [x] `/funil` reutiliza os contratos e componentes existentes, sem implementação paralela
+
+**Dívidas registradas no encerramento:**
+- Exceções de horário de funcionamento (`business_hours.exceptions`, datas com horário especial/feriados) têm schema, validação e persistência completos, mas `/configuracoes/agenda` ainda não oferece UI de edição — apenas preserva o array existente ao salvar.
+- Bundle `index-*.js` do `apps/professional` ultrapassa 500kB após minificação (aviso do Vite); code-splitting adicional fica para a Fase 26 (conforme já registrado no encerramento da Fase 18).
+- QA manual em dispositivos físicos (390px reais, gestos, performance) segue deferida até ambiente de staging + dispositivos (Grupo B registrado no encerramento dos gaps das Fases 5/12/17).
 
 ---
 
