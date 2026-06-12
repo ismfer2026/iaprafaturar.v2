@@ -7,8 +7,8 @@ export const crmKeys = {
   client: (professionalId: string | null, clientId: string | null) =>
     ["crm", "client", professionalId, clientId] as const,
   services: (professionalId: string | null) => ["crm", "services", professionalId] as const,
-  appointments: (professionalId: string | null, dateKey?: string | null) =>
-    ["crm", "appointments", professionalId, dateKey ?? "all"] as const,
+  appointments: (professionalId: string | null, rangeKey?: string | null) =>
+    ["crm", "appointments", professionalId, rangeKey ?? "all"] as const,
   sessions: (professionalId: string | null, clientId?: string | null) =>
     ["crm", "sessions", professionalId, clientId ?? "all"] as const,
   anamneseFichas: (professionalId: string | null, clientId?: string | null) =>

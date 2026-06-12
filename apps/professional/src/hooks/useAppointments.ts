@@ -14,24 +14,17 @@ import type {
 import { supabase } from "@/lib/supabase";
 import { crmKeys } from "./queryKeys";
 
-function dateRange(dateKey?: string | null) {
-  if (!dateKey) return null;
-
-  const start = new Date(`${dateKey}T00:00:00`);
-  const end = new Date(start);
-  end.setDate(end.getDate() + 1);
-
-  return {
-    start: start.toISOString(),
-    end: end.toISOString(),
-  };
+export interface AppointmentsRange {
+  key: string;
+  start: string;
+  end: string;
 }
 
-export function useAppointments(professionalId: string | null, dateKey?: string | null) {
+export function useAppointments(professionalId: string | null, range?: AppointmentsRange | null) {
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: crmKeys.appointments(professionalId, dateKey),
+    queryKey: crmKeys.appointments(professionalId, range?.key),
     enabled: Boolean(professionalId),
     queryFn: async () => {
       if (!professionalId) throw new Error("professionalId is required");
@@ -43,7 +36,6 @@ export function useAppointments(professionalId: string | null, dateKey?: string 
         .is("deleted_at", null)
         .order("scheduled_at");
 
-      const range = dateRange(dateKey);
       if (range) {
         queryBuilder = queryBuilder.gte("scheduled_at", range.start).lt("scheduled_at", range.end);
       }

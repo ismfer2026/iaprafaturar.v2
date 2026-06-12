@@ -15,7 +15,7 @@ import {
   cn,
 } from "@iaprafaturar/ui";
 import type { Appointment, Client, Service } from "@iaprafaturar/domain";
-import { useAppointments } from "@/hooks/useAppointments";
+import { useAppointments, type AppointmentsRange } from "@/hooks/useAppointments";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClients } from "@/hooks/useClients";
 import { useClientPackages } from "@/hooks/useDocumentsPackages";
@@ -32,6 +32,8 @@ const APPOINTMENT_STATUS_LABEL_KEYS: Record<Appointment["status"], TranslationKe
   falta: "appointment.status.falta",
   reagendado: "appointment.status.reagendado",
 };
+
+type AgendaViewMode = "day" | "week" | "month";
 
 function toDateKey(date: Date) {
   const year = date.getFullYear();
@@ -50,6 +52,69 @@ function addMonths(date: Date, amount: number) {
   const next = new Date(date);
   next.setMonth(next.getMonth() + amount);
   return next;
+}
+
+function startOfWeek(date: Date) {
+  const result = new Date(date);
+  result.setHours(0, 0, 0, 0);
+  const day = result.getDay();
+  const diff = (day + 6) % 7;
+  result.setDate(result.getDate() - diff);
+  return result;
+}
+
+function startOfMonth(date: Date) {
+  const result = new Date(date);
+  result.setHours(0, 0, 0, 0);
+  result.setDate(1);
+  return result;
+}
+
+function buildAppointmentsRange(viewMode: AgendaViewMode, selectedDate: Date, dateKey: string): AppointmentsRange {
+  if (viewMode === "week") {
+    const start = startOfWeek(selectedDate);
+    return { key: `week:${toDateKey(start)}`, start: start.toISOString(), end: addDays(start, 7).toISOString() };
+  }
+
+  if (viewMode === "month") {
+    const start = startOfMonth(selectedDate);
+    return { key: `month:${toDateKey(start)}`, start: start.toISOString(), end: addMonths(start, 1).toISOString() };
+  }
+
+  const start = new Date(`${dateKey}T00:00:00`);
+  return { key: `day:${dateKey}`, start: start.toISOString(), end: addDays(start, 1).toISOString() };
+}
+
+function formatRangeLabel(viewMode: AgendaViewMode, selectedDate: Date, locale: Locale) {
+  if (viewMode === "month") {
+    return new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(selectedDate);
+  }
+
+  if (viewMode === "week") {
+    const start = startOfWeek(selectedDate);
+    const end = addDays(start, 6);
+    const formatter = new Intl.DateTimeFormat(locale, { day: "2-digit", month: "short" });
+    return `${formatter.format(start)} - ${formatter.format(end)}`;
+  }
+
+  return formatDay(selectedDate, locale);
+}
+
+function formatDateHeader(date: Date, locale: Locale) {
+  return new Intl.DateTimeFormat(locale, { weekday: "short", day: "2-digit", month: "short" }).format(date);
+}
+
+function groupAppointmentsByDate(appointments: Appointment[]) {
+  const groups = new Map<string, Appointment[]>();
+
+  for (const appointment of appointments) {
+    const dayKey = toDateKey(new Date(appointment.scheduled_at));
+    const list = groups.get(dayKey);
+    if (list) list.push(appointment);
+    else groups.set(dayKey, [appointment]);
+  }
+
+  return Array.from(groups.entries());
 }
 
 function monthlyWeekOccurrence(firstDate: Date, monthOffset: number) {
@@ -112,6 +177,61 @@ function serviceName(serviceId: string | null, services: Service[], fallback: st
   return services.find((service) => service.id === serviceId)?.name ?? fallback;
 }
 
+function AppointmentCard({
+  appointment,
+  clients,
+  services,
+  locale,
+  t,
+  onSelect,
+}: {
+  appointment: Appointment;
+  clients: Client[];
+  services: Service[];
+  locale: Locale;
+  t: (key: TranslationKey, params?: Record<string, string | number>) => string;
+  onSelect: (appointment: Appointment) => void;
+}) {
+  return (
+    <button type="button" className="w-full text-left" onClick={() => onSelect(appointment)}>
+      <Card className="rounded-lg border-zinc-200 shadow-sm transition-colors hover:border-violet-200">
+        <CardContent className="space-y-3 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="truncate text-base font-semibold text-zinc-950">
+                {formatTime(appointment.scheduled_at, locale)} -{" "}
+                {clientName(appointment.client_id, clients, t("agenda.defaultClient"))}
+              </h2>
+              <p className="mt-1 truncate text-sm text-zinc-500">
+                {serviceName(appointment.service_id, services, t("agenda.noService"))}
+              </p>
+            </div>
+            <Badge className={cn("shrink-0 border", statusTone(appointment.status))}>
+              {t(APPOINTMENT_STATUS_LABEL_KEYS[appointment.status])}
+            </Badge>
+          </div>
+          {appointment.source === "public_link" || appointment.booked_by_client ? (
+            <Badge className="w-fit border border-teal-200 bg-teal-50 text-teal-700">
+              {t("agenda.source.publicLink")}
+            </Badge>
+          ) : null}
+          {appointment.series_id ? (
+            <Badge className="w-fit gap-1 border border-violet-200 bg-violet-50 text-violet-700">
+              <Link2 className="h-3.5 w-3.5" />
+              {t("agenda.recurring.badge")}
+              {appointment.series_occurrence_index ? ` ${appointment.series_occurrence_index}` : ""}
+            </Badge>
+          ) : null}
+          <div className="flex items-center gap-2 text-sm text-zinc-500">
+            <Clock className="h-4 w-4" />
+            {appointment.duration_minutes} {t("common.minutes.short")}
+          </div>
+        </CardContent>
+      </Card>
+    </button>
+  );
+}
+
 export default function AgendaPage() {
   const { locale, t } = useI18n();
   const { professionalId } = useAuth();
@@ -134,9 +254,14 @@ export default function AgendaPage() {
   const [sessionValue, setSessionValue] = useState("0");
   const [selectedClientPackageId, setSelectedClientPackageId] = useState("");
   const [sessionError, setSessionError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<AgendaViewMode>("day");
 
   const dateKey = toDateKey(selectedDate);
-  const appointmentsQuery = useAppointments(professionalId, dateKey);
+  const range = useMemo(
+    () => buildAppointmentsRange(viewMode, selectedDate, dateKey),
+    [viewMode, selectedDate, dateKey],
+  );
+  const appointmentsQuery = useAppointments(professionalId, range);
   const clientsQuery = useClients(professionalId);
   const servicesQuery = useServices(professionalId);
   const sessionsQuery = useSessions(professionalId);
@@ -149,6 +274,11 @@ export default function AgendaPage() {
   const activeClientPackages = useMemo(() => {
     return (appointmentClientPackagesQuery.data ?? []).filter((item) => item.status === "ativo" && item.sessions_remaining > 0);
   }, [appointmentClientPackagesQuery.data]);
+  const hasAppointments = Boolean(appointmentsQuery.data?.length);
+  const groupedAppointments = useMemo(
+    () => groupAppointmentsByDate(appointmentsQuery.data ?? []),
+    [appointmentsQuery.data],
+  );
 
   const recurringPreview = useMemo(() => {
     if (!isRecurring) return [];
@@ -356,7 +486,7 @@ export default function AgendaPage() {
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-violet-600">{t("agenda.eyebrow")}</p>
           <h1 className="mt-1 text-3xl font-semibold tracking-tight text-zinc-950">{t("agenda.title")}</h1>
-          <p className="mt-1 text-sm capitalize text-zinc-500">{formatDay(selectedDate, locale)}</p>
+          <p className="mt-1 text-sm capitalize text-zinc-500">{formatRangeLabel(viewMode, selectedDate, locale)}</p>
         </div>
         <Button className="shrink-0 gap-2" onClick={() => setIsNewOpen(true)}>
           <Plus className="h-4 w-4" />
@@ -364,11 +494,33 @@ export default function AgendaPage() {
         </Button>
       </header>
 
+      <div className="flex items-center gap-1 rounded-lg bg-zinc-100 p-1">
+        {(["day", "week", "month"] as const).map((mode) => (
+          <button
+            key={mode}
+            type="button"
+            onClick={() => setViewMode(mode)}
+            className={cn(
+              "h-9 flex-1 rounded-md px-3 text-sm font-medium transition-colors",
+              viewMode === mode ? "bg-white text-zinc-950 shadow-sm" : "text-zinc-500",
+            )}
+          >
+            {t(`agenda.view.${mode}`)}
+          </button>
+        ))}
+      </div>
+
       <div className="grid grid-cols-[auto_1fr_auto] gap-2">
         <Button
           variant="outline"
-          aria-label={t("agenda.previousDay")}
-          onClick={() => setSelectedDate((current) => addDays(current, -1))}
+          aria-label={viewMode === "day" ? t("agenda.previousDay") : t("agenda.previousPeriod")}
+          onClick={() =>
+            setSelectedDate((current) => {
+              if (viewMode === "week") return addDays(current, -7);
+              if (viewMode === "month") return addMonths(current, -1);
+              return addDays(current, -1);
+            })
+          }
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
@@ -379,8 +531,14 @@ export default function AgendaPage() {
         />
         <Button
           variant="outline"
-          aria-label={t("agenda.nextDay")}
-          onClick={() => setSelectedDate((current) => addDays(current, 1))}
+          aria-label={viewMode === "day" ? t("agenda.nextDay") : t("agenda.nextPeriod")}
+          onClick={() =>
+            setSelectedDate((current) => {
+              if (viewMode === "week") return addDays(current, 7);
+              if (viewMode === "month") return addMonths(current, 1);
+              return addDays(current, 1);
+            })
+          }
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
@@ -399,13 +557,17 @@ export default function AgendaPage() {
         </div>
       ) : null}
 
-      {!appointmentsQuery.isLoading && !appointmentsQuery.error && !appointmentsQuery.data?.length ? (
+      {!appointmentsQuery.isLoading && !appointmentsQuery.error && !hasAppointments ? (
         <div className="rounded-lg border border-dashed border-zinc-300 bg-white p-6 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-violet-50 text-violet-700">
             <CalendarDays className="h-5 w-5" />
           </div>
-          <h2 className="mt-4 text-base font-semibold text-zinc-950">{t("agenda.empty.title")}</h2>
-          <p className="mt-1 text-sm text-zinc-500">{t("agenda.empty.description")}</p>
+          <h2 className="mt-4 text-base font-semibold text-zinc-950">
+            {viewMode === "day" ? t("agenda.empty.title") : t("agenda.empty.titleRange")}
+          </h2>
+          <p className="mt-1 text-sm text-zinc-500">
+            {viewMode === "day" ? t("agenda.empty.description") : t("agenda.empty.descriptionRange")}
+          </p>
           <Button className="mt-4 gap-2" onClick={() => setIsNewOpen(true)}>
             <Plus className="h-4 w-4" />
             {t("agenda.schedule")}
@@ -413,50 +575,43 @@ export default function AgendaPage() {
         </div>
       ) : null}
 
-      {appointmentsQuery.data?.length ? (
+      {hasAppointments && viewMode === "day" ? (
         <section className="space-y-3">
-          {appointmentsQuery.data.map((appointment) => (
-            <button
+          {(appointmentsQuery.data ?? []).map((appointment) => (
+            <AppointmentCard
               key={appointment.id}
-              type="button"
-              className="w-full text-left"
-              onClick={() => setSelectedAppointment(appointment)}
-            >
-              <Card className="rounded-lg border-zinc-200 shadow-sm transition-colors hover:border-violet-200">
-                <CardContent className="space-y-3 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h2 className="truncate text-base font-semibold text-zinc-950">
-                        {formatTime(appointment.scheduled_at, locale)} -{" "}
-                        {clientName(appointment.client_id, clients, t("agenda.defaultClient"))}
-                      </h2>
-                      <p className="mt-1 truncate text-sm text-zinc-500">
-                        {serviceName(appointment.service_id, services, t("agenda.noService"))}
-                      </p>
-                    </div>
-                    <Badge className={cn("shrink-0 border", statusTone(appointment.status))}>
-                      {t(APPOINTMENT_STATUS_LABEL_KEYS[appointment.status])}
-                    </Badge>
-                  </div>
-                  {appointment.source === "public_link" || appointment.booked_by_client ? (
-                    <Badge className="w-fit border border-teal-200 bg-teal-50 text-teal-700">
-                      {t("agenda.source.publicLink")}
-                    </Badge>
-                  ) : null}
-                  {appointment.series_id ? (
-                    <Badge className="w-fit gap-1 border border-violet-200 bg-violet-50 text-violet-700">
-                      <Link2 className="h-3.5 w-3.5" />
-                      {t("agenda.recurring.badge")}
-                      {appointment.series_occurrence_index ? ` ${appointment.series_occurrence_index}` : ""}
-                    </Badge>
-                  ) : null}
-                  <div className="flex items-center gap-2 text-sm text-zinc-500">
-                    <Clock className="h-4 w-4" />
-                    {appointment.duration_minutes} {t("common.minutes.short")}
-                  </div>
-                </CardContent>
-              </Card>
-            </button>
+              appointment={appointment}
+              clients={clients}
+              services={services}
+              locale={locale}
+              t={t}
+              onSelect={setSelectedAppointment}
+            />
+          ))}
+        </section>
+      ) : null}
+
+      {hasAppointments && viewMode !== "day" ? (
+        <section className="space-y-4">
+          {groupedAppointments.map(([dayKey, items]) => (
+            <div key={dayKey} className="space-y-2">
+              <h2 className="text-sm font-semibold capitalize text-zinc-700">
+                {formatDateHeader(new Date(`${dayKey}T00:00:00`), locale)}
+              </h2>
+              <div className="space-y-3">
+                {items.map((appointment) => (
+                  <AppointmentCard
+                    key={appointment.id}
+                    appointment={appointment}
+                    clients={clients}
+                    services={services}
+                    locale={locale}
+                    t={t}
+                    onSelect={setSelectedAppointment}
+                  />
+                ))}
+              </div>
+            </div>
           ))}
         </section>
       ) : null}
