@@ -80,6 +80,15 @@ Deno.serve(async (request) => {
       return publicJsonResponse({ ok: false, error: 'collection_not_approved' }, { status: 400 })
     }
 
+    if (transaction.collection_sent_at) {
+      return publicJsonResponse(validateBillingCollectionAgentOutput({
+        ok: true,
+        transaction_id: transaction.id,
+        status: 'collection_already_sent',
+        dry_run: dryRun,
+      }))
+    }
+
     const rawClient = transaction.clients
     const client = Array.isArray(rawClient) ? rawClient[0] : rawClient
     if (!client?.phone_whatsapp || client.whatsapp_opt_out) {

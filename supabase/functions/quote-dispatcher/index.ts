@@ -138,10 +138,9 @@ Deno.serve(async (request) => {
           continue
         }
 
-        const baseKey = `${AGENT_SLUG}:followup:${quote.id}`
         const claim = await claimIdempotency(
           supabase,
-          dryRun ? `dry-run:${baseKey}:${crypto.randomUUID()}` : baseKey,
+          `${AGENT_SLUG}:followup:${quote.id}`,
           { quote_id: quote.id, professional_id: quote.professional_id, dry_run: dryRun },
         )
 

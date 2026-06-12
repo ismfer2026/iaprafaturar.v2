@@ -8,7 +8,7 @@ export const BillingCollectionAgentInputSchema = z.object({
 export const BillingCollectionAgentOutputSchema = z.object({
   ok: z.literal(true),
   transaction_id: z.string().uuid(),
-  status: z.enum(['sent', 'dry_run', 'skipped_no_instance', 'skipped_no_phone']),
+  status: z.enum(['sent', 'dry_run', 'skipped_no_instance', 'skipped_no_phone', 'collection_already_sent']),
   message_event_id: z.string().uuid().nullable().optional(),
   dry_run: z.boolean(),
 })

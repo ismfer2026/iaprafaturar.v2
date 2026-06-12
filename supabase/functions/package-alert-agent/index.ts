@@ -5,6 +5,7 @@ import {
 
 import { isDryRun } from '../_shared/dry-run.ts'
 import { jsonResponse } from '../_shared/http.ts'
+import { claimIdempotency } from '../_shared/idempotency.ts'
 import { assertInternalAuth } from '../_shared/internal-auth.ts'
 import { getConnectedProfessionalWhatsappInstance } from '../_shared/professional-instance.ts'
 import { getRosaneAgentConfig } from '../_shared/rosane-agent-config.ts'
@@ -124,6 +125,17 @@ Deno.serve(async (request) => {
         if (!config) {
           config = await getRosaneAgentConfig(supabase, row.professional_id)
           configCache.set(row.professional_id, config)
+        }
+
+        const claim = await claimIdempotency(
+          supabase,
+          `${AGENT_SLUG}:${input.mode}:${row.id}`,
+          { client_package_id: row.id, professional_id: row.professional_id, mode: input.mode, dry_run: dryRun },
+        )
+
+        if (!claim.claimed) {
+          skipped += 1
+          continue
         }
 
         await sendMessageCore(supabase, {
