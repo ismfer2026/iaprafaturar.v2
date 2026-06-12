@@ -1,5 +1,35 @@
 export type NivelAcesso = "gestor" | "operacional";
 
+export interface CreateTeamMemberInput {
+  name: string;
+  email: string;
+  phoneWhatsapp?: string | null;
+  funcao?: string | null;
+  nivelAcesso?: NivelAcesso;
+  possuiAgenda?: boolean;
+  comissao?: number;
+}
+
+export interface UpdateTeamMemberInput {
+  teamMemberId: string;
+  name: string;
+  email: string;
+  phoneWhatsapp?: string | null;
+  funcao?: string | null;
+  comissao?: number | null;
+}
+
+export interface UpdateTeamMemberPermissionsInput {
+  teamMemberId: string;
+  nivelAcesso: NivelAcesso;
+  possuiAgenda: boolean;
+}
+
+export interface TeamMemberMutationOutput {
+  team_member_id: string;
+  team_member: TeamMember;
+}
+
 export interface TeamMember {
   id: string;
   professional_id: string;

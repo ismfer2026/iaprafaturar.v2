@@ -9,7 +9,14 @@ export type {
   MoveClientStageInput,
   MoveClientStageOutput,
 } from "./types/client";
-export type { TeamMember, NivelAcesso } from "./types/team-member";
+export type {
+  TeamMember,
+  NivelAcesso,
+  CreateTeamMemberInput,
+  UpdateTeamMemberInput,
+  UpdateTeamMemberPermissionsInput,
+  TeamMemberMutationOutput,
+} from "./types/team-member";
 export type { UserRole, UserRoleRecord } from "./types/user-role";
 export type {
   Service,

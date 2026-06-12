@@ -5,16 +5,10 @@ import { Skeleton } from "@iaprafaturar/ui";
 import AdminShell from "@/components/AdminShell";
 import { AdminAuthProvider, useAdminAuth } from "@/contexts/AdminAuthContext";
 import { I18nProvider, useI18n } from "@/i18n";
+import { adminAliases, adminRoutes } from "@/routes";
 
 const LoginPage = lazy(() => import("@/pages/LoginPage"));
-const DashboardPage = lazy(() => import("@/pages/DashboardPage"));
-const ProfessionalsPage = lazy(() => import("@/pages/ProfessionalsPage"));
-const NexusPage = lazy(() => import("@/pages/NexusPage"));
-const BroadcastPage = lazy(() => import("@/pages/BroadcastPage"));
-const PlansPage = lazy(() => import("@/pages/PlansPage"));
-const AmbassadorsPage = lazy(() => import("@/pages/AmbassadorsPage"));
-const AgentsPage = lazy(() => import("@/pages/AgentsPage"));
-const ImprovementsPage = lazy(() => import("@/pages/ImprovementsPage"));
+const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,18 +59,14 @@ function AppRoutes() {
             <Route path="/login" element={<LoginPage />} />
             <Route element={<AdminRoute />}>
               <Route element={<AdminShell />}>
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/profissionais" element={<ProfessionalsPage />} />
-                <Route path="/planos" element={<PlansPage />} />
-                <Route path="/embaixadores" element={<AmbassadorsPage />} />
-                <Route path="/agentes" element={<AgentsPage />} />
-                <Route path="/melhorias" element={<ImprovementsPage />} />
-                <Route path="/broadcast" element={<BroadcastPage />} />
-                <Route path="/nexus" element={<NexusPage />} />
+                {adminRoutes.map(({ path, component: Component }) => (
+                  <Route key={path} path={path} element={<Component />} />
+                ))}
               </Route>
             </Route>
+            {adminAliases.map(({ from, to }) => <Route key={from} path={from} element={<Navigate to={to} replace />} />)}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>
       </BrowserRouter>

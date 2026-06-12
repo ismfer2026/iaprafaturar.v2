@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Bot, CalendarClock, FileSignature, MessageCircle, Save, ShieldCheck, SlidersHorizontal } from "lucide-react";
+import { Bot, CalendarClock, FileSignature, MessageCircle, Save, ShieldCheck, SlidersHorizontal, Users } from "lucide-react";
 import {
   Badge,
   Button,
@@ -27,7 +27,7 @@ const AGENT_OPTIONS = [
 
 export default function ConfiguracoesPage() {
   const { t } = useI18n();
-  const { professionalId } = useAuth();
+  const { professionalId, role } = useAuth();
   const settings = useAssistantSettings(professionalId);
   const [form, setForm] = useState<AssistantSettingsInput>({
     agentName: "Rosane",
@@ -134,11 +134,32 @@ export default function ConfiguracoesPage() {
               </div>
             </div>
             <Button asChild variant="outline">
-              <Link to="/documentos-pacotes">{t("common.open")}</Link>
+              <Link to="/documentos/pacotes">{t("common.open")}</Link>
             </Button>
           </div>
         </CardHeader>
       </Card>
+
+      {role === "gestor" && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-indigo-700">
+                  <Users className="h-5 w-5" />
+                </div>
+                <div>
+                  <CardTitle>{t("settings.team.title")}</CardTitle>
+                  <CardDescription>{t("settings.team.description")}</CardDescription>
+                </div>
+              </div>
+              <Button asChild variant="outline">
+                <Link to="/configuracoes/equipe">{t("common.open")}</Link>
+              </Button>
+            </div>
+          </CardHeader>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

@@ -6,25 +6,14 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { I18nProvider } from "@/i18n";
 import AppShell from "@/components/layout/AppShell";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
+import { professionalAliases, professionalRoutes } from "@/routes";
 
 const LoginPage = lazy(() => import("@/pages/auth/LoginPage"));
 const PublicEntrarPage = lazy(() => import("@/pages/auth/PublicEntrarPage"));
 const PublicCreateAccountPage = lazy(() => import("@/pages/auth/PublicCreateAccountPage"));
-const OnboardingPage = lazy(() => import("@/pages/OnboardingPage"));
-const DashboardPage = lazy(() => import("@/pages/DashboardPage"));
-const AgendaPage = lazy(() => import("@/pages/AgendaPage"));
-const ConfiguracoesPage = lazy(() => import("@/pages/ConfiguracoesPage"));
-const ClientsPage = lazy(() => import("@/pages/ClientsPage"));
-const ClientProfilePage = lazy(() => import("@/pages/ClientProfilePage"));
-const ServicesPage = lazy(() => import("@/pages/ServicesPage"));
-const FinanceiroPage = lazy(() => import("@/pages/FinanceiroPage"));
-const ConversasPage = lazy(() => import("@/pages/ConversasPage"));
-const DocumentsPackagesPage = lazy(() => import("@/pages/DocumentsPackagesPage"));
-const GrowthPage = lazy(() => import("@/pages/GrowthPage"));
-const FunilPage = lazy(() => import("@/pages/FunilPage"));
-const ReportsPage = lazy(() => import("@/pages/ReportsPage"));
-const PlanosPage = lazy(() => import("@/pages/PlanosPage"));
-const MorePage = lazy(() => import("@/pages/MorePage"));
+const RecoverPasswordPage = lazy(() => import("@/pages/auth/RecoverPasswordPage"));
+const ResetPasswordPage = lazy(() => import("@/pages/auth/ResetPasswordPage"));
+const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -57,32 +46,28 @@ function AppRoutes() {
             <Route path="/entrar" element={<PublicEntrarPage />} />
             <Route path="/cadastro" element={<PublicEntrarPage />} />
             <Route path="/criar-conta" element={<PublicCreateAccountPage />} />
+            <Route path="/recuperar-senha" element={<RecoverPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
 
             <Route element={<ProtectedRoute />}>
-              <Route path="/onboarding" element={<OnboardingPage />} />
+              {professionalRoutes
+                .filter((route) => route.path === "/onboarding")
+                .map(({ path, component: Component }) => <Route key={path} path={path} element={<Component />} />)}
             </Route>
 
             <Route element={<ProtectedRoute />}>
               <Route element={<AppShell />}>
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/agenda" element={<AgendaPage />} />
-                <Route path="/clientes" element={<ClientsPage />} />
-                <Route path="/clientes/:id" element={<ClientProfilePage />} />
-                <Route path="/servicos" element={<ServicesPage />} />
-                <Route path="/financeiro" element={<FinanceiroPage />} />
-                <Route path="/conversas" element={<ConversasPage />} />
-                <Route path="/funil" element={<FunilPage />} />
-                <Route path="/growth" element={<GrowthPage />} />
-                <Route path="/relatorios" element={<ReportsPage />} />
-                <Route path="/planos" element={<PlanosPage />} />
-                <Route path="/documentos-pacotes" element={<DocumentsPackagesPage />} />
-                <Route path="/configuracoes" element={<ConfiguracoesPage />} />
-                <Route path="/mais" element={<MorePage />} />
+                {professionalRoutes
+                  .filter((route) => route.path !== "/onboarding")
+                  .map(({ path, component: Component }) => <Route key={path} path={path} element={<Component />} />)}
               </Route>
             </Route>
 
+            {professionalAliases.map(({ from, to }) => (
+              <Route key={from} path={from} element={<Navigate to={to} replace />} />
+            ))}
             <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>
       </BrowserRouter>

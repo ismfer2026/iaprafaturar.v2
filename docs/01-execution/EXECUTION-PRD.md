@@ -415,11 +415,24 @@ Entregas:
 - Load testing WhatsApp pipeline (100 mensagens simultâneas em dry_run)
 - Crons de infraestrutura: `reservation-recovery`, `sweep-processing-redis`, `sweep-zombie-handoffs`, `key-rotation-fanout`, `cleanup-notifications`, `cleanup-idempotency-log`, `cleanup-cron-job-run-details`, `audit-conversations`
 
+### FASES 10-26 — Execução governada pelo PRD-MASTER
+
+As Fases 10-26, seus owners, rotas canônicas, fronteiras e DoDs são definidos exclusivamente em `docs/00-master/PRD-MASTER.md`. Não duplicar a especificação detalhada neste documento.
+
+Antes de executar qualquer tarefa das Fases 18-26:
+
+1. preencher `docs/01-execution/PHASE-PREFLIGHT-CONTRACT.md`;
+2. auditar rotas, componentes, hooks, migrations e contratos do DB v2 existentes;
+3. declarar o artefato reutilizado e o incremento exato;
+4. bloquear qualquer implementação paralela equivalente;
+5. sincronizar PRD-FRONTEND, PRD-SCHEMA e PRD-EDGE-FUNCTIONS quando aplicável.
+
+Functions, tabelas, RPCs, policies e filas da v1 não são referência técnica.
+
 ### FASE FUTURA — Advanced
 Sem data. Não bloqueia nenhuma fase anterior.
 - Knowledge Brain (pgvector, GraphRAG, `knowledge_nodes`)
 - Partner API (`api_keys`, webhooks, rate limiting)
-- Automações avançadas (funil de vendas profissional, conciliação bancária OFX/CSV avançada)
 - NFS-e integrado
 - Sistema de aprendizado por feedback (RLHF): `rlhf_rules`, `rlhf_diffs`, `personas` (tabela de prompts dinâmicos), crons de extração/drift/síntese/rollback de persona. Não faz parte do escopo do PRD-MASTER atual — avaliar como iniciativa futura se houver demanda por personalização automática do tom da Rosane por clínica.
 

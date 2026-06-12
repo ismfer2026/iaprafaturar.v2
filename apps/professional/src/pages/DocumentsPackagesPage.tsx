@@ -1,4 +1,5 @@
-import { type FormEvent, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { FileSignature, FileText, PackageCheck, Plus, Send, Stethoscope } from "lucide-react";
 import {
   Badge,
@@ -31,6 +32,20 @@ import { friendlyErrorMessage } from "@/lib/friendlyError";
 
 type Tab = "packages" | "quotes" | "documents" | "anamnese";
 type SheetMode = "package" | "sell-package" | "quote" | "modelo" | "contract" | "anamnese" | null;
+
+const DOCUMENT_TAB_PATHS: Record<Tab, string> = {
+  packages: "/documentos/pacotes",
+  quotes: "/documentos/orcamentos",
+  documents: "/documentos/contratos",
+  anamnese: "/documentos/anamnese",
+};
+
+function documentTabFromPath(pathname: string): Tab {
+  if (pathname === "/documentos/orcamentos") return "quotes";
+  if (pathname === "/documentos/contratos") return "documents";
+  if (pathname === "/documentos/anamnese") return "anamnese";
+  return "packages";
+}
 
 const TABS = [
   { value: "packages", labelKey: "docs.tab.packages", icon: PackageCheck },
@@ -114,9 +129,20 @@ function publicQuoteLink(token: string) {
 export default function DocumentsPackagesPage() {
   const { locale, t } = useI18n();
   const { professionalId } = useAuth();
-  const [activeTab, setActiveTab] = useState<Tab>("packages");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<Tab>(() => documentTabFromPath(location.pathname));
   const [sheetMode, setSheetMode] = useState<SheetMode>(null);
   const [formError, setFormError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setActiveTab(documentTabFromPath(location.pathname));
+  }, [location.pathname]);
+
+  function selectTab(tab: Tab) {
+    setActiveTab(tab);
+    navigate(DOCUMENT_TAB_PATHS[tab]);
+  }
 
   const clientsQuery = useClients(professionalId);
   const servicesQuery = useServices(professionalId);
@@ -366,7 +392,7 @@ export default function DocumentsPackagesPage() {
           <button
             key={value}
             type="button"
-            onClick={() => setActiveTab(value)}
+            onClick={() => selectTab(value)}
             className={cn(
               "flex h-10 items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors",
               activeTab === value ? "bg-white text-zinc-950 shadow-sm" : "text-zinc-500",

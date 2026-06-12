@@ -292,7 +292,7 @@ const es419: Record<keyof typeof ptBR, string> = {
 
 const dictionaries = { "pt-BR": ptBR, "en-US": enUS, "es-419": es419 };
 
-type TranslationKey = keyof typeof ptBR;
+export type TranslationKey = keyof typeof ptBR;
 
 interface I18nValue {
   locale: Locale;

@@ -2,6 +2,16 @@
 
 ---
 
+## Governança de rotas
+
+- Fontes de verdade em runtime: `apps/professional/src/routes.ts`, `apps/admin/src/routes.ts` e `apps/client/src/routes.ts`.
+- Matriz aprovada: `docs/01-execution/PHASE-18-ROUTE-MATRIX.md`.
+- Rotas descritas neste PRD que ainda não constam no registro runtime são planejadas e pertencem à fase indicada na matriz; não representam tela já entregue.
+- Menus desktop, mobile e Mais devem derivar dos registros tipados. Rotas desconhecidas exibem 404 controlado.
+- Contratos backend são comprovados exclusivamente pela v2 conforme `docs/01-execution/supabase-contract-map-v2.md`.
+
+---
+
 ## apps/professional — CRM do Profissional
 
 ### Convenções
@@ -22,25 +32,16 @@
 | `/reset-password` | `ResetPassword` | J1 |
 | `/criar-conta` | `CriarConta` | J1 |
 
-### Rotas — Públicas (sem auth, para clientes)
+### Fronteira pública
 
-| Rota | Componente | Jornada |
-|---|---|---|
-| `/agendar/:slug` | `AgendarPublico` | J4 |
-| `/cadastro/:codigo` | `CadastroPublico` | J11 |
-| `/convite/:codigo` | `ConvitePublico` | J11 |
-| `/indicacao/:codigo` | `IndicacaoPublica` | J9 |
-| `/anamnese/:token` | `AnamnesePublica` | J5 |
-| `/pacote/:slug` | `PacotePublico` | J25 |
-| `/chat/:slug` | `ChatPublico` | J57 |
-| `/entrar` | `EntrarMagicLink` | J15 |
+Rotas públicas voltadas ao cliente, como agendamento, anamnese, pacote, orçamento, chat e portal, pertencem exclusivamente ao `apps/client` e são declaradas em `apps/client/src/routes.ts`. O professional mantém apenas rotas de autenticação e criação de conta do profissional.
 
 ### Rotas — Auth sem onboarding
 
 | Rota | Componente | Jornada |
 |---|---|---|
 | `/onboarding` | `Onboarding` | J1 |
-| `/upgrade` | `Upgrade` | J11 |
+| `/upgrade` | redirect para `/planos` | J11 |
 
 ### Rotas — Protegidas (auth + onboarding + role)
 
@@ -53,17 +54,19 @@
 | `/clientes/:id/anamnese` | `AnamneseCliente` | operacional | J5 |
 | `/funil` | `FunilVendas` | operacional | J55 |
 | `/estoque` | `Estoque` | operacional | J22 |
-| `/pacotes` | `Pacotes` | gestor | J24 |
+| `/documentos/pacotes` | `Pacotes` | gestor | J24 |
 | `/servicos` | `Servicos` | gestor | J4 |
 | `/servicos/novo` | `NovoServico` | gestor | J4, J6 |
 | `/financeiro` | `Financeiro` | operacional | J7 |
 | `/financeiro/conciliacao` | `Conciliacao` | gestor | J63 |
 | `/financeiro/configuracoes` | `ConfiguracoesFinanceiro` | gestor | J65 |
-| `/orcamentos` | `Orcamentos` | gestor | J54 |
-| `/orcamentos/novo` | `NovoOrcamento` | gestor | J54 |
-| `/orcamentos/editar/:id` | `EditarOrcamento` | gestor | J54 |
-| `/contratos` | `Contratos` | gestor | J26 |
-| `/contratos/novo` | `NovoContrato` | gestor | J26 |
+| `/conversas` | `Conversas` | operacional | J3 |
+| `/documentos/orcamentos` | `Orcamentos` | gestor | J54 |
+| `/documentos/orcamentos/novo` | `NovoOrcamento` | gestor | J54 |
+| `/documentos/orcamentos/editar/:id` | `EditarOrcamento` | gestor | J54 |
+| `/documentos/contratos` | `Contratos` | gestor | J26 |
+| `/documentos/contratos/novo` | `NovoContrato` | gestor | J26 |
+| `/documentos/anamnese` | `AnamneseDocumentos` | gestor | J5 |
 | `/relatorios` | `Relatorios` | gestor | J36 |
 | `/rfm` | `RFM` | gestor | J37 |
 | `/campanhas` | `Campanhas` | gestor | J19 |
@@ -71,8 +74,18 @@
 | `/recompensas` | `Recompensas` | gestor | J9, J16 |
 | `/aniversariantes` | `Aniversariantes` | operacional | J58 |
 | `/parceiros` | `Parceiros` | gestor | J48 |
+| `/growth` | `GrowthHub` | gestor | J37, J58 |
+| `/planos` | `Planos` | gestor | J11 |
+| `/mais` | `Mais` | operacional | navegação |
 | `/configuracoes` | `Configuracoes` | gestor | J18 |
 | `/configuracoes/anamnese` | `AnamneseBuilder` | gestor | J5 |
+| `/configuracoes/agenda` | `ConfiguracoesAgenda` | gestor | J18 |
+| `/configuracoes/servicos` | `ConfiguracoesServicos` | gestor | J18 |
+| `/configuracoes/notificacoes` | `ConfiguracoesNotificacoes` | gestor | J18 |
+| `/configuracoes/equipe` | `ConfiguracoesEquipe` | gestor | J18 |
+| `/configuracoes/clinica` | `ConfiguracoesClinica` | gestor | J18 |
+
+> `/pacotes`, `/orcamentos*`, `/contratos*`, `/documentos-pacotes`, `/configuracoes/assistente`, `/configuracoes/pagamento`, `/configuracoes/plano` e `/upgrade` são aliases/redirects de compatibilidade, não telas paralelas.
 
 ---
 
@@ -170,7 +183,7 @@ useMoveClientStage()      // otimistic update
 // Ações:
 <RegistrarSessaoButton />   // Abre NovoServico (J6)
 <EnviarMensagemButton />    // Abre conversa no inbox
-<GerarOrcamentoButton />    // Redireciona para /orcamentos/novo?client=id
+<GerarOrcamentoButton />    // Redireciona para /documentos/orcamentos/novo?client=id
 ```
 
 #### Financeiro (`/financeiro`)
@@ -296,21 +309,22 @@ useMoveClientStage()      // otimistic update
 ```typescript
 // Tela raiz: lista de grupos (cada item → navegação para tela própria)
 <ConfiguracoesLista />
-//   🤖 Assistente (Rosane)  →  /configuracoes/assistente
+//   Assistente (Rosane)     →  /agentes
 //   📅 Agenda               →  /configuracoes/agenda
-//   💳 Pagamento            →  /configuracoes/pagamento
+//   Pagamento               →  /financeiro/configuracoes
 //   📋 Serviços e Pacotes   →  /configuracoes/servicos
 //   🔔 Notificações         →  /configuracoes/notificacoes
 //   👥 Equipe               →  /configuracoes/equipe
 //   🏢 Clínica              →  /configuracoes/clinica
-//   📦 Plano                →  /configuracoes/plano
-//   ⚙️  Admin SaaS           →  /configuracoes/admin  (só admin_master)
+//   Plano                   →  /planos
 
 // Cada sub-rota é uma tela independente com:
 // - Header com botão voltar (chevron esquerdo)
 // - Formulário focado no domínio
 // - Botão "Salvar" fixo no rodapé (bottom de tela, não flutuante)
 ```
+
+`/configuracoes/admin` é proibida no app profissional. Configurações SaaS pertencem a `apps/admin`.
 
 ---
 
@@ -416,18 +430,22 @@ useMoveClientStage()      // otimistic update
 
 | Rota | Componente | Jornada |
 |---|---|---|
-| `/` | `DashboardAdmin` | J47 |
+| `/dashboard` | `DashboardAdmin` | J47 |
 | `/profissionais` | `ListaProfissionais` | J33 |
 | `/profissionais/:id` | `PerfilProfissional` | J34 |
+| `/planos` | `PlanosAdmin` | J38 |
 | `/leads` | `PipelineLeads` | J33 |
 | `/analytics` | `AnalyticsPlataforma` | J36 |
-| `/afiliados` | `Afiliados` | J48 |
+| `/embaixadores` | `Embaixadores` | J48 |
 | `/agentes` | `AgentesAdmin` | J52 |
 | `/broadcast` | `BroadcastAdmin` | J35 |
+| `/melhorias` | `MelhoriasAdmin` | J53 |
 | `/configuracoes` | `ConfiguracoesAdmin` | J38 |
 | `/nexus` | `Nexus` | J47 |
 
-### Dashboard Admin (`/`)
+> `/` redireciona para `/dashboard`. `/afiliados` redireciona para `/embaixadores`. `/campanhas` e `/notificacoes` admin redirecionam ou navegam para subáreas de `/broadcast`. Nenhum alias mantém tela paralela.
+
+### Dashboard Admin (`/dashboard`)
 
 ```typescript
 <DashboardAdmin>

@@ -2,10 +2,14 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
+export type ProfessionalRole = "gestor" | "operacional" | null;
+
 interface AuthContextValue {
   session: Session | null;
   authUserId: string | null;
   professionalId: string | null;
+  role: ProfessionalRole;
+  teamMemberId: string | null;
   onboardingCompleted: boolean;
   onboardingEssentialsCompleted: boolean;
   whatsappConnected: boolean;
@@ -18,6 +22,8 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [professionalId, setProfessionalId] = useState<string | null>(null);
+  const [role, setRole] = useState<ProfessionalRole>(null);
+  const [teamMemberId, setTeamMemberId] = useState<string | null>(null);
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
   const [onboardingEssentialsCompleted, setOnboardingEssentialsCompleted] = useState(false);
   const [whatsappConnected, setWhatsappConnected] = useState(false);
@@ -34,10 +40,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setOnboardingCompleted(Boolean(data?.onboarding_completed));
     setOnboardingEssentialsCompleted(Boolean(data?.onboarding_essentials_completed));
     setWhatsappConnected(Boolean(data?.whatsapp_connected));
+
+    const { data: roleData } = await supabase.rpc("auth_professional_role");
+    setRole((roleData as ProfessionalRole) ?? null);
+
+    if (data?.id) {
+      setTeamMemberId(null);
+    } else {
+      const { data: memberData } = await supabase
+        .from("team_members")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .maybeSingle();
+      setTeamMemberId(memberData?.id ?? null);
+    }
   }
 
   function clearProfessionalState() {
     setProfessionalId(null);
+    setRole(null);
+    setTeamMemberId(null);
     setOnboardingCompleted(false);
     setOnboardingEssentialsCompleted(false);
     setWhatsappConnected(false);
@@ -76,6 +99,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         authUserId: session?.user?.id ?? null,
         professionalId,
+        role,
+        teamMemberId,
         onboardingCompleted,
         onboardingEssentialsCompleted,
         whatsappConnected,

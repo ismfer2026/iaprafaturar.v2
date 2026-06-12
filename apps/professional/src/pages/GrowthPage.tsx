@@ -1,4 +1,5 @@
-import { useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Gift,
   HeartPulse,
@@ -17,6 +18,26 @@ import { useI18n, type TranslationKey } from "@/i18n";
 import { supabase } from "@/lib/supabase";
 
 type GrowthTab = "overview" | "campaigns" | "risk" | "loyalty" | "email" | "chat" | "upsell" | "rfm";
+
+const GROWTH_TAB_PATHS: Record<GrowthTab, string> = {
+  overview: "/growth",
+  campaigns: "/campanhas",
+  risk: "/growth?tab=risk",
+  loyalty: "/recompensas",
+  email: "/growth?tab=email",
+  chat: "/growth?tab=chat",
+  upsell: "/growth?tab=upsell",
+  rfm: "/rfm",
+};
+
+function growthTabFromLocation(pathname: string, search: string): GrowthTab {
+  if (pathname === "/campanhas") return "campaigns";
+  if (pathname === "/recompensas") return "loyalty";
+  if (pathname === "/rfm") return "rfm";
+  const queryTab = new URLSearchParams(search).get("tab");
+  if (queryTab === "risk" || queryTab === "email" || queryTab === "chat" || queryTab === "upsell") return queryTab;
+  return "overview";
+}
 
 interface ClientRelation {
   full_name: string;
@@ -140,7 +161,9 @@ export default function GrowthPage() {
   const { professionalId } = useAuth();
   const { t } = useI18n();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<GrowthTab>("overview");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [tab, setTab] = useState<GrowthTab>(() => growthTabFromLocation(location.pathname, location.search));
   const [message, setMessage] = useState<string | null>(null);
   const clientsQuery = useClients(professionalId);
   const [campaignForm, setCampaignForm] = useState({ name: "", segmentType: "all", messageTemplate: "" });
@@ -148,6 +171,15 @@ export default function GrowthPage() {
   const [emailForm, setEmailForm] = useState({ clientId: "", subject: "", body: "" });
   const [chatConfig, setChatConfig] = useState({ enabled: true, welcomeMessage: t("growth.chat.defaultWelcome"), handoffMode: "shadow", rateLimit: "12" });
   const [loyaltyForm, setLoyaltyForm] = useState({ clientId: "", points: "50", rewardType: "manual_credit" });
+
+  useEffect(() => {
+    setTab(growthTabFromLocation(location.pathname, location.search));
+  }, [location.pathname, location.search]);
+
+  function selectTab(nextTab: GrowthTab) {
+    setTab(nextTab);
+    navigate(GROWTH_TAB_PATHS[nextTab]);
+  }
 
   const query = useQuery({
     queryKey: ["growth", professionalId],
@@ -331,7 +363,7 @@ export default function GrowthPage() {
           <button
             key={item.value}
             type="button"
-            onClick={() => setTab(item.value)}
+            onClick={() => selectTab(item.value)}
             className={cn(
               "h-10 whitespace-nowrap rounded-lg border px-3 text-sm font-semibold transition-colors",
               tab === item.value ? "border-violet-600 bg-violet-600 text-white" : "border-zinc-200 bg-white text-zinc-600",

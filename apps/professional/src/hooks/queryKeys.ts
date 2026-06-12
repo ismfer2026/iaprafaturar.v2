@@ -44,4 +44,5 @@ export const crmKeys = {
   contracts: (professionalId: string | null, clientId?: string | null) =>
     ["crm", "contracts", professionalId, clientId ?? "all"] as const,
   anamneseTemplates: (professionalId: string | null) => ["crm", "anamnese-templates", professionalId] as const,
+  teamMembers: (professionalId: string | null) => ["crm", "team-members", professionalId] as const,
 };

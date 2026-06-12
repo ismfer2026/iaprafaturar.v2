@@ -3,15 +3,8 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Skeleton } from "@iaprafaturar/ui";
 import { I18nProvider } from "@/i18n";
+import { clientRoutes } from "@/routes";
 
-const PublicBookingPage = lazy(() => import("@/pages/PublicBookingPage"));
-const PublicClientOnboardingPage = lazy(() => import("@/pages/PublicClientOnboardingPage"));
-const PublicAnamnesePage = lazy(() => import("@/pages/PublicAnamnesePage"));
-const PublicAppointmentActionsPage = lazy(() => import("@/pages/PublicAppointmentActionsPage"));
-const PublicPackagePage = lazy(() => import("@/pages/PublicPackagePage"));
-const PublicQuotePage = lazy(() => import("@/pages/PublicQuotePage"));
-const ClientPortalPage = lazy(() => import("@/pages/ClientPortalPage"));
-const PublicChatPage = lazy(() => import("@/pages/PublicChatPage"));
 const PublicNotFoundPage = lazy(() => import("@/pages/PublicNotFoundPage"));
 
 const queryClient = new QueryClient({
@@ -41,19 +34,7 @@ function AppRoutes() {
     <BrowserRouter>
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          <Route path="/cliente/:slug" element={<PublicClientOnboardingPage />} />
-          <Route path="/agendar/:slug" element={<PublicBookingPage />} />
-          <Route path="/agendamento/:token" element={<PublicAppointmentActionsPage />} />
-          <Route path="/anamnese/:token" element={<PublicAnamnesePage />} />
-          <Route path="/pacote/:slug" element={<PublicPackagePage />} />
-          <Route path="/orcamento/:token" element={<PublicQuotePage />} />
-          <Route path="/chat/:slug" element={<PublicChatPage />} />
-          <Route path="/portal/home" element={<ClientPortalPage />} />
-          <Route path="/portal/historico" element={<ClientPortalPage />} />
-          <Route path="/portal/pacotes" element={<ClientPortalPage />} />
-          <Route path="/portal/agendar" element={<ClientPortalPage />} />
-          <Route path="/portal/onboarding" element={<ClientPortalPage />} />
-          <Route path="/portal/:token" element={<ClientPortalPage />} />
+          {clientRoutes.map(({ path, component: Component }) => <Route key={path} path={path} element={<Component />} />)}
           <Route path="/" element={<Navigate to="/agendar/demo" replace />} />
           <Route path="*" element={<PublicNotFoundPage />} />
         </Routes>

@@ -1,4 +1,5 @@
-import { type Dispatch, type FormEvent, type HTMLAttributes, type ReactNode, type SetStateAction, useMemo, useState } from "react";
+import { type Dispatch, type FormEvent, type HTMLAttributes, type ReactNode, type SetStateAction, useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Banknote,
   CalendarClock,
@@ -55,6 +56,20 @@ import { useI18n, type Locale, type TranslationKey } from "@/i18n";
 import { friendlyErrorMessage } from "@/lib/friendlyError";
 
 type FinanceTab = "extrato" | "pdv" | "conciliacao" | "configuracoes";
+
+const FINANCE_TAB_PATHS: Record<FinanceTab, string> = {
+  extrato: "/financeiro",
+  pdv: "/financeiro?tab=pdv",
+  conciliacao: "/financeiro/conciliacao",
+  configuracoes: "/financeiro/configuracoes",
+};
+
+function financeTabFromLocation(pathname: string, search: string): FinanceTab {
+  if (pathname === "/financeiro/conciliacao") return "conciliacao";
+  if (pathname === "/financeiro/configuracoes") return "configuracoes";
+  if (new URLSearchParams(search).get("tab") === "pdv") return "pdv";
+  return "extrato";
+}
 
 interface TransactionFormState {
   type: FinancialTransactionType;
@@ -308,10 +323,21 @@ function TransactionCard({
 export default function FinanceiroPage() {
   const { locale, t } = useI18n();
   const { professionalId } = useAuth();
-  const [activeTab, setActiveTab] = useState<FinanceTab>("extrato");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<FinanceTab>(() => financeTabFromLocation(location.pathname, location.search));
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [form, setForm] = useState<TransactionFormState>(EMPTY_FORM);
   const [formError, setFormError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setActiveTab(financeTabFromLocation(location.pathname, location.search));
+  }, [location.pathname, location.search]);
+
+  function selectTab(tab: FinanceTab) {
+    setActiveTab(tab);
+    navigate(FINANCE_TAB_PATHS[tab]);
+  }
   const [posForm, setPosForm] = useState<PosFormState>(EMPTY_POS_FORM);
   const [posItems, setPosItems] = useState<PosSaleItemInput[]>([]);
   const [posError, setPosError] = useState<string | null>(null);
@@ -642,7 +668,7 @@ export default function FinanceiroPage() {
               "rounded-md px-3 py-2 text-sm font-medium transition-colors",
               activeTab === tab ? "bg-white text-zinc-950 shadow-sm" : "text-zinc-500",
             )}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => selectTab(tab)}
           >
             {t(`finance.tab.${tab}` as TranslationKey)}
           </button>

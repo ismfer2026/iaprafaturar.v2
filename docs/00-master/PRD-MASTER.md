@@ -92,6 +92,7 @@ Gerencia a plataforma: onboard profissionais via WhatsApp (Nerissa), monitora sa
 
 - **O PRD consolidado é a fonte de verdade.** Rascunhos, inventários e comparações v1/v2 são contexto histórico — não regra de produto. Quando houver conflito, este documento manda.
 - **v1 é inventário de problemas a evitar.** Se v1 e PRD divergirem, o PRD vence.
+- **Backend v1 não é referência técnica.** Functions, tabelas, RPCs, policies, filas e nomes de contratos da v1 não podem fundamentar implementação. A v1 serve somente para descobrir comportamento/telas. Todo contrato backend deve ser comprovado no banco e migrations da v2; Functions consolidadas da v2 apenas consomem esses contratos oficiais.
 - **Validação com fixtures sintéticas obrigatória.** Nenhuma fase é aprovada sem seeds reproduzíveis:
   - `adminUser` — usuário admin da plataforma
   - `professionalA` — profissional com instância WhatsApp conectada
@@ -107,6 +108,10 @@ Gerencia a plataforma: onboard profissionais via WhatsApp (Nerissa), monitora sa
 - **Toda entrada externa é validada em runtime** antes de qualquer lógica de negócio: webhooks, Edge Functions, jobs QStash, payloads de eventos, formulários públicos, callbacks Stripe, callbacks Evolution Go. A ferramenta é escolha da stack (squad-dev-code define); a regra é do Master.
 - **Schema nunca é tarefa simples.** Qualquer alteração no banco passa pelo squad-schema-guard: nova coluna, nova tabela, nova FK, nova policy RLS, nova RPC, novo índice, alteração em enum. Toda migration exige: motivo, rollback documentado, seed correspondente, confirmação de não-duplicidade com PRD-CONSOLIDATION.md.
 - **JSONB não é lixeira.** Usar JSONB apenas para preferências flexíveis e pouco consultadas. Nunca para dados que precisam de: filtro frequente, relatório, relacionamento, auditoria, histórico ou índice.
+- **Uma capacidade, um dono e um contrato canônico.** Fases posteriores podem ampliar uma capacidade existente, mas não podem criar rota, tabela, RPC, Edge Function, fila ou componente paralelo para o mesmo objetivo.
+- **Progressão precisa ser explícita.** Toda tarefa que amplia fase anterior declara artefatos reutilizados, incremento entregue, contratos preservados e itens proibidos de reconstruir.
+- **Rota consolidada continua navegável.** Quando uma rota esperada for consolidada em um hub, a decisão deve definir URL canônica, alias/redirect, permissão, breadcrumb/menu e teste de navegação direta.
+- **Decisão de não implementar fecha o gap formalmente.** Um recurso só pode sair da paridade com justificativa de produto aprovada, impacto nas jornadas e atualização dos PRDs e mapas de rotas relacionados.
 
 ### 3.6 Performance
 
@@ -231,6 +236,15 @@ USING (professional_id = auth.uid())
 | **Financeiro Operacional Avançado** | PDV, conciliação, gateways e configurações financeiras | 15 |
 | **Growth Comercial Completo** | Funil, upsell, e-mail, fidelidade e indicação avançada | 16 |
 | **Billing SaaS e Plataforma** | Planos, trial, créditos, afiliados, admin operacional avançado | 17 |
+| **Consolidação de Rotas e Contratos** | Ownership, rotas canônicas, redirects e preflight | 18 |
+| **Paridade Profissional Operacional** | Operação diária, configurações, documentos e funil consolidados | 19 |
+| **Estoque, Fiscal e Financeiro Avançado** | Estoque mínimo, rotas financeiras e decisão fiscal | 20 |
+| **Growth Profissional Completo** | Campanhas, RFM, recompensas, retenção e parceiros | 21 |
+| **Agentes IA Profissional** | Configuração, teste, observabilidade e operação da Rosane | 22 |
+| **Admin SaaS Core** | Dashboard, profissionais, planos e configurações da plataforma | 23 |
+| **Admin Growth e Afiliados** | Broadcast, notificações e operação administrativa de afiliados | 24 |
+| **Client App Completo** | Portal e fluxos públicos seguros | 25 |
+| **Hardening e Anti-Duplicidade** | QA, segurança, migração final e sincronização dos PRDs | 26 |
 | **Advanced** | Knowledge Brain, Partner API | Futuro |
 
 > **Admin mínimo técnico (FASE 1) ≠ Admin analytics completo (FASE 9).** Na FASE 1 o admin opera Nerissa e monitora webhooks via Supabase Dashboard. Dashboard de MRR e analytics vem na FASE 9.
@@ -705,6 +719,34 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 >
 > **Reordenação pós-FASE 9:** a partir da FASE 11, a prioridade oficial é fechar primeiro as rotas e fluxos que falam com profissionais e clientes, organizam agenda/comunicação e geram receita operacional. Billing SaaS, afiliados, admin avançado e plataforma continuam obrigatórios, mas não devem passar na frente dos onboardings, comunicação, agenda e receita do profissional.
 
+### Gate obrigatório antes de executar qualquer fase
+
+Nenhuma tarefa entra em implementação sem uma ficha baseada em `docs/01-execution/PHASE-PREFLIGHT-CONTRACT.md` aprovada contendo:
+
+1. app responsável, ator e permissões;
+2. rota canônica, aliases/redirects e entrada de navegação;
+3. fase dona da capacidade e fases anteriores que serão ampliadas;
+4. componentes, hooks, tabelas, RPCs, Edge Functions, storage e filas existentes que serão reutilizados;
+5. lacuna contratual real, caso seja necessária migration ou função nova;
+6. estados loading, vazio, erro, sucesso, mobile 390px e i18n;
+7. testes de RLS/IDOR, auditoria, idempotência e `DRY_RUN` aplicáveis;
+8. atualização necessária em PRD-FRONTEND, PRD-SCHEMA e PRD-EDGE-FUNCTIONS.
+
+Se já existir artefato equivalente, a tarefa deve ampliá-lo ou substituí-lo com migração documentada. Criar implementação paralela é bloqueado.
+
+### Donos canônicos das capacidades sobrepostas
+
+| Capacidade | Fundação existente | Fase dona do fechamento | Regra anti-conflito |
+|---|---|---|---|
+| Rosane e shadow mode | Fases 1 e 5 | Fase 22 | `/agentes` concentra configuração; `/conversas` concentra operação inline; `/configuracoes/assistente` redireciona para `/agentes` |
+| Funil profissional | Fases 8 e 16 | Fase 19 | ampliar o mesmo `/funil`, contratos e componentes; não criar segundo kanban |
+| Campanhas profissionais | Fases 8 e 16 | Fase 21 | ampliar `campaigns` e contratos v2; não recriar calendários/filas v1 |
+| Fidelidade e recompensas | Fase 16 | Fase 21 | uma única capacidade e rota canônica; Fase 21 fecha UI e operação |
+| Conciliação financeira | Fase 15 | Fase 20 | reutilizar contratos da Fase 15; Fase 20 fecha rota e paridade |
+| Dashboard admin | Fases 9 e 17 | Fase 23 | ampliar dashboard e RPCs existentes; não criar dashboard paralelo |
+| Afiliados da plataforma | Fase 17 | Fase 24 | `/embaixadores` é canônica no admin; não confundir com parceiros profissionais |
+| Parceiros profissionais | contratos a validar | Fase 21 | professional vê apenas seu escopo; pagamentos administrativos ficam na Fase 24 |
+
 ---
 
 ### FASE 0 — Fundação Técnica
@@ -867,7 +909,7 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 **Frontend:**
 - Inbox omnichannel: hierarquia (urgente, shadow pendente, normal)
 - Shadow mode UI: aprovar/editar/ignorar inline
-- Configurações → Assistente (Rosane): shadow mode toggle, agentes ativos, horário
+- Configuração mínima necessária à automação; a rota canônica e a UI completa pertencem à Fase 22
 
 **DoD Fase 5:**
 - [x] Agendamento criado (FASE 3) → confirmação enviada automaticamente pela Rosane
@@ -879,6 +921,11 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 - [x] D+1: follow-up de pós-atendimento enviado
 - [x] Inbox mostra urgente em destaque (rose), shadow em amber, normal sem cor
 - [x] DRY_RUN=true em todos os testes automatizados — nenhuma mensagem real
+
+**Fronteira com a Fase 22:**
+- A Fase 5 funda `professional_agents`, automações e operação shadow em `/conversas`
+- A Fase 22 amplia esses mesmos contratos e concentra configuração e observabilidade em `/agentes`
+- É proibido criar uma segunda fonte de configuração em `/configuracoes/assistente`
 
 ---
 
@@ -946,6 +993,12 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 - Indicação: link de indicação por cliente, painel de resultados
 - Funil de leads: kanban de oportunidades
 
+**Fronteira com as Fases 16, 19 e 21:**
+- Esta fase funda contratos e fluxos mínimos de growth
+- Fase 16 amplia funil, canais e automações comerciais
+- Fase 19 fecha a paridade operacional do mesmo `/funil`
+- Fase 21 fecha campanhas, RFM, recompensas e retenção sem recriar contratos da Fase 8
+
 **DoD Fase 8:**
 - [x] Cliente inativo 30 dias → reativacao-agent enviado automaticamente (dry_run em testes)
 - [x] RFM score calculado semanalmente para todos os clientes do professionalA
@@ -966,6 +1019,11 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 - Dashboard admin: MRR, churn, profissionais ativos, alertas críticos
 - Nexus: chat com Nerissa para gerenciar plataforma
 - Lista de profissionais com health score e status da instância
+
+**Fronteira com as Fases 17 e 23:**
+- Esta fase funda o dashboard e suas métricas
+- Fases 17 e 23 ampliam o mesmo dashboard e os RPCs existentes
+- É proibido criar uma segunda visão principal ou contratos equivalentes para MRR, churn e saúde
 
 **DoD Fase 9:**
 - [x] Admin vê MRR real no dashboard
@@ -1006,7 +1064,7 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 **Backend:**
 - Handoff público pré-conta protegido: `/entrar`, `/criar-conta`, `ref`, `lang`, `pid`, `conversation`, `collected_data`
 - Criação Auth controlada por backend/RPC, preservando `auth.users.id = professionals.id = professionals.user_id`
-- A Fase 11 deve portar/evoluir o padrão validado na v1: `/criar-conta` chama backend/RPC, valida `pid + email`, cria Auth com o UUID canônico de `professionals.id` e nunca usa `supabase.auth.signUp` direto no frontend. Se o `handle_new_user` atual da v2 criar `professionals.id` diferente de `auth.users.id`, a fase deve corrigir o trigger antes de liberar o fluxo.
+- A Fase 11 deve preservar o invariante `auth.users.id = professionals.id = professionals.user_id` usando exclusivamente contratos comprovados no banco/migrations da v2. `/criar-conta` chama backend/RPC v2, valida `pid + email` e nunca usa `supabase.auth.signUp` direto no frontend. Se o `handle_new_user` atual da v2 quebrar o invariante, a fase deve corrigir o trigger v2 antes de liberar o fluxo.
 - Nerissa completa dados mínimos do profissional: nome público, especialidade, serviços, horários, endereço/região, WhatsApp, regras de atendimento, nome/persona da Rosane
 - Onboarding do cliente no PWA: identificação, aceite LGPD, vínculo ao profissional por slug/token/telefone, preferências básicas
 - Admin/manual onboarding para casos de suporte sem quebrar auditoria
@@ -1137,6 +1195,11 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 - Configurações financeiras
 - Extrato com origem PDV/cobrança/pacote
 
+**Fronteira com a Fase 20:**
+- Esta fase é dona da regra de negócio, matching e contratos de conciliação
+- A Fase 20 reutiliza esses contratos para fechar a rota, a navegação e a integração opcional com estoque/fiscal
+- É proibido criar segundo modelo de itens, importação ou confirmação de match
+
 **DoD Fase 15:**
 - [x] Venda no PDV cria transação financeira auditável
 - [x] Comprovante pode ser enviado pela instância do profissional
@@ -1155,16 +1218,21 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 - Funil de vendas do profissional: stages, opportunities, histórico e automações
 - Chat público com anti-spam, contexto e handoff
 - E-mail como canal com Resend/SMTP e opt-out
-- Fidelidade e recompensas
+- Fundação de fidelidade e recompensas: regras, saldo/eventos e contratos necessários
 - Upsell-agent com aprovação e métricas
 - Health score cliente explicável e acionável
 
 **Frontend:**
 - `/funil`
 - Campanhas avançadas
-- Fidelidade/recompensas
+- Integração mínima de fidelidade/recompensas, sem criar rota ou programa paralelo
 - Chat público configurável
 - Métricas de conversão por canal
+
+**Fronteira com as Fases 19 e 21:**
+- Fase 19 fecha a operação do mesmo `/funil`
+- Fase 21 fecha a UI e a operação de campanhas, RFM, fidelidade, recompensas, retenção e parceiros profissionais
+- `/recompensas` é a única rota canônica da capacidade; Fase 21 deve reutilizar a fundação desta fase
 
 **DoD Fase 16:**
 - [x] Lead entra no funil e evolui por estágios com histórico
@@ -1206,11 +1274,342 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 
 ---
 
+### FASE 18 — Consolidação de Rotas, Navegação e Contratos
+**Duração estimada:** 2-3 semanas, podendo estender se lacunas contratuais bloqueantes forem descobertas
+**Entrega:** mapa canônico de rotas e contratos aprovado antes de desenvolver novas telas.
+
+> Nenhuma feature de paridade entra em implementação antes de declarar app responsável, rota canônica e contrato Supabase.
+
+**Governança e decisão:**
+- Decision Owner final: Ismael, proprietário do produto
+- Conflitos de rota, ownership, consolidação, descarte ou prioridade são escalados ao Decision Owner; consenso não é requisito para encerrar a decisão
+- Registrar decisões e justificativas em `docs/01-execution/PHASE-18-DECISIONS.md`
+- Nenhuma decisão crítica permanece como “a decidir depois” ao encerrar a matriz canônica
+
+**Planejamento e contratos:**
+- Usar os comparativos v1 somente para frontend/produto: `v1-v2-professional-frontend-gap.md` e `v1-v2-admin-frontend-gap.md`; usar `supabase-contract-map-v2.md` exclusivamente para contratos backend
+- Classificar cada recurso v1 como: portar, substituir pelo modelo v2, descartar como legado ou bloquear até existir contrato
+- Definir tabelas, RPCs, storage e RLS oficiais exclusivamente a partir do banco/migrations da v2
+- Confirmar fronteiras: profissional em `apps/professional`, plataforma em `apps/admin`, cliente/público em `apps/client`
+- Produzir ficha de contrato para cada capacidade das Fases 19-25 antes de sua implementação
+- Mapear componentes, hooks, migrations, RPCs e Edge Functions já existentes; o inventário textual de fases não substitui auditoria técnica
+- Proibir consulta a Functions, schema, RPCs ou policies da v1 para desenhar backend; Functions v2 consolidadas devem ser validadas contra os contratos oficiais do DB v2
+- Priorizar auditoria contratual por risco bloqueante: auth recovery, parceiros profissional, estoque, financeiro/conciliação, documentos, configurações e analytics admin
+- Toda lacuna contratual descoberta recebe imediatamente owner, fase responsável, prioridade, bloqueios causados e tarefa contratual
+
+**Frontend:**
+- Definir rotas canônicas, aliases e redirects
+- Definir uma fonte planejada única para menu desktop, mobile e página “Mais”
+- Exigir sub-rota ou query param estável para hubs com áreas importantes
+- Completar auth profissional com `/recuperar-senha` e `/reset-password`
+- Separar explicitamente `/parceiros` profissional de `/embaixadores` admin
+- Mapear cada rota para jornadas, componentes, hooks, permissões e fase responsável
+
+**Decisões canônicas obrigatórias desta fase:**
+- `/agentes` é a única tela de configuração profissional da Rosane; `/configuracoes/assistente` redireciona para ela
+- `/conversas` mantém apenas operação inline, takeover e aprovação/rejeição shadow
+- `/recompensas`, `/rfm`, `/campanhas`, `/aniversariantes` e `/parceiros` são rotas profissionais; `/growth` é hub, não implementação paralela
+- `/embaixadores` e `/broadcast` pertencem exclusivamente ao admin; `/afiliados` redireciona para `/embaixadores`
+- `/configuracoes/admin` não existe no app profissional
+- `/upgrade` redireciona para `/planos`
+- `/teste-premium` e `/debug` não são rotas de produto; necessidades internas viram teste automatizado, runbook ou devtool protegido
+
+**DoD Fase 18:**
+- [x] Matriz de rotas dos três apps aprovada pelo Decision Owner
+- [x] Cada rota aponta para jornadas, componentes/hooks existentes ou fase responsável pela entrega
+- [x] Conflitos de rota, ownership e consolidação estão resolvidos e registrados em `PHASE-18-DECISIONS.md`
+- [x] PRD-FRONTEND está sincronizado com a matriz aprovada antes de encerrar a definição de rotas
+- [x] Cada lacuna aponta para contrato v2 existente ou tarefa contratual com owner, fase, prioridade e bloqueio explícito
+- [x] Nenhuma rota pública de cliente permanece no app profissional; rotas públicas de autenticação profissional são exceção explícita
+- [x] Nenhuma rota admin permanece no app profissional
+- [x] Nenhuma tarefa de tela segue sem checklist Supabase
+- [x] `/recuperar-senha` solicita link sem revelar existência da conta
+- [x] `/reset-password` valida sessão/token, altera senha e retorna ao login
+- [x] Cada rota consolidada possui URL canônica, alias/redirect e validação estrutural de navegação direta
+- [x] Matriz separa `/parceiros` profissional de `/embaixadores` admin
+- [x] Navegação consolidada preserva lazy loading; avisos de chunks existentes ficam registrados para a Fase 26
+- [x] Nenhum conflito crítico de rota ou ownership permanece aberto ao encerrar a fase
+
+**Evidências de encerramento:** `PHASE-18-ROUTE-MATRIX.md`, `PHASE-18-DECISIONS.md`, `PHASE-18-CONTRACT-GAPS.md`, `PHASE-18-PREFLIGHT-INDEX.md` e `PHASE-18-VALIDATION.md`.
+
+---
+
+### FASE 19 — Paridade Profissional Operacional
+**Status:** em andamento — execução iniciada via PR 19.0 conforme `docs/01-execution/PHASE-19-EXECUTION-PLAN.md`
+**Duração estimada:** 3-4 semanas
+**Entrega:** fechar a operação diária do profissional sem duplicar contratos ou rotas.
+
+**Escopo:**
+- Dashboard: hoje, atenção, receita, leads quentes, clientes em risco e atividade da IA
+- Clientes: lista/kanban aprovado, filtros, jornada, perfil, histórico, ações rápidas e anamnese
+- Agenda: agenda, histórico/sessões, recorrência, status, detalhes e tarefas aprovadas
+- Serviços: catálogo, categorias, CRUD e visão geral
+- Funil: etapas, oportunidades, histórico, notas, tarefas e ações comerciais
+- Documentos: subáreas navegáveis para pacotes, orçamentos, contratos e anamnese
+- Configurações profissionais navegáveis, sem conteúdo administrativo da plataforma
+
+**Rotas e aliases obrigatórios:**
+- `/clientes/:id/anamnese`: visão e histórico de fichas do cliente
+- `/servicos/novo`: rota acionável que abre o mesmo formulário/sheet do catálogo; não criar segundo formulário
+- `/configuracoes/anamnese`: builder e versionamento de templates
+- `/documentos/pacotes`, `/documentos/orcamentos`, `/documentos/contratos`, `/documentos/anamnese`; aliases legados só por redirect
+- `/configuracoes/agenda`, `/configuracoes/servicos`, `/configuracoes/notificacoes`, `/configuracoes/equipe` e `/configuracoes/clinica`
+- `/configuracoes/assistente` redireciona para `/agentes`
+- `/configuracoes/pagamento` redireciona para `/financeiro/configuracoes`
+- `/configuracoes/plano` redireciona para `/planos`
+- `/configuracoes/admin` é proibida no app profissional
+
+**Backend/contratos:**
+- Reutilizar RPCs v2 de clientes, agenda, serviços, funil, documentos e pacotes
+- Validar RLS das leituras diretas
+- Proibir recriação de tabelas legadas quando houver equivalente v2
+- Ampliar o `/funil` existente das Fases 8 e 16; não criar segundo board, stages ou opportunities
+- Fichas de anamnese respondidas são imutáveis/versionadas; revisão gera auditoria, não sobrescrita silenciosa
+- Antes do primeiro PR de implementação, executar o PR 19.0 documental conforme `docs/01-execution/PHASE-19-EXECUTION-PLAN.md`
+- O PR 19.0 deve aprovar contratos específicos para anamnese versionada, gestão segura de equipe/roles, notificações e business hours
+- O PR 19.0 deve aprovar matriz de permissões `operacional` versus `gestor` e inventário de componentes/hooks/RPCs
+- Agenda por membro, tarefas do funil, escrita de categorias e telas de configurações permanecem bloqueadas até contrato DB v2 comprovado
+- Ocultar ação no frontend não substitui autorização no DB/RPC
+
+**DoD Fase 19:**
+- [ ] Fluxos operacionais principais funcionam sem rotas duplicadas
+- [ ] Toda escrita multi-tabela usa RPC/Edge Function aprovada
+- [ ] Perfil do cliente reúne histórico, financeiro, pacotes, documentos e anamnese permitida
+- [ ] Documentos/pacotes possuem URLs navegáveis
+- [ ] Mapa profissional atualizado com decisão final de cada recurso
+- [ ] Todas as rotas e redirects de configurações definidos acima funcionam por URL direta
+- [ ] `/configuracoes/anamnese` cria e versiona templates sem alterar fichas já respondidas
+- [ ] `/clientes/:id/anamnese` mostra histórico permitido e ações auditáveis
+- [ ] Criação/edição de serviços e configurações respeitam roles; `operacional` não executa ação de `gestor`
+- [ ] `/servicos/novo` reutiliza o formulário do catálogo e bloqueia acesso sem role `gestor`
+- [ ] `/funil` reutiliza os contratos e componentes existentes, sem implementação paralela
+
+---
+
+### FASE 20 — Estoque, Fiscal e Financeiro Avançado
+**Duração estimada:** 3-4 semanas
+**Entrega:** fechar as lacunas financeiras, fiscais e de estoque sem conflitar com o modelo v2.
+
+**Escopo:**
+- Entregar `/estoque` mínimo operacional ligado ao PDV: produtos, saldo, movimentações, baixo estoque e vencimentos
+- Reservas, manutenção e importação assistida entram somente após contrato aprovado, sem bloquear o estoque mínimo
+- `/financeiro/conciliacao` com importação CSV/OFX e confirmação auditável
+- `/financeiro/configuracoes` para bancos, categorias, centros de custo, PIX, gateways e recibos
+- Avaliar NFSe/fiscal da v1 antes de criar tela ou schema
+
+**Backend/contratos:**
+- Usar `finance_reconciliation_items`, `import_reconciliation_items` e `confirm_reconciliation_match`
+- Validar integração entre `upsert_product`, PDV e baixa de estoque
+- Reutilizar integralmente matching e regras de conciliação da Fase 15
+- NFSe só entra com contrato oficial no PRD-SCHEMA
+
+**DoD Fase 20:**
+- [ ] `/estoque` mínimo operacional existe e reconcilia movimentações com vendas do PDV
+- [ ] professionalA não vê ou altera estoque de professionalB
+- [ ] Conciliação nunca aplica match sem confirmação
+- [ ] Configurações financeiras não reescrevem histórico
+- [ ] NFSe possui contrato aprovado ou permanece explicitamente fora do escopo
+- [ ] Nenhuma tabela legada fiscal/estoque foi recriada sem validação
+- [ ] Fase 20 não criou segundo modelo de conciliação, importação ou confirmação de match
+
+---
+
+### FASE 21 — Growth Profissional, Recompensas e Retenção
+**Duração estimada:** 3-4 semanas
+**Entrega:** growth profissional completo, acionável e separado da comunicação admin.
+
+**Escopo:**
+- Manter `/growth` como hub navegável para as rotas canônicas do domínio
+- Campanhas profissionais: segmento, agendamento, envio, resultados, opt-out e cooldown
+- RFM: matriz, segmentos, recalcular e iniciar ação
+- Recompensas: indicações, fidelidade, ranking, programa, templates e resgates
+- Aniversariantes, clientes em risco, reativação e upsell
+- Parceiros profissionais: vínculo/links próprios, indicações atribuídas, desempenho e comissões visíveis; aprovação e pagamento permanecem no admin
+
+**Rotas canônicas profissionais:**
+- `/campanhas`, `/rfm`, `/recompensas`, `/aniversariantes` e `/parceiros`
+- `/growth` agrega atalhos e indicadores, mas não mantém uma segunda implementação dessas áreas
+
+**Backend/contratos:**
+- Usar `campaigns`, `campaign_recipients`, `campaign_dispatches`, `rfm_scores`, `client_health_scores`, `referral_links`, `referral_events` e RPCs v2
+- Não recriar filas/calendários de campanha da v1 sem decisão explícita
+- Toda comunicação respeita opt-out, cooldown, horário e instância correta
+- Reutilizar a fundação de campanhas da Fase 8 e os contratos comerciais/recompensas da Fase 16
+- Definir contrato profissional de parceiros separado dos contratos administrativos de aprovação e pagamento
+
+**DoD Fase 21:**
+- [ ] Campanhas profissionais mostram resultados e respeitam consentimento
+- [ ] RFM gera segmentos acionáveis
+- [ ] Recompensas cobre indicação, fidelidade, ranking e resgate
+- [ ] `/aniversariantes` possui UI navegável, lista/filtros e ações permitidas; qualquer consolidação mantém redirect para essa URL canônica
+- [ ] `/parceiros` mostra somente relações e métricas permitidas ao profissional autenticado
+- [ ] Growth profissional não usa contratos de broadcast admin
+- [ ] Campanhas e recompensas ampliam os contratos existentes sem filas, programas ou saldos paralelos
+- [ ] `/growth` não duplica regras, formulários ou fontes de dados das rotas canônicas
+
+---
+
+### FASE 22 — Agentes IA Profissional e Operação da Rosane
+**Duração estimada:** 3-4 semanas
+**Entrega:** profissional controla a Rosane sem alterar configurações globais da plataforma.
+
+**Escopo:**
+- `/agentes` profissional: tom, persona operacional, canais, horários, regras, shadow mode e agentes ativos
+- Chat de teste com contexto real e sem envio externo automático
+- Aprovar, editar e rejeitar sugestões
+- Logs e métricas operacionais visíveis ao profissional
+- Decidir destino de `personas` e `rlhf_rules` da v1
+- `/configuracoes/assistente` funciona apenas como redirect para `/agentes`
+- `/conversas` mantém aprovação/rejeição inline e takeover, sem formulário paralelo de configuração
+
+**Backend/contratos:**
+- Usar `professional_agents`, `shadow_suggestions`, `message_events`, `agent_executions` e contratos de conversa
+- Prompt global e versionamento continuam sob responsabilidade do admin
+- Ampliar contratos fundados nas Fases 1 e 5; nova tabela ou função exige prova de lacuna
+
+**DoD Fase 22:**
+- [ ] Configuração profissional não altera prompt global
+- [ ] Shadow suggestions possuem auditoria completa
+- [ ] Chat de teste não envia mensagem real sem confirmação
+- [ ] Logs respeitam isolamento de tenant
+- [ ] Decisão sobre personas/RLHF registrada antes de schema novo
+- [ ] `/agentes` é a única fonte de configuração profissional da Rosane
+- [ ] `/configuracoes/assistente` redireciona sem manter estado ou persistência paralela
+- [ ] Fase 22 reutiliza `professional_agents` e o fluxo shadow existente
+
+---
+
+### FASE 23 — Admin SaaS Core e Configurações da Plataforma
+**Duração estimada:** 3-4 semanas
+**Entrega:** admin v2 opera profissionais, planos, métricas e configurações com segurança.
+
+**Escopo:**
+- Ampliar o dashboard das Fases 9 e 17 com MRR, churn, profissionais, alertas, saúde e logs relevantes
+- Profissionais: busca, filtros, detalhes, assinatura, wallet/saldo, status e onboarding manual
+- Planos: decidir CRUD, features e calculadora financeira ou modelo controlado por migration/RPC
+- `/analytics`: métricas detalhadas; dashboard mantém apenas resumo acionável
+- Configurações globais: integrações, credenciais, status e segurança
+- Agentes globais: completar ativação, versões de prompt, métricas/logs e rollback sem tocar configurações profissionais
+- Melhorias: consolidar workflow de feature requests e histórico relevante
+- Onboarding administrativo acontece dentro de `/profissionais`; não criar wizard paralelo sem gap aprovado
+
+**Rotas canônicas admin desta fase:**
+- `/dashboard`, `/analytics`, `/profissionais`, `/planos`, `/agentes`, `/melhorias` e `/configuracoes`
+
+**Backend/contratos:**
+- Reutilizar `get_admin_dashboard_rpc`, `get_admin_phase17_dashboard` e demais RPCs admin existentes; criar contrato somente quando a lacuna estiver documentada
+- Proibir CRUD direto de configurações sensíveis
+- Toda ação admin gera auditoria
+
+**DoD Fase 23:**
+- [ ] Profissionais, planos, assinaturas e créditos são operáveis por contratos auditáveis
+- [ ] Configurações globais possuem RPC/Edge Function segura
+- [ ] Métricas v1 foram portadas ou consolidadas com decisão registrada
+- [ ] CRUD/calculadora de planos possui decisão final
+- [ ] Nenhuma ação sensível depende de acesso direto improvisado
+- [ ] Existe uma única visão principal de dashboard admin e uma única fonte contratual por métrica
+- [ ] Nenhum card de MRR, churn, saúde ou profissionais foi reimplementado com consulta paralela
+- [ ] `/analytics` reutiliza os contratos do dashboard sem recalcular métricas em consultas paralelas
+- [ ] Agentes globais não alteram `professional_agents` de um tenant sem ação explícita, autorizada e auditada
+- [ ] Onboarding manual reutiliza `/profissionais` e contrato auditável, sem fluxo administrativo paralelo
+
+---
+
+### FASE 24 — Admin Growth, Broadcast, Notificações e Afiliados
+**Duração estimada:** 3-4 semanas
+**Entrega:** comunicação de plataforma e operação de afiliados completas, sem conflitar com growth profissional.
+
+**Escopo:**
+- Usar `/broadcast` como rota canônica da comunicação admin; `/campanhas` e `/notificacoes` admin são aliases ou subáreas, nunca domínios paralelos
+- Audiência, canais, dry-run, envio, histórico, leitura e limpeza
+- Embaixadores: aprovação, suspensão, criação, links, indicações, comissões, PIX e histórico
+- Métricas de afiliados e comunicação admin
+- `/embaixadores` é a rota administrativa canônica; `/afiliados` redireciona para ela; `/parceiros` pertence exclusivamente ao profissional
+- `/leads` administra apenas leads comerciais da plataforma/Nerissa; nunca oportunidades do funil profissional
+
+**Backend/contratos:**
+- Usar `admin-broadcast` e contratos específicos para histórico/canais
+- Usar contratos da fase 17 e `affiliate-commission-cron`
+- Pagamentos e comissões exigem auditoria
+- Não reutilizar campanhas profissionais para broadcast admin sem separação explícita
+- Não expor ações de aprovação, suspensão ou pagamento no app profissional
+
+**DoD Fase 24:**
+- [ ] Broadcast/notificações possui contrato único e histórico
+- [ ] Campanhas admin foram portadas ou consolidadas com decisão registrada
+- [ ] Embaixadores cobre operação e pagamentos auditáveis
+- [ ] UI identifica claramente o público de cada comunicação
+- [ ] Growth admin não conflita com growth profissional
+- [ ] `/embaixadores` admin e `/parceiros` profissional usam permissões e experiências distintas
+- [ ] `/afiliados` redireciona para `/embaixadores` sem implementação paralela
+- [ ] `/broadcast` é a única implementação de comunicação admin
+- [ ] `/leads` usa contratos da plataforma e não lê ou altera o `/funil` de profissionais
+
+---
+
+### FASE 25 — Client App e Portal do Cliente
+**Duração estimada:** 2-3 semanas
+**Entrega:** parte cliente da v2 inventariada, estabilizada e segura.
+
+> Esta fase não busca paridade com v1, pois o app cliente não existia nela.
+
+**Escopo:**
+- Inventariar agendamento, ações de agendamento, anamnese, pacote, orçamento, chat e portal
+- Portal: home, histórico permitido, pacotes, agendar e onboarding
+- Validar token/slug, rate limit, privacidade, idioma, marca e mensagens de erro
+- Preservar `lang`, `ref`, `slug` e `token` em redirects
+- Reutilizar o chat público e contratos fundados na Fase 16; esta fase valida a experiência cliente, não cria segundo chat
+
+**Backend/contratos:**
+- Usar somente handlers públicos aprovados
+- Proibir acesso direto amplo a tabelas pelo app client
+- Garantir que respostas públicas não vazam dados
+- Cada handler público possui validação runtime, rate limit, resposta mínima e teste de token/slug inválido
+
+**DoD Fase 25:**
+- [ ] Todas as rotas client foram inventariadas e testadas em 390px
+- [ ] Nenhum fluxo depende de auth profissional
+- [ ] Token inválido, expirado e slug inexistente geram erros amigáveis
+- [ ] Cliente vê somente dados permitidos
+- [ ] Idioma, marca e parâmetros sobrevivem ao fluxo
+- [ ] Chat, agendamento, anamnese, pacote e orçamento reutilizam handlers canônicos sem acesso direto paralelo
+
+---
+
+### FASE 26 — Hardening, QA, Migração Final e Anti-Duplicidade
+**Duração estimada:** 3-4 semanas
+**Entrega:** v2 completa, testada, documentada e sem recursos conflitantes.
+
+**Escopo:**
+- Auditoria final professional/admin/client contra os mapas v1/v2/Supabase
+- Testes de RLS, IDOR, permissão, dry-run, idempotência e auditoria
+- Performance, paginação/cursor, payloads públicos e timeouts
+- Mobile 390px, Safari iOS, Android Chrome e i18n
+- Remover links mortos, aliases sem destino e menus duplicados
+- Registrar recursos legados descartados e runbooks finais
+- Auditar conflitos reais no código: rotas, componentes, hooks, migrations, tabelas, RPCs, Edge Functions, storage, filas e policies
+- Validar que cada capacidade possui exatamente um dono, uma rota canônica e uma fonte contratual
+
+**DoD Fase 26:**
+- [ ] Matriz v1/v2 possui decisão final para todos os recursos
+- [ ] Lint, typecheck e build passam no monorepo
+- [ ] RLS/IDOR validado para professionalA, professionalB e admin
+- [ ] Fluxos públicos testados com tokens válidos e inválidos
+- [ ] Nenhum menu aponta para rota sem tela aprovada
+- [ ] Nenhum recurso está duplicado entre admin, professional e client
+- [ ] PRD-MASTER, PRD-FRONTEND, PRD-SCHEMA e PRD-EDGE-FUNCTIONS estão sincronizados
+- [ ] Nenhum domínio possui tabelas, RPCs, Edge Functions, filas ou componentes paralelos com a mesma responsabilidade
+- [ ] Aliases e redirects possuem teste; nenhuma rota consolidada depende apenas de estado local de aba
+- [ ] Matriz de cobertura comprova rota + permissão + contrato + estados + teste para cada jornada
+- [ ] Recursos descartados possuem decisão de produto aprovada e não permanecem em menus, mapas ou contratos órfãos
+
+---
+
 ### FASE FUTURA — Advanced
 Sem data. Não bloqueia nenhuma fase anterior.
 - Knowledge Brain (pgvector, GraphRAG, knowledge_nodes)
 - Partner API (api_keys, webhooks, rate limiting)
-- Automações avançadas além das FASES 11-17
+- Automações avançadas além das FASES 11-26
 - NFS-e integrado
 
 ---
@@ -1236,6 +1635,10 @@ Todo item de qualquer fase só está pronto quando:
 | **Sem dado hardcoded** | Nenhum professional_id no frontend. Nenhuma chave de API no código. |
 | **DRY_RUN respeitado** | Testes automatizados não enviaram WhatsApp real nem chamaram IA real |
 | **Build e lint passam** | `npm run lint` e `npm run build` sem erros |
+| **Preflight aprovado** | Ficha baseada em `PHASE-PREFLIGHT-CONTRACT.md` aprovada antes da implementação |
+| **Ownership preservado** | A capacidade possui um dono; fases posteriores ampliam sem implementação paralela |
+| **Rota canônica validada** | URL direta, aliases/redirects, menu e permissões testados |
+| **Não-duplicidade comprovada** | Busca técnica não encontrou contrato, schema, fila ou componente paralelo equivalente |
 
 ---
 
@@ -1250,6 +1653,7 @@ Todo item de qualquer fase só está pronto quando:
 | **PRD-EDGE-FUNCTIONS.md** | Contratos de Edge Functions |
 | **PRD-CONSOLIDATION.md** | Tabelas consolidadas (o que foi fundido — o que NÃO criar) |
 | **EXECUTION-PRD.md** | Stack, crons, integrações, deploy — segue a ordem de fases deste PRD |
+| **PHASE-PREFLIGHT-CONTRACT.md** | Ficha obrigatória de ownership, rotas, contratos v2, segurança e não-duplicidade antes de implementar |
 | **EVENTS.md** | Contratos completos dos eventos canônicos |
 
 **Em caso de conflito:** PRD-MASTER > PRD-UX (para UX) = PRD-CONSOLIDATION (para schema) > demais.
