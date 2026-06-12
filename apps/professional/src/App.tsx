@@ -23,6 +23,7 @@ const DocumentsPackagesPage = lazy(() => import("@/pages/DocumentsPackagesPage")
 const GrowthPage = lazy(() => import("@/pages/GrowthPage"));
 const FunilPage = lazy(() => import("@/pages/FunilPage"));
 const ReportsPage = lazy(() => import("@/pages/ReportsPage"));
+const PlanosPage = lazy(() => import("@/pages/PlanosPage"));
 const MorePage = lazy(() => import("@/pages/MorePage"));
 
 const queryClient = new QueryClient({
@@ -73,6 +74,7 @@ function AppRoutes() {
                 <Route path="/funil" element={<FunilPage />} />
                 <Route path="/growth" element={<GrowthPage />} />
                 <Route path="/relatorios" element={<ReportsPage />} />
+                <Route path="/planos" element={<PlanosPage />} />
                 <Route path="/documentos-pacotes" element={<DocumentsPackagesPage />} />
                 <Route path="/configuracoes" element={<ConfiguracoesPage />} />
                 <Route path="/mais" element={<MorePage />} />

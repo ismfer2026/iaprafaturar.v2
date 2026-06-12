@@ -1,4 +1,4 @@
-import { BarChart3, Bot, LogOut, Megaphone, Users } from "lucide-react";
+import { BarChart3, Bot, Cpu, CreditCard, Handshake, Lightbulb, LogOut, Megaphone, Users } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 import { Button, cn } from "@iaprafaturar/ui";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
@@ -7,6 +7,10 @@ import { useI18n } from "@/i18n";
 const navItems = [
   { href: "/dashboard", labelKey: "nav.dashboard", icon: BarChart3 },
   { href: "/profissionais", labelKey: "nav.professionals", icon: Users },
+  { href: "/planos", labelKey: "nav.plans", icon: CreditCard },
+  { href: "/embaixadores", labelKey: "nav.ambassadors", icon: Handshake },
+  { href: "/agentes", labelKey: "nav.agents", icon: Cpu },
+  { href: "/melhorias", labelKey: "nav.improvements", icon: Lightbulb },
   { href: "/broadcast", labelKey: "nav.broadcast", icon: Megaphone },
   { href: "/nexus", labelKey: "nav.nexus", icon: Bot }
 ] as const;
@@ -45,13 +49,13 @@ export default function AdminShell() {
         <Outlet />
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t bg-white px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 lg:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-20 flex gap-1 overflow-x-auto border-t bg-white px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 lg:hidden">
         {navItems.map((item) => (
           <NavLink
             key={item.href}
             to={item.href}
             className={({ isActive }) => cn(
-              "flex flex-col items-center gap-1 rounded-lg px-2 py-2 text-xs font-semibold",
+              "flex min-w-20 flex-col items-center gap-1 rounded-lg px-2 py-2 text-xs font-semibold",
               isActive ? "text-violet-700" : "text-zinc-500"
             )}
           >

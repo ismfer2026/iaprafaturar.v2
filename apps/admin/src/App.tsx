@@ -11,6 +11,10 @@ const DashboardPage = lazy(() => import("@/pages/DashboardPage"));
 const ProfessionalsPage = lazy(() => import("@/pages/ProfessionalsPage"));
 const NexusPage = lazy(() => import("@/pages/NexusPage"));
 const BroadcastPage = lazy(() => import("@/pages/BroadcastPage"));
+const PlansPage = lazy(() => import("@/pages/PlansPage"));
+const AmbassadorsPage = lazy(() => import("@/pages/AmbassadorsPage"));
+const AgentsPage = lazy(() => import("@/pages/AgentsPage"));
+const ImprovementsPage = lazy(() => import("@/pages/ImprovementsPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -63,6 +67,10 @@ function AppRoutes() {
               <Route element={<AdminShell />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/profissionais" element={<ProfessionalsPage />} />
+                <Route path="/planos" element={<PlansPage />} />
+                <Route path="/embaixadores" element={<AmbassadorsPage />} />
+                <Route path="/agentes" element={<AgentsPage />} />
+                <Route path="/melhorias" element={<ImprovementsPage />} />
                 <Route path="/broadcast" element={<BroadcastPage />} />
                 <Route path="/nexus" element={<NexusPage />} />
               </Route>

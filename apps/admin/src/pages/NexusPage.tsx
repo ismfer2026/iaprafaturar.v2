@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { Bot, Send } from "lucide-react";
 import { Button, Card, CardContent, Input } from "@iaprafaturar/ui";
 import { useI18n } from "@/i18n";
+import { supabase } from "@/lib/supabase";
 
 interface Message {
   role: "admin" | "nexus";
@@ -11,9 +13,57 @@ interface Message {
 export default function NexusPage() {
   const { t } = useI18n();
   const [input, setInput] = useState("");
+  const [professionalId, setProfessionalId] = useState("");
+  const [amount, setAmount] = useState("200");
+  const [reason, setReason] = useState("nexus_admin_credit");
+  const [proposal, setProposal] = useState<{ proposal_id: string; confirmation_token: string } | null>(null);
   const [messages, setMessages] = useState<Message[]>([
-    { role: "nexus", content: t("nexus.pending") }
+    { role: "nexus", content: t("nexus.ready") }
   ]);
+  const chat = useMutation({
+    mutationFn: async (message: string) => {
+      const { data, error } = await supabase.functions.invoke<{ reply: string }>("admin-ai-gateway", {
+        body: { mode: "panel_chat", channel: "panel", message },
+      });
+      if (error) throw error;
+      return data?.reply ?? t("common.error");
+    },
+    onSuccess: (reply) => setMessages((current) => [...current, { role: "nexus", content: reply }]),
+    onError: () => setMessages((current) => [...current, { role: "nexus", content: t("common.error") }]),
+  });
+  const proposeCredits = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.rpc("nexus_create_action_proposal", {
+        p_action_type: "add_ai_credits",
+        p_payload: { professional_id: professionalId, amount: Number(amount || 0), reason },
+        p_reason: reason,
+      });
+      if (error) throw error;
+      return data as { proposal_id: string; confirmation_token: string };
+    },
+    onSuccess: (data) => {
+      setProposal(data);
+      setMessages((current) => [...current, { role: "nexus", content: `${t("nexus.proposed")} ${data.confirmation_token}` }]);
+    },
+  });
+  const confirmAndExecute = useMutation({
+    mutationFn: async () => {
+      if (!proposal) return;
+      const confirm = await supabase.rpc("nexus_confirm_action", {
+        p_proposal_id: proposal.proposal_id,
+        p_confirmation_token: proposal.confirmation_token,
+      });
+      if (confirm.error) throw confirm.error;
+      const execute = await supabase.rpc("nexus_execute_confirmed_action", {
+        p_proposal_id: proposal.proposal_id,
+      });
+      if (execute.error) throw execute.error;
+    },
+    onSuccess: () => {
+      setMessages((current) => [...current, { role: "nexus", content: t("nexus.executed") }]);
+      setProposal(null);
+    },
+  });
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -23,8 +73,8 @@ export default function NexusPage() {
     setMessages((current) => [
       ...current,
       { role: "admin", content: text },
-      { role: "nexus", content: t("nexus.pending") }
     ]);
+    chat.mutate(text);
     setInput("");
   }
 
@@ -35,7 +85,7 @@ export default function NexusPage() {
         <p className="mt-1 text-sm text-zinc-500">{t("nexus.subtitle")}</p>
       </div>
 
-      <Card className="flex min-h-[60vh] flex-1 flex-col rounded-lg">
+      <Card className="flex min-h-[48vh] flex-1 flex-col rounded-lg">
         <CardContent className="flex flex-1 flex-col gap-3 p-4">
           <div className="flex-1 space-y-3">
             {messages.map((message, index) => (
@@ -53,10 +103,23 @@ export default function NexusPage() {
 
           <form className="flex gap-2" onSubmit={submit}>
             <Input value={input} onChange={(event) => setInput(event.target.value)} placeholder={t("nexus.placeholder")} />
-            <Button type="submit" aria-label={t("nexus.send")}>
+            <Button type="submit" variant="outline" aria-label={t("nexus.send")} disabled={chat.isPending}>
               <Send className="h-4 w-4" />
             </Button>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-lg">
+        <CardContent className="grid gap-3 p-4 md:grid-cols-[1fr_120px_1fr_auto]">
+          <Input value={professionalId} onChange={(event) => setProfessionalId(event.target.value)} placeholder={t("nexus.professionalId")} />
+          <Input value={amount} onChange={(event) => setAmount(event.target.value)} placeholder={t("nexus.amount")} />
+          <Input value={reason} onChange={(event) => setReason(event.target.value)} placeholder={t("nexus.reason")} />
+          {proposal ? (
+            <Button type="button" onClick={() => confirmAndExecute.mutate()} disabled={confirmAndExecute.isPending}>{t("nexus.confirm")}</Button>
+          ) : (
+            <Button type="button" onClick={() => proposeCredits.mutate()} disabled={!professionalId || !amount || proposeCredits.isPending}>{t("nexus.propose")}</Button>
+          )}
         </CardContent>
       </Card>
     </div>

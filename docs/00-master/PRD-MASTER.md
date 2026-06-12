@@ -1198,11 +1198,11 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 - Feature requests/melhorias
 
 **DoD Fase 17:**
-- [ ] Stripe é fonte de verdade de assinatura
-- [ ] Trial expira e entra em modo leitura sem perder dados
-- [ ] Créditos IA limitam automações sem bloquear acesso aos dados
-- [ ] Admin consegue conceder `free_internal` sem checkout público
-- [ ] Nexus não executa ação sensível sem confirmação e auditoria
+- [x] Stripe é fonte de verdade de assinatura
+- [x] Trial expira e entra em modo leitura sem perder dados
+- [x] Créditos IA limitam automações sem bloquear acesso aos dados
+- [x] Admin consegue conceder `free_internal` sem checkout público
+- [x] Nexus não executa ação sensível sem confirmação e auditoria
 
 ---
 

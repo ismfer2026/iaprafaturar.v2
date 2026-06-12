@@ -1,10 +1,17 @@
 import { Link } from "react-router-dom";
-import { BarChart3, Box, Columns3, DollarSign, FileText, Settings, Sparkles } from "lucide-react";
+import { BarChart3, Box, Columns3, CreditCard, DollarSign, FileText, Settings, Sparkles } from "lucide-react";
 import { Card, CardContent, cn } from "@iaprafaturar/ui";
 import { useI18n, type TranslationKey } from "@/i18n";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 
 const moreItems = [
+  {
+    to: "/planos",
+    icon: CreditCard,
+    titleKey: "plans.title",
+    descriptionKey: "more.plans.description",
+    tone: "bg-indigo-50 text-indigo-700",
+  },
   {
     to: "/financeiro",
     icon: DollarSign,
