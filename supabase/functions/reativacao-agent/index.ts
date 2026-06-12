@@ -34,9 +34,11 @@ interface HealthRow {
   }> | null
 }
 
-function clientFrom(row: HealthRow): NonNullable<HealthRow['clients']> extends Array<infer U> ? U | null : never {
+type HealthClient = Exclude<HealthRow['clients'], Array<unknown> | null>
+
+function clientFrom(row: HealthRow): HealthClient | null {
   const value = row.clients
-  return (Array.isArray(value) ? value[0] : value) as never
+  return (Array.isArray(value) ? value[0] : value) ?? null
 }
 
 function buildReactivationText(input: { assistantName: string; clientName: string }): string {

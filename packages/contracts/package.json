@@ -18,6 +18,8 @@
     "./edge-functions/admin-message-processor.ts": "./edge-functions/admin-message-processor.ts",
     "./edge-functions/send-message": "./edge-functions/send-message.ts",
     "./edge-functions/send-message.ts": "./edge-functions/send-message.ts",
+    "./edge-functions/send-conversation-message": "./edge-functions/send-conversation-message.ts",
+    "./edge-functions/send-conversation-message.ts": "./edge-functions/send-conversation-message.ts",
     "./edge-functions/send-appointment-series-summary": "./edge-functions/send-appointment-series-summary.ts",
     "./edge-functions/send-appointment-series-summary.ts": "./edge-functions/send-appointment-series-summary.ts",
     "./edge-functions/nerissa-setup-agent": "./edge-functions/nerissa-setup-agent.ts",

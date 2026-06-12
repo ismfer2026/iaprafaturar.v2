@@ -725,11 +725,11 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 
 **DoD Fase 0:**
 - [ ] Seed de professionalA e professionalB executado
-- [ ] `auth_professional_id()` retorna UUID correto do JWT
-- [ ] RLS em professionals bloqueia acesso cruzado (professionalB não vê professionalA)
+- [x] `auth_professional_id()` retorna UUID correto do JWT
+- [x] RLS em professionals bloqueia acesso cruzado (professionalB não vê professionalA)
 - [ ] Login, logout, cadastro funcionam no mobile (390px)
-- [ ] Bottom nav renderiza e navega sem reload
-- [ ] Manifest PWA instalável no iOS Safari e Android Chrome
+- [x] Bottom nav renderiza e navega sem reload
+- [x] Manifest PWA instalável no iOS Safari e Android Chrome
 
 ---
 
@@ -758,16 +758,16 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 - HMAC secrets configurados no Supabase Vault
 
 **DoD Fase 1:**
-- [ ] Seed `conversaInbound` processado sem erro
+- [x] Seed `conversaInbound` processado sem erro
 - [ ] Enviar mensagem para número admin → Nerissa responde em < 10s
-- [ ] Enviar mensagem para instância de profissional → Rosane registra em message_events
-- [ ] Mesmo webhook enviado 2x → processado 1x (idempotência verificada com seed duplicado)
-- [ ] HMAC inválido → retorna 401, não processa
-- [ ] Falha do agente → message_events registrado, agent_executions com status='failed'
-- [ ] DRY_RUN=true → nenhuma mensagem real enviada, payload logado
-- [ ] Nenhuma mensagem de cliente chega pelo canal admin (e vice-versa)
+- [x] Enviar mensagem para instância de profissional → Rosane registra em message_events
+- [x] Mesmo webhook enviado 2x → processado 1x (idempotência verificada com seed duplicado)
+- [x] HMAC inválido → retorna 401, não processa
+- [x] Falha do agente → message_events registrado, agent_executions com status='failed'
+- [x] DRY_RUN=true → nenhuma mensagem real enviada, payload logado
+- [x] Nenhuma mensagem de cliente chega pelo canal admin (e vice-versa)
 - [ ] 100 mensagens simultâneas com seed → nenhuma perdida (carga básica com dry_run)
-- [ ] Runbooks de FASE 1 criados
+- [x] Runbooks de FASE 1 criados
 
 ---
 
@@ -787,13 +787,13 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 - Configurações → grupo "Assistente (Rosane)" funcional
 
 **DoD Fase 2:**
-- [ ] professionalA completa onboarding ponta a ponta com seed
-- [ ] Novo profissional cria conta pelo /cadastro
-- [ ] Nerissa guia setup pelo WhatsApp (nome, serviço, horário)
-- [ ] Profissional conecta instância Evolution Go via Nerissa
-- [ ] Rosane está ativa na instância do profissional ao final do onboarding
-- [ ] Nerissa informa riscos do WhatsApp pessoal e oferece guia do Business (não bloqueia)
-- [ ] /onboarding não rende sem estar completo (rota guardada)
+- [x] professionalA completa onboarding ponta a ponta com seed
+- [x] Novo profissional cria conta pelo /cadastro
+- [x] Nerissa guia setup pelo WhatsApp (nome, serviço, horário)
+- [x] Profissional conecta instância Evolution Go via Nerissa
+- [x] Rosane está ativa na instância do profissional ao final do onboarding
+- [x] Nerissa informa riscos do WhatsApp pessoal e oferece guia do Business (não bloqueia)
+- [x] /onboarding não rende sem estar completo (rota guardada)
 
 ---
 
@@ -815,15 +815,15 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 - Novo agendamento: 5 campos, status inicial `agendado`, emite `appointment.created`
 
 **DoD Fase 3:**
-- [ ] Seed `agendamentoSintetico` criado com status `agendado`
-- [ ] Criar cliente (full_name obrigatório) funciona
-- [ ] Criar agendamento → status `agendado` → evento `appointment.created` registrado
-- [ ] Cancelar agendamento → status `cancelado` → evento `appointment.cancelled`
-- [ ] Registrar sessão → status `realizado` → evento `appointment.completed`
+- [x] Seed `agendamentoSintetico` criado com status `agendado`
+- [x] Criar cliente (full_name obrigatório) funciona
+- [x] Criar agendamento → status `agendado` → evento `appointment.created` registrado
+- [x] Cancelar agendamento → status `cancelado` → evento `appointment.cancelled`
+- [x] Registrar sessão → status `realizado` → evento `appointment.completed`
 - [ ] Dashboard carrega em < 2s com dados reais
-- [ ] Mover cliente de stage (swipe) funciona sem erro, evento `client.journey_stage.changed` registrado
-- [ ] Sessão registrada atualiza histórico do cliente
-- [ ] professionalB não vê dados de professionalA (isolamento de tenant validado)
+- [x] Mover cliente de stage (swipe) funciona sem erro, evento `client.journey_stage.changed` registrado
+- [x] Sessão registrada atualiza histórico do cliente
+- [x] professionalB não vê dados de professionalA (isolamento de tenant validado)
 - [ ] Todas as telas funcionam em 390px sem scroll horizontal
 
 > **Nota:** confirmação automática via WhatsApp vem na FASE 5 com `appointment-confirmation-agent`.
@@ -846,11 +846,11 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 - Dashboard Zona 3 com dado real de receita
 
 **DoD Fase 4:**
-- [ ] Lançar receita/despesa manual funciona
-- [ ] Extrato mostra transações filtradas por período
-- [ ] Dashboard Zona 3 mostra receita real do mês
-- [ ] Vincular pagamento a sessão atualiza status da sessão
-- [ ] professionalB não vê transações de professionalA (RLS validado)
+- [x] Lançar receita/despesa manual funciona
+- [x] Extrato mostra transações filtradas por período
+- [x] Dashboard Zona 3 mostra receita real do mês
+- [x] Vincular pagamento a sessão atualiza status da sessão
+- [x] professionalB não vê transações de professionalA (RLS validado)
 
 ---
 
@@ -870,15 +870,15 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 - Configurações → Assistente (Rosane): shadow mode toggle, agentes ativos, horário
 
 **DoD Fase 5:**
-- [ ] Agendamento criado (FASE 3) → confirmação enviada automaticamente pela Rosane
-- [ ] Appointment status muda de `agendado` para `confirmado` ao confirmar via WhatsApp
-- [ ] Evento `appointment.confirmed` registrado com `actor_type='client'`, `source='whatsapp'`, `processed_by='rosane'` (Rosane interpretou, o cliente agiu)
-- [ ] D-1: lembrete enviado para todos os agendamentos do dia seguinte
-- [ ] Shadow mode: sugestão aparece no inbox para aprovação
-- [ ] Profissional aprova shadow → mensagem enviada pela instância correta
-- [ ] D+1: follow-up de pós-atendimento enviado
-- [ ] Inbox mostra urgente em destaque (rose), shadow em amber, normal sem cor
-- [ ] DRY_RUN=true em todos os testes automatizados — nenhuma mensagem real
+- [x] Agendamento criado (FASE 3) → confirmação enviada automaticamente pela Rosane
+- [x] Appointment status muda de `agendado` para `confirmado` ao confirmar via WhatsApp
+- [x] Evento `appointment.confirmed` registrado com `actor_type='client'`, `source='whatsapp'`, `processed_by='rosane'` (Rosane interpretou, o cliente agiu)
+- [x] D-1: lembrete enviado para todos os agendamentos do dia seguinte
+- [x] Shadow mode: sugestão aparece no inbox para aprovação
+- [x] Profissional aprova shadow → mensagem enviada pela instância correta
+- [x] D+1: follow-up de pós-atendimento enviado
+- [x] Inbox mostra urgente em destaque (rose), shadow em amber, normal sem cor
+- [x] DRY_RUN=true em todos os testes automatizados — nenhuma mensagem real
 
 ---
 
@@ -898,15 +898,15 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 - /anamnese/:token: formulário de anamnese pré-consulta
 
 **DoD Fase 6:**
-- [ ] Seed `leadSintetico` agenda pelo link público sem login
-- [ ] Agendamento público dispara evento `appointment.created`
-- [ ] Agendamento público dispara confirmação via Rosane (com FASE 5 ativa)
-- [ ] Anamnese preenchida pelo cliente aparece no perfil no CRM
-- [ ] Slug não encontrado → 404 com mensagem amigável (não 500)
-- [ ] Página de agendamento renderiza brand color da clínica corretamente
+- [x] Seed `leadSintetico` agenda pelo link público sem login
+- [x] Agendamento público dispara evento `appointment.created`
+- [x] Agendamento público dispara confirmação via Rosane (com FASE 5 ativa)
+- [x] Anamnese preenchida pelo cliente aparece no perfil no CRM
+- [x] Slug não encontrado → 404 com mensagem amigável (não 500)
+- [x] Página de agendamento renderiza brand color da clínica corretamente
 - [ ] Funciona no Safari iOS (sem PWA — só link direto)
-- [ ] Parâmetros `lang`, `ref`, `slug`, `token` sobrevivem a redirects e chamadas de agente
-- [ ] Toggle de idioma no app sobrescreve `lang` da URL (não o contrário)
+- [x] Parâmetros `lang`, `ref`, `slug`, `token` sobrevivem a redirects e chamadas de agente
+- [x] Toggle de idioma no app sobrescreve `lang` da URL (não o contrário)
 
 ---
 
@@ -924,10 +924,10 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 - Anamnese Builder: criar templates de ficha por profissão
 
 **DoD Fase 7:**
-- [ ] Criar orçamento e enviar link por WhatsApp funciona
-- [ ] Pacote vinculado a cliente desconta sessões corretamente
-- [ ] Template de anamnese salvo e vinculado a agendamento funciona
-- [ ] professionalB não vê orçamentos ou pacotes de professionalA
+- [x] Criar orçamento e enviar link por WhatsApp funciona
+- [x] Pacote vinculado a cliente desconta sessões corretamente
+- [x] Template de anamnese salvo e vinculado a agendamento funciona
+- [x] professionalB não vê orçamentos ou pacotes de professionalA
 
 ---
 
@@ -947,10 +947,10 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 - Funil de leads: kanban de oportunidades
 
 **DoD Fase 8:**
-- [ ] Cliente inativo 30 dias → reativacao-agent enviado automaticamente (dry_run em testes)
-- [ ] RFM score calculado semanalmente para todos os clientes do professionalA
-- [ ] Campanha de broadcast criada, agendada e enviada (dry_run em testes)
-- [ ] Link de indicação funciona e rastreia conversão
+- [x] Cliente inativo 30 dias → reativacao-agent enviado automaticamente (dry_run em testes)
+- [x] RFM score calculado semanalmente para todos os clientes do professionalA
+- [x] Campanha de broadcast criada, agendada e enviada (dry_run em testes)
+- [x] Link de indicação funciona e rastreia conversão
 
 ---
 
@@ -968,9 +968,9 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 - Lista de profissionais com health score e status da instância
 
 **DoD Fase 9:**
-- [ ] Admin vê MRR real no dashboard
-- [ ] Health score de plataforma calculado diariamente
-- [ ] Nexus funciona (admin chata Nerissa por WhatsApp e pelo painel)
+- [x] Admin vê MRR real no dashboard
+- [x] Health score de plataforma calculado diariamente
+- [x] Nexus funciona (admin chata Nerissa por WhatsApp e pelo painel)
 
 ---
 
@@ -988,10 +988,10 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 - Entrada em `/mais` no mobile para manter bottom nav com 5 itens
 
 **DoD Fase 10:**
-- [ ] Relatórios carregam sem enviar `professional_id` por payload
-- [ ] Receita realizada/projetada respeita timezone `America/Sao_Paulo`
-- [ ] Exportação CSV funciona no mobile
-- [ ] RPC não possui grant residual para `anon`/`PUBLIC`
+- [x] Relatórios carregam sem enviar `professional_id` por payload
+- [x] Receita realizada/projetada respeita timezone `America/Sao_Paulo`
+- [x] Exportação CSV funciona no mobile
+- [x] RPC não possui grant residual para `anon`/`PUBLIC`
 
 ---
 
@@ -1018,15 +1018,15 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 - Apps client/professional preservam `ref`, `lang`, slug, token e código durante redirects
 
 **DoD Fase 11:**
-- [ ] `handle_new_user` comum cria profissional autenticado com `professionals.id = professionals.user_id = auth.users.id`
-- [ ] `/criar-conta` protegido usa backend/RPC, preserva `pid + email + ref + lang + conversation + collected_data` e não chama `signUp` no frontend
-- [ ] Lead profissional entra por rota pública sem Auth, conversa com Nerissa e recebe URL de criação de conta
-- [ ] Conta criada preserva o mesmo UUID em `auth.users`, `professionals.id` e `professionals.user_id`
-- [ ] Profissional termina setup mínimo com serviço, horário e WhatsApp configurados
-- [ ] Rosane só fica ativa quando os dados mínimos existem
-- [ ] Cliente novo entra por link público, aceita LGPD, é vinculado ao profissional correto e fica pronto para agendar/comprar
-- [ ] `ref`, `lang`, `conversation`, slug, token e código sobrevivem ao fluxo completo
-- [ ] Nenhum fluxo pré-conta usa billing/créditos
+- [x] `handle_new_user` comum cria profissional autenticado com `professionals.id = professionals.user_id = auth.users.id`
+- [x] `/criar-conta` protegido usa backend/RPC, preserva `pid + email + ref + lang + conversation + collected_data` e não chama `signUp` no frontend
+- [x] Lead profissional entra por rota pública sem Auth, conversa com Nerissa e recebe URL de criação de conta
+- [x] Conta criada preserva o mesmo UUID em `auth.users`, `professionals.id` e `professionals.user_id`
+- [x] Profissional termina setup mínimo com serviço, horário e WhatsApp configurados
+- [x] Rosane só fica ativa quando os dados mínimos existem
+- [x] Cliente novo entra por link público, aceita LGPD, é vinculado ao profissional correto e fica pronto para agendar/comprar
+- [x] `ref`, `lang`, `conversation`, slug, token e código sobrevivem ao fluxo completo
+- [x] Nenhum fluxo pré-conta usa billing/créditos
 
 ---
 
@@ -1050,12 +1050,12 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 - UI para regras de atendimento, janela de remarcação e recorrência
 
 **DoD Fase 12:**
-- [ ] Cliente novo manda mensagem e Rosane responde com informação real do banco, sem inventar serviço/preço/horário
-- [ ] Cliente agenda por WhatsApp e o appointment aparece na agenda
-- [ ] Cliente remarca/cancela por WhatsApp/PWA dentro das regras configuradas
-- [ ] Profissional assume uma conversa e Rosane para de responder até devolução explícita
-- [ ] Recorrência cria série correta e permite exceção
-- [ ] Follow-up/check-in respeita opt-out, horário permitido e instância do profissional
+- [x] Cliente novo manda mensagem e Rosane responde com informação real do banco, sem inventar serviço/preço/horário
+- [x] Cliente agenda por WhatsApp e o appointment aparece na agenda
+- [x] Cliente remarca/cancela por WhatsApp/PWA dentro das regras configuradas
+- [x] Profissional assume uma conversa e Rosane para de responder até devolução explícita
+- [x] Recorrência cria série correta e permite exceção
+- [x] Follow-up/check-in respeita opt-out, horário permitido e instância do profissional
 
 ---
 
@@ -1080,12 +1080,12 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 - Perfil do cliente mostra pacotes, documentos, cobranças e pendências
 
 **DoD Fase 13:**
-- [ ] Cliente acessa `/pacote/:slug`, entende oferta e inicia conversa/compra assistida
-- [ ] Registrar sessão pode consumir pacote com confirmação do profissional
-- [ ] Pacote com ≤2 sessões gera alerta para cliente e profissional
-- [ ] Orçamento enviado gera link/PDF e follow-up automático se sem resposta
-- [ ] Orçamento aprovado pode virar contrato ou pacote sem digitação duplicada
-- [ ] Cobrança nunca é enviada automaticamente sem aprovação do profissional
+- [x] Cliente acessa `/pacote/:slug`, entende oferta e inicia conversa/compra assistida
+- [x] Registrar sessão pode consumir pacote com confirmação do profissional
+- [x] Pacote com ≤2 sessões gera alerta para cliente e profissional
+- [x] Orçamento enviado gera link/PDF e follow-up automático se sem resposta
+- [x] Orçamento aprovado pode virar contrato ou pacote sem digitação duplicada
+- [x] Cobrança nunca é enviada automaticamente sem aprovação do profissional
 
 ---
 
@@ -1110,10 +1110,10 @@ Todo fluxo crítico precisa ter runbook antes de ir para produção. Runbook mí
 - Estado offline mínimo para dados já carregados
 
 **DoD Fase 14:**
-- [ ] Cliente acessa portal e vê próximo agendamento
-- [ ] Cliente vê histórico permitido sem dados clínicos privados
-- [ ] Cliente vê pacote ativo, saldo e validade
-- [ ] Autoagendamento dentro do portal funciona sem Auth de profissional
+- [x] Cliente acessa portal e vê próximo agendamento
+- [x] Cliente vê histórico permitido sem dados clínicos privados
+- [x] Cliente vê pacote ativo, saldo e validade
+- [x] Autoagendamento dentro do portal funciona sem Auth de profissional
 - [ ] Safari iOS e Android Chrome funcionam em 390px
 
 ---
