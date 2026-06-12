@@ -410,6 +410,18 @@ verify_jwt = false
 [functions.email-dispatcher]
 verify_jwt = false
 
+[functions.platform-create-checkout-session]
+verify_jwt = true
+
+[functions.platform-checkout]
+verify_jwt = true
+
+[functions.platform-stripe-webhook]
+verify_jwt = false
+
+[functions.affiliate-commission-cron]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

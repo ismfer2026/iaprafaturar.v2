@@ -18,6 +18,7 @@ import type { Service } from "@iaprafaturar/domain";
 import { useAuth } from "@/contexts/AuthContext";
 import { useServices } from "@/hooks/useServices";
 import { useI18n } from "@/i18n";
+import { friendlyErrorMessage } from "@/lib/friendlyError";
 
 interface ServiceFormState {
   name: string;
@@ -123,7 +124,7 @@ export default function ServicesPage() {
 
       setIsSheetOpen(false);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : t("services.error.save"));
+      setFormError(friendlyErrorMessage(err, t, "services.error.save"));
     }
   }
 

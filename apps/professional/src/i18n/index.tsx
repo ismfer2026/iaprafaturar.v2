@@ -21,6 +21,7 @@ const ptBR = {
   "common.minutes.short": "min",
   "common.loading": "Carregando...",
   "common.error.generic": "Não foi possível concluir a ação.",
+  "common.error.readOnlyAccess": "Seu trial expirou e a conta esta em modo leitura. Acesse Planos para reativar as alteracoes.",
 
   "language.label": "Idioma",
 
@@ -139,6 +140,7 @@ const ptBR = {
   "plans.team": "equipe",
   "plans.subscribe": "Assinar",
   "plans.contact": "Falar com vendas",
+  "plans.custom": "Sob consulta",
   "plans.checkoutDryRun": "Checkout ainda nao configurado",
   "plans.checkoutError": "Nao foi possivel iniciar o checkout.",
 
@@ -791,6 +793,7 @@ const enUS: Record<TranslationKey, string> = {
   "common.minutes.short": "min",
   "common.loading": "Loading...",
   "common.error.generic": "Unable to complete the action.",
+  "common.error.readOnlyAccess": "Your trial has expired and the account is in read-only mode. Go to Plans to reactivate changes.",
   "language.label": "Language",
   "nav.dashboard": "Dashboard",
   "nav.agenda": "Schedule",
@@ -907,6 +910,7 @@ const enUS: Record<TranslationKey, string> = {
   "plans.team": "team",
   "plans.subscribe": "Subscribe",
   "plans.contact": "Contact sales",
+  "plans.custom": "Custom",
   "plans.checkoutDryRun": "Checkout is not configured yet",
   "plans.checkoutError": "Could not start checkout.",
 
@@ -1543,6 +1547,9 @@ const es419: Record<TranslationKey, string> = {
   "common.none": "Ninguno",
   "common.noContact": "Sin contacto registrado",
   "common.noDate": "Sin fecha",
+  "common.loading": "Cargando...",
+  "common.error.generic": "No fue posible completar la accion.",
+  "common.error.readOnlyAccess": "Tu prueba expiro y la cuenta esta en modo lectura. Ve a Planes para reactivar los cambios.",
   "language.label": "Idioma",
   "nav.agenda": "Agenda",
   "nav.clients": "Clientes",
@@ -1658,6 +1665,7 @@ const es419: Record<TranslationKey, string> = {
   "plans.team": "equipo",
   "plans.subscribe": "Suscribirse",
   "plans.contact": "Hablar con ventas",
+  "plans.custom": "A consultar",
   "plans.checkoutDryRun": "Checkout aun no configurado",
   "plans.checkoutError": "No fue posible iniciar el checkout.",
 

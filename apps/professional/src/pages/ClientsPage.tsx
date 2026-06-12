@@ -19,6 +19,7 @@ import type { Client, JourneyStage } from "@iaprafaturar/domain";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClients } from "@/hooks/useClients";
 import { useI18n, type TranslationKey } from "@/i18n";
+import { friendlyErrorMessage } from "@/lib/friendlyError";
 
 const STAGES = [
   { value: null, labelKey: "clients.filter.all" },
@@ -175,7 +176,7 @@ export default function ClientsPage() {
       setEmail("");
       setIsSheetOpen(false);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : t("clients.error.create"));
+      setFormError(friendlyErrorMessage(err, t, "clients.error.create"));
     }
   }
 

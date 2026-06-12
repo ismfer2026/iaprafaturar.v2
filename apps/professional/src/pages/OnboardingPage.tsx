@@ -23,6 +23,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboardingSetup, type OnboardingItemStatus } from "@/hooks/useOnboardingSetup";
 import { useI18n } from "@/i18n";
+import { friendlyErrorMessage } from "@/lib/friendlyError";
 import { supabase } from "@/lib/supabase";
 
 const DEFAULT_ASSISTANT_NAME = "Rosane";
@@ -113,7 +114,7 @@ export default function OnboardingPage() {
         setFormError(t("onboarding.form.incomplete"));
       }
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : t("common.error.generic"));
+      setFormError(friendlyErrorMessage(error, t, "common.error.generic"));
     } finally {
       setIsSaving(false);
     }

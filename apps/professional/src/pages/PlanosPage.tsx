@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Check, CreditCard, Sparkles } from "lucide-react";
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@iaprafaturar/ui";
-import { useI18n } from "@/i18n";
+import { useI18n, type Locale } from "@/i18n";
 import { supabase } from "@/lib/supabase";
 
 interface PlatformPlan {
@@ -34,12 +34,12 @@ async function loadPlans() {
 }
 
 export default function PlanosPage() {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const [message, setMessage] = useState<string | null>(null);
   const query = useQuery({ queryKey: ["platform-plans"], queryFn: loadPlans });
   const checkout = useMutation({
     mutationFn: async (productSlug: string) => {
-      const { data, error } = await supabase.functions.invoke<{ checkout_url: string | null; dry_run?: boolean; reason?: string }>("platform-create-checkout-session", {
+      const { data, error } = await supabase.functions.invoke<{ checkout_url: string | null; dry_run?: boolean; reason?: string }>("platform-checkout", {
         body: {
           product_slug: productSlug,
           success_url: `${window.location.origin}/planos?checkout=success`,
@@ -90,7 +90,7 @@ export default function PlanosPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-2xl font-semibold text-zinc-950">{formatCurrency(plan.monthly_price_cents)}</p>
+                <p className="text-2xl font-semibold text-zinc-950">{formatCurrency(plan.monthly_price_cents, locale, t("plans.custom"))}</p>
                 <p className="text-xs text-zinc-500">{t("plans.perMonth")}</p>
               </div>
               <div className="space-y-2 text-sm text-zinc-600">
@@ -114,7 +114,7 @@ function Feature({ icon: Icon, text }: { icon: typeof Check; text: string }) {
   return <div className="flex items-center gap-2"><Icon className="h-4 w-4 text-emerald-600" /><span>{text}</span></div>;
 }
 
-function formatCurrency(cents: number) {
-  if (cents === 0) return "Custom";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
+function formatCurrency(cents: number, locale: Locale, customLabel: string) {
+  if (cents === 0) return customLabel;
+  return new Intl.NumberFormat(locale, { style: "currency", currency: "BRL" }).format(cents / 100);
 }

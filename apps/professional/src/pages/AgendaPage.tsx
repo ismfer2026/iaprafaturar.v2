@@ -22,6 +22,7 @@ import { useClientPackages } from "@/hooks/useDocumentsPackages";
 import { useServices } from "@/hooks/useServices";
 import { useSessions } from "@/hooks/useSessions";
 import { useI18n, type Locale, type TranslationKey } from "@/i18n";
+import { friendlyErrorMessage } from "@/lib/friendlyError";
 
 const APPOINTMENT_STATUS_LABEL_KEYS: Record<Appointment["status"], TranslationKey> = {
   agendado: "appointment.status.agendado",
@@ -270,7 +271,7 @@ export default function AgendaPage() {
       setSeriesAdjustments({});
       setIsNewOpen(false);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : t("agenda.error.create"));
+      setFormError(friendlyErrorMessage(err, t, "agenda.error.create"));
     }
   }
 
@@ -345,7 +346,7 @@ export default function AgendaPage() {
       resetSessionForm();
       setSelectedAppointment(null);
     } catch (err) {
-      setSessionError(err instanceof Error ? err.message : t("session.register.error.save"));
+      setSessionError(friendlyErrorMessage(err, t, "session.register.error.save"));
     }
   }
 

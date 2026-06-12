@@ -27,6 +27,7 @@ import {
 } from "@/hooks/useDocumentsPackages";
 import { useServices } from "@/hooks/useServices";
 import { useI18n, type Locale, type TranslationKey } from "@/i18n";
+import { friendlyErrorMessage } from "@/lib/friendlyError";
 
 type Tab = "packages" | "quotes" | "documents" | "anamnese";
 type SheetMode = "package" | "sell-package" | "quote" | "modelo" | "contract" | "anamnese" | null;
@@ -221,7 +222,7 @@ export default function DocumentsPackagesPage() {
       });
       setSheetMode(null);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : t("docs.error.save"));
+      setFormError(friendlyErrorMessage(err, t, "docs.error.save"));
     }
   }
 
@@ -244,7 +245,7 @@ export default function DocumentsPackagesPage() {
       });
       setSheetMode(null);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : t("docs.error.save"));
+      setFormError(friendlyErrorMessage(err, t, "docs.error.save"));
     }
   }
 
@@ -280,7 +281,7 @@ export default function DocumentsPackagesPage() {
       });
       setSheetMode(null);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : t("docs.error.save"));
+      setFormError(friendlyErrorMessage(err, t, "docs.error.save"));
     }
   }
 
@@ -302,7 +303,7 @@ export default function DocumentsPackagesPage() {
       });
       setSheetMode(null);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : t("docs.error.save"));
+      setFormError(friendlyErrorMessage(err, t, "docs.error.save"));
     }
   }
 
@@ -320,7 +321,7 @@ export default function DocumentsPackagesPage() {
       });
       setSheetMode(null);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : t("docs.error.save"));
+      setFormError(friendlyErrorMessage(err, t, "docs.error.save"));
     }
   }
 
@@ -338,7 +339,7 @@ export default function DocumentsPackagesPage() {
       });
       setSheetMode(null);
     } catch (err) {
-      setFormError(err instanceof Error && err.message === "invalid_json" ? t("docs.error.jsonInvalid") : t("docs.error.save"));
+      setFormError(err instanceof Error && err.message === "invalid_json" ? t("docs.error.jsonInvalid") : friendlyErrorMessage(err, t, "docs.error.save"));
     }
   }
 

@@ -52,6 +52,7 @@ import {
 import { useServices } from "@/hooks/useServices";
 import { useSessions } from "@/hooks/useSessions";
 import { useI18n, type Locale, type TranslationKey } from "@/i18n";
+import { friendlyErrorMessage } from "@/lib/friendlyError";
 
 type FinanceTab = "extrato" | "pdv" | "conciliacao" | "configuracoes";
 
@@ -406,7 +407,7 @@ export default function FinanceiroPage() {
       });
       setIsSheetOpen(false);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : t("finance.error.create"));
+      setFormError(friendlyErrorMessage(err, t, "finance.error.create"));
     }
   }
 
@@ -495,7 +496,7 @@ export default function FinanceiroPage() {
       setPosItems([]);
       setPosForm(EMPTY_POS_FORM);
     } catch (err) {
-      setPosError(err instanceof Error ? err.message : t("finance.pdv.error"));
+      setPosError(friendlyErrorMessage(err, t, "finance.pdv.error"));
     }
   }
 
@@ -586,7 +587,7 @@ export default function FinanceiroPage() {
         items,
       });
     } catch (err) {
-      setReconciliationError(err instanceof Error ? err.message : t("finance.conciliation.importError"));
+      setReconciliationError(friendlyErrorMessage(err, t, "finance.conciliation.importError"));
     }
   }
 
