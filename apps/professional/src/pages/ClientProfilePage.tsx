@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { ArrowLeft, CalendarDays, DollarSign, FileHeart, History, UserRound } from "lucide-react";
 import { Badge, Button, Card, CardContent, Skeleton, cn } from "@iaprafaturar/ui";
 import type { Appointment, JourneyStage, Session } from "@iaprafaturar/domain";
@@ -227,8 +227,11 @@ function AnamneseCard({
 export default function ClientProfilePage() {
   const { locale, t } = useI18n();
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
   const { professionalId } = useAuth();
-  const [activeTab, setActiveTab] = useState<Tab>("resumo");
+  const [activeTab, setActiveTab] = useState<Tab>(() =>
+    location.pathname.endsWith("/anamnese") ? "anamnese" : "resumo",
+  );
   const [reviewNotesByFichaId, setReviewNotesByFichaId] = useState<Record<string, string>>({});
 
   const clientQuery = useClient(professionalId, id ?? null);

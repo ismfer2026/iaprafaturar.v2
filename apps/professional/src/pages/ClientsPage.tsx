@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Search, Users } from "lucide-react";
+import { Columns3, List, Plus, Search, Users } from "lucide-react";
 import {
   Badge,
   Button,
@@ -16,38 +16,14 @@ import {
   cn,
 } from "@iaprafaturar/ui";
 import type { Client, JourneyStage } from "@iaprafaturar/domain";
+import { ClientsKanban } from "@/components/clients/ClientsKanban";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClients } from "@/hooks/useClients";
-import { useI18n, type TranslationKey } from "@/i18n";
+import { useI18n } from "@/i18n";
 import { friendlyErrorMessage } from "@/lib/friendlyError";
+import { CLIENT_STAGES, STAGE_LABEL_KEYS, stageTone } from "@/lib/clientStages";
 
-const STAGES = [
-  { value: null, labelKey: "clients.filter.all" },
-  { value: "lead", labelKey: "clients.filter.leads" },
-  { value: "agendado", labelKey: "clients.filter.scheduled" },
-  { value: "em_tratamento", labelKey: "clients.filter.treatment" },
-  { value: "pos_tratamento", labelKey: "clients.filter.postTreatment" },
-  { value: "cliente_fiel", labelKey: "clients.filter.loyal" },
-  { value: "inativo", labelKey: "clients.filter.inactive" },
-] satisfies Array<{ value: JourneyStage | null; labelKey: TranslationKey }>;
-
-const STAGE_LABEL_KEYS: Record<JourneyStage, TranslationKey> = {
-  lead: "stage.lead",
-  agendado: "stage.agendado",
-  em_tratamento: "stage.em_tratamento",
-  pos_tratamento: "stage.pos_tratamento",
-  cliente_fiel: "stage.cliente_fiel",
-  inativo: "stage.inativo",
-};
-
-function stageTone(stage: JourneyStage) {
-  if (stage === "lead") return "bg-sky-50 text-sky-700 border-sky-200";
-  if (stage === "agendado") return "bg-amber-50 text-amber-700 border-amber-200";
-  if (stage === "em_tratamento") return "bg-emerald-50 text-emerald-700 border-emerald-200";
-  if (stage === "pos_tratamento") return "bg-violet-50 text-violet-700 border-violet-200";
-  if (stage === "cliente_fiel") return "bg-teal-50 text-teal-700 border-teal-200";
-  return "bg-zinc-100 text-zinc-600 border-zinc-200";
-}
+type ClientsView = "list" | "kanban";
 
 function normalizeSearch(value: string) {
   return value.trim().toLowerCase();
@@ -89,7 +65,7 @@ function ClientCard({
             disabled={disabled}
             onChange={(event) => onMoveStage(client.id, event.target.value as JourneyStage)}
           >
-            {STAGES.filter((stage) => stage.value).map((stage) => (
+            {CLIENT_STAGES.filter((stage) => stage.value).map((stage) => (
               <option key={stage.value} value={stage.value ?? ""}>
                 {t(stage.labelKey)}
               </option>
@@ -125,12 +101,15 @@ export default function ClientsPage() {
   const { t } = useI18n();
   const { professionalId } = useAuth();
   const [stage, setStage] = useState<JourneyStage | null>(null);
+  const [view, setView] = useState<ClientsView>("list");
   const [search, setSearch] = useState("");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [fullName, setFullName] = useState("");
   const [phoneWhatsapp, setPhoneWhatsapp] = useState("");
   const [email, setEmail] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
+
+  const effectiveStage = view === "kanban" ? null : stage;
 
   const {
     data: clients = [],
@@ -140,7 +119,7 @@ export default function ClientsPage() {
     isCreatingClient,
     moveStage,
     isMovingStage,
-  } = useClients(professionalId, stage);
+  } = useClients(professionalId, effectiveStage);
 
   const filteredClients = useMemo(() => {
     const needle = normalizeSearch(search);
@@ -199,8 +178,33 @@ export default function ClientsPage() {
         </Button>
       </header>
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {STAGES.map((item) => {
+      <div className="hidden items-center gap-1 rounded-lg bg-zinc-100 p-1 md:flex md:w-fit">
+        <button
+          type="button"
+          onClick={() => setView("list")}
+          className={cn(
+            "flex h-9 items-center gap-2 rounded-md px-3 text-sm font-medium transition-colors",
+            view === "list" ? "bg-white text-zinc-950 shadow-sm" : "text-zinc-500",
+          )}
+        >
+          <List className="h-4 w-4" />
+          {t("clients.view.list")}
+        </button>
+        <button
+          type="button"
+          onClick={() => setView("kanban")}
+          className={cn(
+            "flex h-9 items-center gap-2 rounded-md px-3 text-sm font-medium transition-colors",
+            view === "kanban" ? "bg-white text-zinc-950 shadow-sm" : "text-zinc-500",
+          )}
+        >
+          <Columns3 className="h-4 w-4" />
+          {t("clients.view.kanban")}
+        </button>
+      </div>
+
+      <div className={cn("flex gap-2 overflow-x-auto pb-1", view === "kanban" && "md:hidden")}>
+        {CLIENT_STAGES.map((item) => {
           const isActive = stage === item.value;
           return (
             <button
@@ -220,7 +224,7 @@ export default function ClientsPage() {
         })}
       </div>
 
-      <div className="relative">
+      <div className={cn("relative", view === "kanban" && "md:hidden")}>
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
         <Input
           value={search}
@@ -239,7 +243,7 @@ export default function ClientsPage() {
       ) : null}
 
       {!isLoading && !error && filteredClients.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-zinc-300 bg-white p-6 text-center">
+        <div className={cn("rounded-lg border border-dashed border-zinc-300 bg-white p-6 text-center", view === "kanban" && "md:hidden")}>
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-violet-50 text-violet-700">
             <Users className="h-5 w-5" />
           </div>
@@ -253,7 +257,7 @@ export default function ClientsPage() {
       ) : null}
 
       {!isLoading && !error && filteredClients.length > 0 ? (
-        <section className="space-y-3">
+        <section className={cn("space-y-3", view === "kanban" && "md:hidden")}>
           {filteredClients.map((client) => (
             <ClientCard
               key={client.id}
@@ -262,6 +266,12 @@ export default function ClientsPage() {
               onMoveStage={handleMoveStage}
             />
           ))}
+        </section>
+      ) : null}
+
+      {!isLoading && !error && view === "kanban" ? (
+        <section className="hidden md:block">
+          <ClientsKanban clients={clients} onMoveStage={handleMoveStage} disabled={isMovingStage} />
         </section>
       ) : null}
 

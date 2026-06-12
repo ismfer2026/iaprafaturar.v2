@@ -86,6 +86,7 @@ export const professionalRoutes: ProfessionalRouteDefinition[] = [
     mobileNav: true,
   },
   { path: "/clientes/:id", component: ClientProfilePage, ownerPhase: 3 },
+  { path: "/clientes/:id/anamnese", component: ClientProfilePage, ownerPhase: 19 },
   {
     path: "/servicos",
     component: ServicesPage,

@@ -72,6 +72,27 @@ export function useClients(professionalId: string | null, stage?: JourneyStage |
       if (error) throw error;
       return data as MoveClientStageOutput;
     },
+    onMutate: async (input) => {
+      const queryKey = crmKeys.clients(professionalId, stage);
+      await queryClient.cancelQueries({ queryKey });
+
+      const previous = queryClient.getQueryData<Client[]>(queryKey);
+      if (previous) {
+        queryClient.setQueryData<Client[]>(
+          queryKey,
+          previous.map((client) =>
+            client.id === input.clientId ? { ...client, journey_stage: input.toStage } : client,
+          ),
+        );
+      }
+
+      return { previous, queryKey };
+    },
+    onError: (_error, _input, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(context.queryKey, context.previous);
+      }
+    },
     onSuccess: async (_data, input) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["crm", "clients", professionalId] }),
