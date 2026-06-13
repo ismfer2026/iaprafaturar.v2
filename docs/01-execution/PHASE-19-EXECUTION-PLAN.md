@@ -135,7 +135,11 @@ Nenhum PR 19.1-19.8 pode começar enquanto:
 | Criar/mover/fechar oportunidade | sim | sim | RPCs do funil |
 | Criar/editar/desativar serviço | não | sim | RPC deve validar `gestor` |
 | Criar/editar pacote | não | sim | RPC deve validar `gestor` |
+| Vender pacote existente pelo preço cadastrado | sim | sim | `sell_client_package`; alteração de preço exige `gestor` |
 | Criar modelos, contratos e orçamentos | não | sim | RPC deve validar `gestor` |
+| Enviar orçamento existente para aprovação | sim | sim | `send_quote_for_approval`; somente transição permitida |
+| Converter orçamento aprovado | não | sim | escrita em orçamento/contrato/pacote exige `gestor` |
+| Marcar contrato existente como assinado | sim | sim | `mark_contract_signed_manual`; somente transição permitida |
 | Criar/versionar template de anamnese | não | sim | C19-01 |
 | Alterar configurações de agenda/clínica | não | sim | C19-04/RPC específica |
 | Alterar defaults de notificações | não | sim | C19-03 |
@@ -268,7 +272,14 @@ Nenhum PR 19.1-19.8 pode começar enquanto:
 ### Dívidas remanescentes
 
 - `business_hours.exceptions` (datas com horário especial) tem schema/validação/persistência completos via `upsert_professional_business_hours`/`upsert_team_member_business_hours`, mas `/configuracoes/agenda` ainda não tem UI para editar exceções — apenas preserva o array existente ao salvar.
-- `/configuracoes/anamnese`, `/configuracoes/servicos` e `/configuracoes/clinica` previstos no PRD-MASTER não foram criados como rotas paralelas: a funcionalidade equivalente já existe em `/documentos/pacotes` (versionamento de templates, PR 19.5), `/servicos` + `/servicos/novo` (catálogo gestor-only, PR 19.4) e `/agentes` (identidade/comportamento do assistente). PRD-FRONTEND e PRD-MASTER foram atualizados para refletir essa consolidação.
+- `/configuracoes/servicos` e `/configuracoes/anamnese` permanecem aliases dos owners canônicos. `/configuracoes/clinica` possui tela e contrato próprios após a validação independente.
+
+### Correções após validação independente
+
+- Contexto autenticado e tenant de membros da equipe corrigidos; convite/vínculo Supabase Auth passa pela Edge Function `invite-team-member`.
+- Versionamento de anamnese, proteção do último gestor, autorização de documentos e preferências pessoais do dono corrigidos.
+- Perfil financeiro, preservação de múltiplos intervalos, limite da consulta de clientes e pulso operacional do dashboard completados.
+- Leitura direta de `professionals` restrita ao proprietário; membros recebem somente contexto sanitizado por RPC.
+- Venda de pacote e transições documentais operacionais alinhadas entre matriz, UI e proteção no banco.
 
 **Status final: Fase 19 concluída — PR 19.0 a 19.8 entregues.**
-

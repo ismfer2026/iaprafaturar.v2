@@ -8,6 +8,7 @@ import { useClient } from "@/hooks/useClients";
 import { useClientAppointments } from "@/hooks/useAppointments";
 import { useClientAnamneseFichas, useReviewAnamneseFicha, type AnamneseFicha } from "@/hooks/useAnamnese";
 import { useClientPackages, useContracts } from "@/hooks/useDocumentsPackages";
+import { useFinancialTransactions } from "@/hooks/useFinancial";
 import { useSessions } from "@/hooks/useSessions";
 import { useI18n, type Locale, type TranslationKey } from "@/i18n";
 
@@ -241,6 +242,7 @@ export default function ClientProfilePage() {
   const reviewAnamneseMutation = useReviewAnamneseFicha(professionalId, id ?? null);
   const clientPackagesQuery = useClientPackages(professionalId, id ?? null);
   const contractsQuery = useContracts(professionalId, id ?? null);
+  const financialTransactionsQuery = useFinancialTransactions(professionalId, { clientId: id ?? null });
 
   const timeline = useMemo(() => {
     const appointments = appointmentsQuery.data ?? [];
@@ -399,6 +401,32 @@ export default function ClientProfilePage() {
 
       {activeTab === "financeiro" ? (
         <section className="space-y-3">
+          <Card className="rounded-lg border-zinc-200">
+            <CardContent className="space-y-3 p-4">
+              <h2 className="text-base font-semibold text-zinc-950">{t("clientProfile.finance.title")}</h2>
+              {financialTransactionsQuery.isLoading ? <Skeleton className="h-16 w-full" /> : null}
+              {!financialTransactionsQuery.isLoading && !financialTransactionsQuery.data?.length ? (
+                <p className="text-sm text-zinc-500">{t("clientProfile.finance.description")}</p>
+              ) : null}
+              {financialTransactionsQuery.data?.map((transaction) => (
+                <div key={transaction.id} className="flex items-center justify-between gap-3 rounded-lg bg-zinc-50 p-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-zinc-950">{transaction.description}</p>
+                    <p className="mt-0.5 text-xs text-zinc-500">
+                      {formatDate(transaction.paid_at ?? transaction.created_at, locale, t("common.noDate"))}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className="text-sm font-semibold text-zinc-950">
+                      {new Intl.NumberFormat(locale, { style: "currency", currency: "BRL" }).format(transaction.net_amount)}
+                    </p>
+                    <Badge className="mt-1 border border-zinc-200 bg-white text-zinc-700">{transaction.status}</Badge>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
           <Card className="rounded-lg border-zinc-200">
             <CardContent className="space-y-3 p-4">
               <h2 className="text-base font-semibold text-zinc-950">{t("clientProfile.packages.title")}</h2>

@@ -81,10 +81,11 @@ Rotas públicas voltadas ao cliente, como agendamento, anamnese, pacote, orçame
 | `/configuracoes/agenda` | `ConfiguracoesAgendaPage` | operacional (seções de clínica/equipe só gestor) | J18 |
 | `/configuracoes/notificacoes` | `ConfiguracoesNotificacoesPage` | operacional (seção de clínica só gestor) | J18 |
 | `/configuracoes/equipe` | `ConfiguracoesEquipePage` | gestor | J18 |
+| `/configuracoes/clinica` | `ConfiguracoesClinicaPage` | gestor | J18 |
 
-> `/pacotes`, `/orcamentos*`, `/contratos*`, `/documentos-pacotes`, `/configuracoes/assistente`, `/configuracoes/pagamento`, `/configuracoes/plano` e `/upgrade` são aliases/redirects de compatibilidade, não telas paralelas.
+> `/pacotes`, `/orcamentos*`, `/contratos*`, `/documentos-pacotes`, `/configuracoes/assistente`, `/configuracoes/pagamento`, `/configuracoes/plano`, `/configuracoes/servicos`, `/configuracoes/anamnese` e `/upgrade` são aliases/redirects de compatibilidade, não telas paralelas.
 >
-> **Decisão da Fase 19 (PR 19.7):** `/configuracoes` passou a ser um índice de sub-rotas (Equipe, Notificações, Agenda, Serviços, Documentos, Assistente) em vez de uma tela monolítica. As rotas `/configuracoes/anamnese`, `/configuracoes/servicos` e `/configuracoes/clinica` previstas originalmente NÃO foram criadas como telas paralelas — a funcionalidade equivalente já existe e foi ampliada em `/documentos/pacotes` (builder/versionamento de templates de anamnese, PR 19.5), `/servicos` + `/servicos/novo` (catálogo, escrita gestor-only, PR 19.4) e `/agentes` (identidade/comportamento do assistente). O card "Assistente" do índice de configurações aponta para `/agentes`.
+> **Decisão da Fase 19 (corrigida após validação independente):** `/configuracoes` é um índice de sub-rotas. `/configuracoes/clinica` possui tela e contrato próprios. `/configuracoes/anamnese` e `/configuracoes/servicos` são aliases para `/documentos/anamnese` e `/servicos`; o card Assistente aponta para `/agentes`.
 
 ---
 

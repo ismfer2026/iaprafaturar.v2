@@ -32,14 +32,16 @@ export function useTeamMembers(professionalId: string | null) {
 
   const createTeamMember = useMutation({
     mutationFn: async (input: CreateTeamMemberInput) => {
-      const { data, error } = await supabase.rpc("create_team_member", {
-        p_name: input.name,
-        p_email: input.email,
-        p_phone_whatsapp: input.phoneWhatsapp ?? null,
-        p_funcao: input.funcao ?? null,
-        p_nivel_acesso: input.nivelAcesso ?? "operacional",
-        p_possui_agenda: input.possuiAgenda ?? false,
-        p_comissao: input.comissao ?? 0,
+      const { data, error } = await supabase.functions.invoke("invite-team-member", {
+        body: {
+          name: input.name,
+          email: input.email,
+          phoneWhatsapp: input.phoneWhatsapp ?? null,
+          funcao: input.funcao ?? null,
+          nivelAcesso: input.nivelAcesso ?? "operacional",
+          possuiAgenda: input.possuiAgenda ?? false,
+          comissao: input.comissao ?? 0,
+        },
       });
 
       if (error) throw error;

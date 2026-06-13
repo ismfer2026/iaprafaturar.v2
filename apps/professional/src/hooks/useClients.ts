@@ -35,7 +35,8 @@ export function useClients(professionalId: string | null, stage?: JourneyStage |
         .select("*")
         .eq("professional_id", professionalId)
         .is("deleted_at", null)
-        .order("updated_at", { ascending: false });
+        .order("updated_at", { ascending: false })
+        .limit(500);
 
       if (stage) {
         queryBuilder = queryBuilder.eq("journey_stage", stage);
@@ -133,4 +134,3 @@ export function useClient(professionalId: string | null, clientId: string | null
     },
   });
 }
-

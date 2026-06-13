@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import type { Session, User } from "@supabase/supabase-js";
+import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
 export type ProfessionalRole = "gestor" | "operacional" | null;
@@ -19,6 +19,15 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+interface ProfessionalAuthContext {
+  professionalId: string;
+  role: Exclude<ProfessionalRole, null>;
+  teamMemberId: string | null;
+  onboardingCompleted: boolean;
+  onboardingEssentialsCompleted: boolean;
+  whatsappConnected: boolean;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [professionalId, setProfessionalId] = useState<string | null>(null);
@@ -29,32 +38,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [whatsappConnected, setWhatsappConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  async function loadProfessionalId(user: User) {
-    const { data } = await supabase
-      .from("professionals")
-      .select("id, onboarding_completed, onboarding_essentials_completed, whatsapp_connected")
-      .eq("user_id", user.id)
-      .single();
+  async function loadProfessionalId() {
+    const { data, error } = await supabase.rpc("get_professional_auth_context");
+    if (error) throw error;
 
-    setProfessionalId(data?.id ?? null);
-    setOnboardingCompleted(Boolean(data?.onboarding_completed));
-    setOnboardingEssentialsCompleted(Boolean(data?.onboarding_essentials_completed));
-    setWhatsappConnected(Boolean(data?.whatsapp_connected));
-
-    const { data: roleData } = await supabase.rpc("auth_professional_role");
-    setRole((roleData as ProfessionalRole) ?? null);
-
-    if (data?.id) {
-      setTeamMemberId(null);
-    } else {
-      const { data: memberData } = await supabase
-        .from("team_members")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("is_active", true)
-        .maybeSingle();
-      setTeamMemberId(memberData?.id ?? null);
-    }
+    const context = data as ProfessionalAuthContext | null;
+    setProfessionalId(context?.professionalId ?? null);
+    setRole(context?.role ?? null);
+    setTeamMemberId(context?.teamMemberId ?? null);
+    setOnboardingCompleted(Boolean(context?.onboardingCompleted));
+    setOnboardingEssentialsCompleted(Boolean(context?.onboardingEssentialsCompleted));
+    setWhatsappConnected(Boolean(context?.whatsappConnected));
   }
 
   function clearProfessionalState() {
@@ -70,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s);
       if (s?.user) {
-        loadProfessionalId(s.user).finally(() => setIsLoading(false));
+        loadProfessionalId().finally(() => setIsLoading(false));
       } else {
         setIsLoading(false);
       }
@@ -79,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
       if (s?.user) {
-        loadProfessionalId(s.user);
+        loadProfessionalId();
       } else {
         clearProfessionalState();
       }

@@ -47,12 +47,13 @@ interface DayState {
   enabled: boolean;
   start: string;
   end: string;
+  additionalIntervals: TimeInterval[];
 }
 
 type WeeklyFormState = Record<Weekday, DayState>;
 
-const DEFAULT_OPEN_DAY: DayState = { enabled: true, start: "09:00", end: "18:00" };
-const DEFAULT_CLOSED_DAY: DayState = { enabled: false, start: "09:00", end: "18:00" };
+const DEFAULT_OPEN_DAY: DayState = { enabled: true, start: "09:00", end: "18:00", additionalIntervals: [] };
+const DEFAULT_CLOSED_DAY: DayState = { enabled: false, start: "09:00", end: "18:00", additionalIntervals: [] };
 
 const DEFAULT_WEEKLY: WeeklyFormState = {
   monday: { ...DEFAULT_OPEN_DAY },
@@ -70,7 +71,12 @@ function toWeeklyForm(hours: BusinessHoursValue): WeeklyFormState {
   for (const day of WEEKDAYS) {
     const firstInterval = weekly[day]?.[0];
     if (firstInterval) {
-      result[day] = { enabled: true, start: firstInterval.start, end: firstInterval.end };
+      result[day] = {
+        enabled: true,
+        start: firstInterval.start,
+        end: firstInterval.end,
+        additionalIntervals: weekly[day]?.slice(1) ?? [],
+      };
     } else {
       result[day] = { ...DEFAULT_CLOSED_DAY };
     }
@@ -96,7 +102,9 @@ function toBusinessHoursPayload(
   const weeklyPayload: Partial<Record<Weekday, TimeInterval[]>> = {};
   for (const day of WEEKDAYS) {
     const dayState = weekly[day];
-    weeklyPayload[day] = dayState.enabled ? [{ start: dayState.start, end: dayState.end }] : [];
+    weeklyPayload[day] = dayState.enabled
+      ? [{ start: dayState.start, end: dayState.end }, ...dayState.additionalIntervals]
+      : [];
   }
   return { schema_version: 1, timezone, weekly: weeklyPayload, exceptions };
 }

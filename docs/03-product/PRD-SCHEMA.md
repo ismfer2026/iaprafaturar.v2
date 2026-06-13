@@ -6161,3 +6161,14 @@ Timeout = 10 segundos por tentativa
 
 > `knowledge_nodes` com embedding vector(1536) ≈ 6KB/nó. Para 100k nós = ~600MB.
 > Usar pgvector HNSW index (já no DDL) — busca em ~10ms para até 1M nós.
+
+---
+
+## 21. Correções de Contrato da Fase 19
+
+- `auth_professional_id()` resolve o tenant tanto para o dono em `professionals.user_id` quanto para membro ativo em `team_members.user_id`.
+- `get_professional_auth_context()` é a fonte única do frontend para tenant, role e identidade do membro.
+- Convites de equipe usam `invite-team-member`; `handle_new_user()` reconhece `team_member_id` + `professional_id` e vincula a identidade sem criar outro tenant.
+- `professionals` não permite `UPDATE` direto para `authenticated`; configurações e identidade da clínica usam RPCs validadas.
+- Escritas em `service_packages`, `quotes`, `modelos` e `contracts` exigem gestor também no banco.
+- Preferências pessoais do dono usam `professionals.settings.owner_notifications`; defaults da clínica permanecem em `professionals.settings.notifications`.

@@ -413,6 +413,9 @@ verify_jwt = false
 [functions.platform-checkout]
 verify_jwt = true
 
+[functions.invite-team-member]
+verify_jwt = true
+
 [functions.platform-stripe-webhook]
 verify_jwt = false
 

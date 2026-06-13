@@ -30,6 +30,9 @@ export interface DashboardPulse {
   openOpportunitiesCount: number;
   openOpportunitiesValue: number;
   pendingAnamneseReviewCount: number;
+  hotLeadsCount: number;
+  clientsAtRiskCount: number;
+  aiExecutionsTodayCount: number;
 }
 
 export interface DashboardSummary {

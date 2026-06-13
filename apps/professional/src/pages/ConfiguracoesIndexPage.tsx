@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Bell, Box, Clock, FileSignature, Sparkles, Users } from "lucide-react";
+import { Bell, Box, Building2, Clock, FileSignature, Sparkles, Users } from "lucide-react";
 import { Button, Card, CardDescription, CardHeader, CardTitle } from "@iaprafaturar/ui";
 import { useAuth } from "@/contexts/AuthContext";
 import { useI18n } from "@/i18n";
@@ -18,6 +18,13 @@ export default function ConfiguracoesIndexPage() {
       </header>
 
       <div className="grid gap-3">
+        {isGestor && (
+          <Card><CardHeader><div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-indigo-700"><Building2 className="h-5 w-5" /></div>
+              <div><CardTitle>{t("settings.clinic.title")}</CardTitle><CardDescription>{t("settings.clinic.description")}</CardDescription></div>
+            </div><Button asChild variant="outline"><Link to="/configuracoes/clinica">{t("common.open")}</Link></Button>
+          </div></CardHeader></Card>
+        )}
         {isGestor && (
           <Card>
             <CardHeader>

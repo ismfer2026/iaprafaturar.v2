@@ -245,6 +245,42 @@ export default function DashboardPage() {
         </Card>
       </section>
 
+      <section className="grid gap-3 md:grid-cols-3">
+        <Card className="rounded-lg border-zinc-200">
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-50 text-orange-700">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-2xl font-semibold text-zinc-950">{pulse.hotLeadsCount}</p>
+              <p className="text-sm text-zinc-500">{t("dashboard.pulse.hotLeads")}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="rounded-lg border-zinc-200">
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-red-700">
+              <AlertTriangle className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-2xl font-semibold text-zinc-950">{pulse.clientsAtRiskCount}</p>
+              <p className="text-sm text-zinc-500">{t("dashboard.pulse.clientsAtRisk")}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="rounded-lg border-zinc-200">
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-50 text-cyan-700">
+              <Activity className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-2xl font-semibold text-zinc-950">{pulse.aiExecutionsTodayCount}</p>
+              <p className="text-sm text-zinc-500">{t("dashboard.pulse.aiActivity")}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
       <section className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">
         <Card className="rounded-lg border-zinc-200">
           <CardHeader>

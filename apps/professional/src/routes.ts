@@ -47,6 +47,7 @@ const ConfiguracoesIndexPage = lazy(() => import("@/pages/ConfiguracoesIndexPage
 const ConfiguracoesEquipePage = lazy(() => import("@/pages/ConfiguracoesEquipePage"));
 const ConfiguracoesNotificacoesPage = lazy(() => import("@/pages/ConfiguracoesNotificacoesPage"));
 const ConfiguracoesAgendaPage = lazy(() => import("@/pages/ConfiguracoesAgendaPage"));
+const ConfiguracoesClinicaPage = lazy(() => import("@/pages/ConfiguracoesClinicaPage"));
 const ClientsPage = lazy(() => import("@/pages/ClientsPage"));
 const ClientProfilePage = lazy(() => import("@/pages/ClientProfilePage"));
 const ServicesPage = lazy(() => import("@/pages/ServicesPage"));
@@ -186,6 +187,7 @@ export const professionalRoutes: ProfessionalRouteDefinition[] = [
   { path: "/configuracoes/equipe", component: ConfiguracoesEquipePage, ownerPhase: 19 },
   { path: "/configuracoes/notificacoes", component: ConfiguracoesNotificacoesPage, ownerPhase: 19 },
   { path: "/configuracoes/agenda", component: ConfiguracoesAgendaPage, ownerPhase: 19 },
+  { path: "/configuracoes/clinica", component: ConfiguracoesClinicaPage, ownerPhase: 19 },
   {
     path: "/mais",
     component: MorePage,
@@ -204,6 +206,8 @@ export const professionalAliases: RouteAlias[] = [
   { from: "/contratos", to: "/documentos/contratos" },
   { from: "/configuracoes/assistente", to: "/agentes" },
   { from: "/configuracoes/pagamento", to: "/financeiro/configuracoes" },
+  { from: "/configuracoes/servicos", to: "/servicos" },
+  { from: "/configuracoes/anamnese", to: "/documentos/anamnese" },
   { from: "/configuracoes/plano", to: "/planos" },
 ];
 

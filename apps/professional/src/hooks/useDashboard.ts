@@ -16,4 +16,3 @@ export function useDashboard(professionalId: string | null) {
     },
   });
 }
-

@@ -1353,7 +1353,7 @@ Se já existir artefato equivalente, a tarefa deve ampliá-lo ou substituí-lo c
 - `/servicos/novo`: rota acionável que abre o mesmo formulário/sheet do catálogo; não criar segundo formulário
 - Versionamento de templates de anamnese ampliado em `/documentos/pacotes` (não criar `/configuracoes/anamnese` paralelo)
 - `/documentos/pacotes`, `/documentos/orcamentos`, `/documentos/contratos`, `/documentos/anamnese`; aliases legados só por redirect
-- `/configuracoes` é índice de sub-rotas; `/configuracoes/agenda`, `/configuracoes/notificacoes` e `/configuracoes/equipe` existem; `/configuracoes/servicos` e `/configuracoes/clinica` não são telas paralelas (cobertas por `/servicos` e `/agentes`)
+- `/configuracoes` é índice de sub-rotas; `/configuracoes/agenda`, `/configuracoes/notificacoes`, `/configuracoes/equipe` e `/configuracoes/clinica` existem; `/configuracoes/servicos` e `/configuracoes/anamnese` redirecionam para os owners canônicos
 - `/configuracoes/assistente` redireciona para `/agentes`
 - `/configuracoes/pagamento` redireciona para `/financeiro/configuracoes`
 - `/configuracoes/plano` redireciona para `/planos`
@@ -1388,6 +1388,14 @@ Se já existir artefato equivalente, a tarefa deve ampliá-lo ou substituí-lo c
 - Exceções de horário de funcionamento (`business_hours.exceptions`, datas com horário especial/feriados) têm schema, validação e persistência completos, mas `/configuracoes/agenda` ainda não oferece UI de edição — apenas preserva o array existente ao salvar.
 - Bundle `index-*.js` do `apps/professional` ultrapassa 500kB após minificação (aviso do Vite); code-splitting adicional fica para a Fase 26 (conforme já registrado no encerramento da Fase 18).
 - QA manual em dispositivos físicos (390px reais, gestos, performance) segue deferida até ambiente de staging + dispositivos (Grupo B registrado no encerramento dos gaps das Fases 5/12/17).
+
+**Correções da validação independente:**
+- Tenant e role de membros da equipe resolvidos por `auth_professional_id()` + `get_professional_auth_context()`.
+- Criação de membro usa `invite-team-member`, vinculando identidade Supabase Auth antes do primeiro acesso.
+- Versionamento de anamnese troca a versão atual antes de inserir a sucessora na mesma transação.
+- Escritas de documentos/pacotes exigem gestor no banco; preferências pessoais do dono não sobrescrevem defaults da clínica.
+- Dashboard inclui leads quentes, clientes em risco e atividade da IA no contrato único `get_dashboard_rpc`.
+- `/configuracoes/clinica` possui contrato e tela próprios; `/configuracoes/servicos` e `/configuracoes/anamnese` são aliases.
 
 ---
 

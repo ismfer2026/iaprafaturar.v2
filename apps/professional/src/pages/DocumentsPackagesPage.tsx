@@ -276,7 +276,7 @@ export default function DocumentsPackagesPage() {
     event.preventDefault();
     setFormError(null);
     const selectedPackage = servicePackages.find((item) => item.id === sellForm.servicePackageId);
-    const amount = sellForm.amount ? parseMoney(sellForm.amount) : selectedPackage?.price ?? NaN;
+    const amount = isGestor && sellForm.amount ? parseMoney(sellForm.amount) : selectedPackage?.price ?? NaN;
 
     if (!sellForm.clientId) return setFormError(t("docs.error.clientRequired"));
     if (!sellForm.servicePackageId) return setFormError(t("docs.error.packageRequired"));
@@ -287,7 +287,7 @@ export default function DocumentsPackagesPage() {
         clientId: sellForm.clientId,
         servicePackageId: sellForm.servicePackageId,
         paymentMethod: sellForm.paymentMethod,
-        amount,
+        amount: isGestor ? amount : null,
       });
       setSheetMode(null);
     } catch (err) {
@@ -456,10 +456,12 @@ export default function DocumentsPackagesPage() {
       {activeTab === "packages" ? (
         <section className="space-y-4">
           <div className="flex gap-2">
+            {isGestor ? (
             <Button className="gap-2" onClick={() => openSheet("package")}>
               <Plus className="h-4 w-4" />
               {t("docs.package.new")}
             </Button>
+            ) : null}
             <Button variant="outline" className="gap-2" onClick={() => openSheet("sell-package")}>
               <PackageCheck className="h-4 w-4" />
               {t("docs.package.sell")}
@@ -522,10 +524,10 @@ export default function DocumentsPackagesPage() {
 
       {activeTab === "quotes" ? (
         <section className="space-y-4">
-          <Button className="gap-2" onClick={() => openSheet("quote")}>
+          {isGestor ? <Button className="gap-2" onClick={() => openSheet("quote")}>
             <Plus className="h-4 w-4" />
             {t("docs.quote.new")}
-          </Button>
+          </Button> : null}
           {quotes.map((quote) => (
             <Card key={quote.id} className="rounded-lg border-zinc-200">
               <CardContent className="space-y-3 p-4">
@@ -560,7 +562,7 @@ export default function DocumentsPackagesPage() {
                         {t("docs.quote.sendApproval")}
                       </Button>
                     ) : null}
-                    {quote.status === "aprovado" ? (
+                    {isGestor && quote.status === "aprovado" ? (
                       <Button
                         variant="outline"
                         className="gap-2"
@@ -581,7 +583,7 @@ export default function DocumentsPackagesPage() {
 
       {activeTab === "documents" ? (
         <section className="space-y-4">
-          <div className="flex gap-2">
+          {isGestor ? <div className="flex gap-2">
             <Button className="gap-2" onClick={() => openSheet("modelo")}>
               <Plus className="h-4 w-4" />
               {t("docs.modelo.new")}
@@ -590,7 +592,7 @@ export default function DocumentsPackagesPage() {
               <FileSignature className="h-4 w-4" />
               {t("docs.contract.new")}
             </Button>
-          </div>
+          </div> : null}
           {contracts.map((contract) => (
             <Card key={contract.id} className="rounded-lg border-zinc-200">
               <CardContent className="space-y-3 p-4">
@@ -695,7 +697,7 @@ export default function DocumentsPackagesPage() {
                 <SelectInput label={t("docs.form.client")} value={sellForm.clientId} onChange={(clientId) => setSellForm((current) => ({ ...current, clientId }))} options={[{ value: "", label: t("common.select") }, ...clients.map((client) => ({ value: client.id, label: client.full_name }))]} />
                 <SelectInput label={t("docs.form.package")} value={sellForm.servicePackageId} onChange={(servicePackageId) => setSellForm((current) => ({ ...current, servicePackageId }))} options={[{ value: "", label: t("common.select") }, ...servicePackages.map((item) => ({ value: item.id, label: item.name }))]} />
                 <SelectInput label={t("docs.form.paymentMethod")} value={sellForm.paymentMethod} onChange={(paymentMethod) => setSellForm((current) => ({ ...current, paymentMethod: paymentMethod as FinancialPaymentMethod }))} options={PAYMENT_METHODS.map((method) => ({ value: method, label: t(`finance.method.${method}` as TranslationKey) }))} />
-                <TextInput label={t("docs.form.amount")} value={sellForm.amount} onChange={(amount) => setSellForm((current) => ({ ...current, amount }))} inputMode="decimal" />
+                {isGestor ? <TextInput label={t("docs.form.amount")} value={sellForm.amount} onChange={(amount) => setSellForm((current) => ({ ...current, amount }))} inputMode="decimal" /> : null}
                 <FormError message={formError} />
               </div>
               <SheetFooter><SheetActions onCancel={() => setSheetMode(null)} isBusy={clientPackagesQuery.isSellingClientPackage} /></SheetFooter>

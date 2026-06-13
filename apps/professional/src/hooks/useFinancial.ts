@@ -23,6 +23,7 @@ import { crmKeys } from "./queryKeys";
 export interface FinancialFilters {
   status?: FinancialTransactionStatus | null;
   type?: FinancialTransactionType | null;
+  clientId?: string | null;
   dateFrom?: string | null;
   dateTo?: string | null;
 }
@@ -65,6 +66,7 @@ export function useFinancialTransactions(professionalId: string | null, filters:
 
       if (filters.status) queryBuilder = queryBuilder.eq("status", filters.status);
       if (filters.type) queryBuilder = queryBuilder.eq("type", filters.type);
+      if (filters.clientId) queryBuilder = queryBuilder.eq("client_id", filters.clientId);
       if (filters.dateFrom) queryBuilder = queryBuilder.gte("created_at", filters.dateFrom);
       if (filters.dateTo) queryBuilder = queryBuilder.lt("created_at", filters.dateTo);
 
