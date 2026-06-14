@@ -1,131 +1,38 @@
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Badge, Button, Card, CardContent, Input, Skeleton } from "@iaprafaturar/ui";
+import { Link } from "react-router-dom";
+import { Badge, Card, CardContent, Input, Skeleton } from "@iaprafaturar/ui";
+import { useAdminProfessionals } from "@/hooks/useAdminCore";
 import { useI18n } from "@/i18n";
-import { supabase } from "@/lib/supabase";
-
-interface ProfessionalRow {
-  id: string;
-  name: string;
-  business_name: string | null;
-  email: string;
-  plan_type: string;
-  whatsapp_connected: boolean;
-  onboarding_completed: boolean;
-  total_score: number | null;
-  health_level: string | null;
-  active_clients: number;
-  total_sessions: number;
-}
-
-async function loadProfessionals(search: string): Promise<ProfessionalRow[]> {
-  const { data, error } = await supabase.rpc("get_admin_professionals_rpc", {
-    p_limit: 50,
-    p_cursor: null,
-    p_search: search || null,
-    p_health_level: null
-  });
-
-  if (error) throw error;
-  return (data?.items ?? []) as ProfessionalRow[];
-}
 
 export default function ProfessionalsPage() {
   const { t } = useI18n();
   const [search, setSearch] = useState("");
-  const queryClient = useQueryClient();
-  const query = useQuery({
-    queryKey: ["admin-professionals", search],
-    queryFn: () => loadProfessionals(search)
-  });
-  const completeOnboarding = useMutation({
-    mutationFn: async (professionalId: string) => {
-      const { error } = await supabase.rpc("admin_complete_professional_onboarding", {
-        p_professional_id: professionalId,
-        p_reason: "manual_admin_phase11"
-      });
-      if (error) throw error;
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["admin-professionals"] });
-    }
-  });
-
-  const rows = query.data ?? [];
-
+  const [plan, setPlan] = useState("");
+  const [access, setAccess] = useState("");
+  const [health, setHealth] = useState("");
+  const query = useAdminProfessionals({ search, plan, access, health });
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-5 sm:px-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-zinc-950">{t("professionals.title")}</h1>
-        <p className="mt-1 max-w-2xl text-sm text-zinc-500">{t("professionals.subtitle")}</p>
+      <header><h1 className="text-2xl font-semibold">{t("professionals.title")}</h1><p className="text-sm text-zinc-500">{t("professionals.subtitle")}</p></header>
+      <div className="grid gap-2 md:grid-cols-4">
+        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("professionals.searchPlaceholder")} />
+        <Select value={plan} onChange={setPlan} label={t("professionals.filter.plan")} options={["trial","individual","equipe","team","enterprise","free_internal"]} />
+        <Select value={access} onChange={setAccess} label={t("professionals.filter.access")} options={["full","read_only","suspended"]} />
+        <Select value={health} onChange={setHealth} label={t("professionals.filter.health")} options={["critico","baixo","medio","alto","excelente"]} />
       </div>
-
-      <Input
-        value={search}
-        onChange={(event) => setSearch(event.target.value)}
-        placeholder={t("professionals.searchPlaceholder")}
-      />
-
-      {query.isLoading ? <ListSkeleton /> : null}
-      {query.isError ? <Card className="rounded-lg"><CardContent className="p-5 text-sm font-semibold text-red-700">{t("common.error")}</CardContent></Card> : null}
-      {!query.isLoading && !query.isError && rows.length === 0 ? (
-        <Card className="rounded-lg"><CardContent className="p-5 text-sm text-zinc-500">{t("professionals.empty")}</CardContent></Card>
-      ) : null}
-
+      {query.isLoading ? <div className="grid gap-3 lg:grid-cols-2">{[1,2,3,4].map((i) => <Skeleton className="h-36" key={i} />)}</div> : null}
+      {query.isError ? <Error /> : null}
+      {query.data?.length === 0 ? <Card><CardContent className="p-5 text-zinc-500">{t("professionals.empty")}</CardContent></Card> : null}
       <div className="grid gap-3 lg:grid-cols-2">
-        {rows.map((row) => (
-          <Card key={row.id} className="rounded-lg">
-            <CardContent className="space-y-3 p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h2 className="truncate text-sm font-semibold text-zinc-950">{row.business_name || row.name}</h2>
-                  <p className="truncate text-xs text-zinc-500">{row.email}</p>
-                </div>
-                <Badge>{row.plan_type}</Badge>
-              </div>
-              <div className="flex flex-wrap gap-2 text-xs font-semibold text-zinc-600">
-                <Badge variant={row.whatsapp_connected ? "default" : "secondary"}>
-                  {row.whatsapp_connected ? t("professionals.whatsapp.connected") : t("professionals.whatsapp.disconnected")}
-                </Badge>
-                <Badge variant="secondary">{row.health_level ?? "-"}</Badge>
-                <Badge variant="secondary">{row.total_score ?? 0}/100</Badge>
-                <Badge variant="secondary">{row.active_clients} {t("professionals.clients")}</Badge>
-                <Badge variant="secondary">{row.total_sessions} {t("professionals.sessions")}</Badge>
-              </div>
-              <div className="flex items-center justify-between gap-3 border-t border-zinc-100 pt-3">
-                <Badge variant={row.onboarding_completed ? "success" : "secondary"}>
-                  {row.onboarding_completed ? t("professionals.onboarding.completed") : t("professionals.onboarding.pending")}
-                </Badge>
-                {!row.onboarding_completed ? (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={completeOnboarding.isPending}
-                    onClick={() => completeOnboarding.mutate(row.id)}
-                  >
-                    {t("professionals.onboarding.complete")}
-                  </Button>
-                ) : null}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        {query.data?.map((row) => <Link key={row.id} to={`/profissionais/${row.id}`}><Card className="h-full rounded-lg hover:border-violet-300"><CardContent className="space-y-3 p-4">
+          <div className="flex items-start justify-between gap-3"><div className="min-w-0"><h2 className="truncate text-sm font-semibold">{row.business_name || row.name}</h2><p className="truncate text-xs text-zinc-500">{row.email}</p></div><Badge>{row.plan_type}</Badge></div>
+          <div className="flex flex-wrap gap-2"><Badge variant="secondary">{row.access_status}</Badge><Badge variant="secondary">{row.health_level ?? "-"}</Badge><Badge variant="secondary">{row.ai_credit_balance} {t("plans.credits")}</Badge><Badge variant={row.whatsapp_connected ? "success" : "secondary"}>{row.whatsapp_connected ? t("professionals.whatsapp.connected") : t("professionals.whatsapp.disconnected")}</Badge></div>
+        </CardContent></Card></Link>)}
       </div>
     </div>
   );
 }
-
-function ListSkeleton() {
-  return (
-    <div className="grid gap-3 lg:grid-cols-2">
-      {Array.from({ length: 4 }).map((_, index) => (
-        <Card key={index} className="rounded-lg">
-          <CardContent className="space-y-3 p-4">
-            <Skeleton className="h-5 w-48" />
-            <Skeleton className="h-4 w-32" />
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
+function Select({ value, onChange, label, options }: { value: string; onChange: (v: string) => void; label: string; options: string[] }) {
+  return <select className="h-10 rounded-md border bg-white px-3 text-sm" value={value} onChange={(e) => onChange(e.target.value)}><option value="">{label}</option>{options.map((x) => <option key={x} value={x}>{x}</option>)}</select>;
 }
+function Error() { const { t } = useI18n(); return <Card><CardContent className="p-5 text-red-700">{t("common.error")}</CardContent></Card>; }

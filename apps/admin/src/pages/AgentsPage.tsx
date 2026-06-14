@@ -1,77 +1,33 @@
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input } from "@iaprafaturar/ui";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Skeleton } from "@iaprafaturar/ui";
+import { useAdminAgents } from "@/hooks/useAdminCore";
 import { useI18n } from "@/i18n";
 import { supabase } from "@/lib/supabase";
 
-interface Phase17Dashboard {
-  agents: Array<Record<string, unknown> & { id: string; agent_slug: string; display_name: string; status: string }>;
-}
-
-async function loadPhase17(): Promise<Phase17Dashboard> {
-  const { data, error } = await supabase.rpc("get_admin_phase17_dashboard");
-  if (error) throw error;
-  return data as Phase17Dashboard;
-}
-
 export default function AgentsPage() {
   const { t } = useI18n();
-  const queryClient = useQueryClient();
-  const query = useQuery({ queryKey: ["admin-phase17"], queryFn: loadPhase17 });
-  const [agentSlug, setAgentSlug] = useState("admin-ai-gateway");
+  const query = useAdminAgents();
+  const client = useQueryClient();
+  const [slug, setSlug] = useState("admin-ai-gateway");
   const [prompt, setPrompt] = useState("");
-  const stagePrompt = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.rpc("admin_register_agent_prompt_version", {
-        p_agent_slug: agentSlug,
-        p_display_name: agentSlug,
-        p_prompt_body: prompt,
-        p_changelog: "admin_update",
-      });
-      if (error) throw error;
+  const [reason, setReason] = useState("");
+  const mutate = useMutation({
+    mutationFn: async ({ type, value }: { type: "stage" | "promote" | "pause"; value?: string }) => {
+      const result = type === "stage"
+        ? await supabase.rpc("phase23_register_agent_prompt_version", { p_agent_slug: slug, p_display_name: slug, p_prompt_body: prompt, p_changelog: reason })
+        : type === "promote"
+          ? await supabase.rpc("phase23_activate_agent_prompt_version", { p_version_id: value, p_reason: reason })
+          : await supabase.rpc("phase23_pause_agent", { p_agent_slug: slug, p_until: new Date(Date.now() + 60 * 60 * 1000).toISOString(), p_reason: reason });
+      if (result.error) throw result.error;
     },
-    onSuccess: () => {
-      setPrompt("");
-      queryClient.invalidateQueries({ queryKey: ["admin-phase17"] });
-    },
+    onSuccess: async () => { setPrompt(""); await client.invalidateQueries({ queryKey: ["admin-agents"] }); },
   });
-
-  return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-5 sm:px-6">
-      <header>
-        <h1 className="text-2xl font-semibold text-zinc-950">{t("agents.title")}</h1>
-        <p className="mt-1 max-w-2xl text-sm text-zinc-500">{t("agents.subtitle")}</p>
-      </header>
-      <section className="grid gap-3 lg:grid-cols-[1fr_360px]">
-        <div className="space-y-3">
-          {query.data?.agents.map((agent) => (
-            <Card key={agent.id} className="rounded-lg">
-              <CardContent className="flex items-center justify-between gap-3 p-4">
-                <div>
-                  <h2 className="text-sm font-semibold text-zinc-950">{agent.display_name}</h2>
-                  <p className="text-xs text-zinc-500">{agent.agent_slug}</p>
-                </div>
-                <Badge>{agent.status}</Badge>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-        <Card className="rounded-lg">
-          <CardHeader><CardTitle>{t("agents.stagePrompt")}</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            <Field label={t("agents.slug")} value={agentSlug} onChange={setAgentSlug} />
-            <label className="block space-y-1">
-              <span className="text-xs font-semibold text-zinc-600">{t("agents.prompt")}</span>
-              <textarea className="min-h-32 w-full rounded-md border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100" value={prompt} onChange={(event) => setPrompt(event.target.value)} />
-            </label>
-            <Button className="w-full" disabled={!agentSlug || !prompt || stagePrompt.isPending} onClick={() => stagePrompt.mutate()}>{t("agents.stage")}</Button>
-          </CardContent>
-        </Card>
-      </section>
-    </div>
-  );
-}
-
-function Field({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  return <label className="block space-y-1"><span className="text-xs font-semibold text-zinc-600">{label}</span><Input value={value} onChange={(event) => onChange(event.target.value)} /></label>;
+  return <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-5 sm:px-6">
+    <header><h1 className="text-2xl font-semibold">{t("agents.title")}</h1><p className="text-sm text-zinc-500">{t("agents.subtitle")}</p></header>
+    {query.isLoading ? <Skeleton className="h-40" /> : null}
+    {query.isError ? <Card><CardContent className="p-5 text-red-700">{t("common.error")}</CardContent></Card> : null}
+    <div className="grid gap-3 lg:grid-cols-2">{query.data?.agents.map((agent) => <Card key={agent.id}><CardContent className="space-y-3 p-4"><div className="flex justify-between"><div><h2 className="font-semibold">{agent.display_name}</h2><p className="text-xs text-zinc-500">{agent.agent_slug}</p></div><Badge>{agent.status}</Badge></div><div className="flex flex-wrap gap-2"><Badge variant="secondary">active v{agent.active_version ?? "-"}</Badge><Badge variant="secondary">{agent.executions_30d} runs/30d</Badge></div><div className="flex flex-wrap gap-2">{agent.versions.map((version: { id: string; version: number; status: string }) => <Button key={version.id} size="sm" variant="outline" disabled={version.status === "active" || mutate.isPending} onClick={() => mutate.mutate({ type: "promote", value: version.id })}>v{version.version} · {version.status}</Button>)}</div></CardContent></Card>)}</div>
+    <Card><CardHeader><CardTitle>{t("agents.stagePrompt")}</CardTitle></CardHeader><CardContent className="space-y-3"><Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder={t("agents.slug")} /><Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t("plans.reason")} /><textarea className="min-h-32 w-full rounded-md border px-3 py-2 text-sm" value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={t("agents.prompt")} /><div className="flex gap-2"><Button disabled={!slug || !prompt || !reason || mutate.isPending} onClick={() => mutate.mutate({ type: "stage" })}>{t("agents.stage")}</Button><Button variant="outline" disabled={!slug || !reason || mutate.isPending} onClick={() => mutate.mutate({ type: "pause" })}>{t("agents.pause")}</Button></div></CardContent></Card>
+  </div>;
 }

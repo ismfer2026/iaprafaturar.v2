@@ -444,6 +444,8 @@ useMoveClientStage()      // otimistic update
 | `/nexus` | `Nexus` | J47 |
 
 > `/` redireciona para `/dashboard`. `/afiliados` redireciona para `/embaixadores`. `/campanhas` e `/notificacoes` admin redirecionam ou navegam para subáreas de `/broadcast`. Nenhum alias mantém tela paralela.
+>
+> **Implementação Fase 23:** `/analytics`, `/profissionais/:id` e `/configuracoes` foram adicionadas. `/dashboard` mantém resumo acionável; `/analytics` concentra histórico. `/profissionais` é a entrada única para detalhe e onboarding administrativo.
 
 ### Dashboard Admin (`/dashboard`)
 

@@ -1515,16 +1515,18 @@ Se já existir artefato equivalente, a tarefa deve ampliá-lo ou substituí-lo c
 - Toda ação admin gera auditoria
 
 **DoD Fase 23:**
-- [ ] Profissionais, planos, assinaturas e créditos são operáveis por contratos auditáveis
-- [ ] Configurações globais possuem RPC/Edge Function segura
-- [ ] Métricas v1 foram portadas ou consolidadas com decisão registrada
-- [ ] CRUD/calculadora de planos possui decisão final
-- [ ] Nenhuma ação sensível depende de acesso direto improvisado
-- [ ] Existe uma única visão principal de dashboard admin e uma única fonte contratual por métrica
-- [ ] Nenhum card de MRR, churn, saúde ou profissionais foi reimplementado com consulta paralela
-- [ ] `/analytics` reutiliza os contratos do dashboard sem recalcular métricas em consultas paralelas
-- [ ] Agentes globais não alteram `professional_agents` de um tenant sem ação explícita, autorizada e auditada
-- [ ] Onboarding manual reutiliza `/profissionais` e contrato auditável, sem fluxo administrativo paralelo
+- [x] Profissionais, planos, assinaturas e créditos são operáveis por contratos auditáveis
+- [x] Configurações globais possuem RPC/Edge Function segura
+- [x] Métricas v1 foram portadas ou consolidadas com decisão registrada
+- [x] CRUD/calculadora de planos possui decisão final
+- [x] Nenhuma ação sensível depende de acesso direto improvisado
+- [x] Existe uma única visão principal de dashboard admin e uma única fonte contratual por métrica
+- [x] Nenhum card de MRR, churn, saúde ou profissionais foi reimplementado com consulta paralela
+- [x] `/analytics` reutiliza os contratos do dashboard sem recalcular métricas em consultas paralelas
+- [x] Agentes globais não alteram `professional_agents` de um tenant sem ação explícita, autorizada e auditada
+- [x] Onboarding manual reutiliza `/profissionais` e contrato auditável, sem fluxo administrativo paralelo
+
+> **Implementação Fase 23 (2026-06-14):** planos permanecem controlados por migration/RPC especializada, sem CRUD genérico. `/dashboard` e `/analytics` usam `platform_metrics_daily` e contratos curados `phase23_*`. Configurações globais expõem somente estado sanitizado em `platform_admin_settings`; segredos não são armazenados nem retornados pelo frontend. Ações globais são registradas no log imutável `platform_admin_audit_log`.
 
 ---
 

@@ -1,120 +1,17 @@
-import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Coins, ShieldCheck } from "lucide-react";
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input } from "@iaprafaturar/ui";
+import { Badge, Card, CardContent, CardHeader, CardTitle, Skeleton } from "@iaprafaturar/ui";
+import { useAdminPlans } from "@/hooks/useAdminCore";
 import { useI18n } from "@/i18n";
-import { supabase } from "@/lib/supabase";
-
-interface Phase17Dashboard {
-  plans: Array<Record<string, unknown> & { id: string; slug: string; name: string; monthly_price_cents: number; included_ai_credits: number; is_public: boolean }>;
-  subscriptions: Array<Record<string, unknown> & { id: string; professional_id: string; status: string; source: string; updated_at: string }>;
-}
-
-async function loadPhase17(): Promise<Phase17Dashboard> {
-  const { data, error } = await supabase.rpc("get_admin_phase17_dashboard");
-  if (error) throw error;
-  return data as Phase17Dashboard;
-}
 
 export default function PlansPage() {
   const { t } = useI18n();
-  const queryClient = useQueryClient();
-  const query = useQuery({ queryKey: ["admin-phase17"], queryFn: loadPhase17 });
-  const [professionalId, setProfessionalId] = useState("");
-  const [reason, setReason] = useState("");
-  const [credits, setCredits] = useState("500");
-
-  const grantFree = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.rpc("admin_grant_free_internal", {
-        p_professional_id: professionalId,
-        p_reason: reason,
-        p_expires_at: null,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-phase17"] }),
-  });
-
-  const addCredits = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.rpc("admin_add_ai_credits", {
-        p_professional_id: professionalId,
-        p_amount: Number(credits || 0),
-        p_reason: reason,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-phase17"] }),
-  });
-
-  const data = query.data;
-
-  return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-5 sm:px-6">
-      <header>
-        <h1 className="text-2xl font-semibold text-zinc-950">{t("plans.title")}</h1>
-        <p className="mt-1 max-w-2xl text-sm text-zinc-500">{t("plans.subtitle")}</p>
-      </header>
-
-      {query.isError ? <ErrorCard /> : null}
-
-      <section className="grid gap-3 lg:grid-cols-[1fr_360px]">
-        <div className="space-y-3">
-          {data?.plans.map((plan) => (
-            <Card key={plan.id} className="rounded-lg">
-              <CardContent className="flex items-center justify-between gap-3 p-4">
-                <div>
-                  <h2 className="text-sm font-semibold text-zinc-950">{plan.name}</h2>
-                  <p className="text-xs text-zinc-500">{plan.included_ai_credits} {t("plans.credits")} · {formatCurrency(plan.monthly_price_cents)}</p>
-                </div>
-                <Badge variant={plan.is_public ? "default" : "secondary"}>{plan.slug}</Badge>
-              </CardContent>
-            </Card>
-          ))}
-          {data?.subscriptions.map((subscription) => (
-            <Card key={subscription.id} className="rounded-lg">
-              <CardContent className="flex items-center justify-between gap-3 p-4">
-                <div>
-                  <h2 className="text-sm font-semibold text-zinc-950">{subscription.professional_id}</h2>
-                  <p className="text-xs text-zinc-500">{subscription.source}</p>
-                </div>
-                <Badge>{subscription.status}</Badge>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        <Card className="rounded-lg">
-          <CardHeader><CardTitle>{t("plans.adminActions")}</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            <Field label={t("plans.professionalId")} value={professionalId} onChange={setProfessionalId} />
-            <Field label={t("plans.reason")} value={reason} onChange={setReason} />
-            <Field label={t("plans.credits")} value={credits} onChange={setCredits} />
-            <Button className="w-full" disabled={!professionalId || !reason || grantFree.isPending} onClick={() => grantFree.mutate()}>
-              <ShieldCheck className="mr-2 h-4 w-4" />
-              {t("plans.grantFree")}
-            </Button>
-            <Button className="w-full" variant="outline" disabled={!professionalId || !reason || addCredits.isPending} onClick={() => addCredits.mutate()}>
-              <Coins className="mr-2 h-4 w-4" />
-              {t("plans.addCredits")}
-            </Button>
-          </CardContent>
-        </Card>
-      </section>
-    </div>
-  );
+  const query = useAdminPlans();
+  return <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-5 sm:px-6">
+    <header><h1 className="text-2xl font-semibold">{t("plans.title")}</h1><p className="text-sm text-zinc-500">{t("plans.subtitle")}</p></header>
+    <Badge variant="secondary">{t("plans.governance")}: {query.data?.governance ?? "migration_rpc_controlled"}</Badge>
+    {query.isLoading ? <Skeleton className="h-48" /> : null}{query.isError ? <Error /> : null}
+    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{query.data?.plans.map((plan) => <Card key={plan.id}><CardContent className="space-y-3 p-4"><div className="flex justify-between gap-2"><h2 className="font-semibold">{plan.name}</h2><Badge variant={plan.is_active ? "success" : "secondary"}>{plan.slug}</Badge></div><p className="text-sm text-zinc-500">{plan.description}</p><p className="text-lg font-semibold">{money(plan.monthly_price_cents)}</p><div className="flex flex-wrap gap-2"><Badge variant="secondary">{plan.included_ai_credits} {t("plans.credits")}</Badge><Badge variant="secondary">{plan.client_limit ?? "∞"} clients</Badge><Badge variant="secondary">{plan.team_limit ?? "∞"} team</Badge></div></CardContent></Card>)}</div>
+    <Card><CardHeader><CardTitle>{t("plans.subscriptions")}</CardTitle></CardHeader><CardContent className="overflow-x-auto"><table className="w-full min-w-[680px] text-left text-sm"><thead><tr className="border-b text-zinc-500"><th className="p-2">{t("professionals.title")}</th><th>{t("nav.plans")}</th><th>Status</th><th>Source</th></tr></thead><tbody>{query.data?.subscriptions.map((s) => <tr className="border-b" key={s.id}><td className="p-2">{s.professional_name}</td><td>{s.plan_slug}</td><td>{s.status}</td><td>{s.source}</td></tr>)}</tbody></table></CardContent></Card>
+  </div>;
 }
-
-function Field({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  return <label className="block space-y-1"><span className="text-xs font-semibold text-zinc-600">{label}</span><Input value={value} onChange={(event) => onChange(event.target.value)} /></label>;
-}
-
-function ErrorCard() {
-  const { t } = useI18n();
-  return <Card className="rounded-lg"><CardContent className="p-5 text-sm font-semibold text-red-700">{t("common.error")}</CardContent></Card>;
-}
-
-function formatCurrency(cents: number) {
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
-}
+function Error() { const { t } = useI18n(); return <Card><CardContent className="p-5 text-red-700">{t("common.error")}</CardContent></Card>; }
+function money(cents: number) { return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100); }

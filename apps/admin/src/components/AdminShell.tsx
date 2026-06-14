@@ -15,7 +15,7 @@ export default function AdminShell() {
         <div className="text-lg font-semibold text-zinc-950">iaprafaturar</div>
         <div className="mt-1 text-xs font-semibold uppercase text-violet-700">Admin</div>
         <nav className="mt-8 space-y-1">
-          {adminRoutes.map((item) => (
+          {adminRoutes.filter((item) => !item.path.includes(":")).map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
@@ -40,7 +40,7 @@ export default function AdminShell() {
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-20 flex gap-1 overflow-x-auto border-t bg-white px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 lg:hidden">
-        {adminRoutes.map((item) => (
+        {adminRoutes.filter((item) => !item.path.includes(":")).map((item) => (
           <NavLink
             key={item.path}
             to={item.path}

@@ -3271,6 +3271,8 @@ REVOKE ALL ON platform_metrics_daily FROM authenticated;
 -- service_role escreve via cron; master_admin lê via RPC
 ```
 
+> **Nota de implementação (Fase 23):** `platform_metrics_daily` permanece fonte canônica para dashboard e analytics. A migration `20260614100000_phase23_admin_saas_core.sql` adiciona contratos curados `phase23_get_admin_dashboard`, `phase23_get_admin_analytics`, profissionais, planos, agentes, melhorias e configurações. `platform_admin_settings` guarda apenas estado sanitizado e nunca segredos. `platform_admin_audit_log` é imutável e registra ações globais que não pertencem ao audit log de um tenant. A migration `20260614101000_phase23_admin_contract_fixes.sql` adiciona rollback auditável de prompts e impede o frontend de declarar credencial configurada. A migration `20260614102000_phase23_fix_admin_agents_runtime.sql` corrige métricas de execução para usar `agent_executions.started_at` e vincula a auditoria de staging ao `agent_prompt_version`.
+
 #### onboarding_sessions
 
 ```sql
