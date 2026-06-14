@@ -743,6 +743,36 @@ Input: gateway event payload
 Output: { received: true }
 ```
 
+### admin-broadcast
+
+```
+verify_jwt: true
+Proteção: master admin ou token interno
+```
+
+Responsabilidade:
+- selecionar audiência administrativa sem consultar campanhas profissionais;
+- persistir broadcast e destinatários antes do envio;
+- manter `dry_run` seguro, idempotência por destinatário e falha parcial consultável;
+- usar somente a instância WhatsApp admin;
+- não simular entrega ou leitura sem evento confiável do provedor.
+
+**Implementação Fase 24:** `admin-broadcast` é o orquestrador idempotente e assíncrono. Ele publica `admin-broadcast-worker` via QStash; o worker usa claim atômico, lotes, rate limit, retry/backoff, recuperação de locks e `dead_letter`. Histórico canônico permanece em `platform_broadcasts` e `platform_broadcast_recipients`.
+
+### admin-broadcast-worker
+
+```
+verify_jwt: false
+Proteção: INTERNAL_FUNCTION_TOKEN encaminhado pelo QStash
+```
+
+Responsabilidade:
+- obter lote por `phase24_claim_broadcast_batch` com `FOR UPDATE SKIP LOCKED`;
+- enviar no máximo 10 destinatários por execução com espaçamento;
+- registrar sucesso ou falha por `phase24_complete_broadcast_recipient`;
+- reagendar trabalho pendente e retries pelo QStash;
+- registrar publicação, consumo, falha e `dead_letter` em `qstash_job_log`.
+
 ### affiliate-commission-cron
 ```
 verify_jwt: false

@@ -2114,6 +2114,10 @@ WITH CHECK (professional_id = auth_professional_id());
 
 ### sales_leads
 
+> **Implementação Fase 24:** migration `20260614110000` criou o contrato administrativo isolado de leads; `20260614111000` adicionou vínculo opcional ao profissional convertido, notas da Nerissa e `converted_at`. Escrita autenticada ocorre somente pelas RPCs `phase24_*`; não há acesso ao funil profissional.
+>
+> A migration `20260614112000` concluiu a entrega distribuída de broadcast com `idempotency_key`, claim atômico, retry/backoff, lock de worker e `dead_letter`.
+
 ```sql
 CREATE TABLE sales_leads (
   id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),

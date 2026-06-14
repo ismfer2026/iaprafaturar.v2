@@ -422,6 +422,9 @@ verify_jwt = false
 [functions.affiliate-commission-cron]
 verify_jwt = false
 
+[functions.admin-broadcast-worker]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

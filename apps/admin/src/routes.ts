@@ -1,5 +1,5 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from "react";
-import { BarChart3, Bot, Cpu, CreditCard, Handshake, Lightbulb, Megaphone, Settings, TrendingUp, Users, type LucideIcon } from "lucide-react";
+import { BarChart3, Bot, Cpu, CreditCard, Handshake, Lightbulb, Megaphone, Settings, TrendingUp, UserRoundSearch, Users, type LucideIcon } from "lucide-react";
 import type { TranslationKey } from "@/i18n";
 
 type RouteComponent = LazyExoticComponent<ComponentType>;
@@ -23,6 +23,7 @@ const AmbassadorsPage = lazy(() => import("@/pages/AmbassadorsPage"));
 const AgentsPage = lazy(() => import("@/pages/AgentsPage"));
 const ImprovementsPage = lazy(() => import("@/pages/ImprovementsPage"));
 const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
+const LeadsPage = lazy(() => import("@/pages/LeadsPage"));
 
 export const adminRoutes: AdminRouteDefinition[] = [
   { path: "/dashboard", component: DashboardPage, labelKey: "nav.dashboard", icon: BarChart3, ownerPhase: 9 },
@@ -35,6 +36,7 @@ export const adminRoutes: AdminRouteDefinition[] = [
   { path: "/melhorias", component: ImprovementsPage, labelKey: "nav.improvements", icon: Lightbulb, ownerPhase: 23 },
   { path: "/configuracoes", component: SettingsPage, labelKey: "nav.settings", icon: Settings, ownerPhase: 23 },
   { path: "/broadcast", component: BroadcastPage, labelKey: "nav.broadcast", icon: Megaphone, ownerPhase: 24 },
+  { path: "/leads", component: LeadsPage, labelKey: "nav.leads", icon: UserRoundSearch, ownerPhase: 24 },
   { path: "/nexus", component: NexusPage, labelKey: "nav.nexus", icon: Bot, ownerPhase: 17 },
 ];
 

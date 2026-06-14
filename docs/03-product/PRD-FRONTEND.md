@@ -446,6 +446,8 @@ useMoveClientStage()      // otimistic update
 > `/` redireciona para `/dashboard`. `/afiliados` redireciona para `/embaixadores`. `/campanhas` e `/notificacoes` admin redirecionam ou navegam para subáreas de `/broadcast`. Nenhum alias mantém tela paralela.
 >
 > **Implementação Fase 23:** `/analytics`, `/profissionais/:id` e `/configuracoes` foram adicionadas. `/dashboard` mantém resumo acionável; `/analytics` concentra histórico. `/profissionais` é a entrada única para detalhe e onboarding administrativo.
+>
+> **Implementação Fase 24:** `/broadcast` concentra composição, audiência, dry-run, histórico e métricas; `/embaixadores` concentra operação, indicações, comissões e PIX; `/leads` usa contrato exclusivo da plataforma. Os aliases continuam sem telas paralelas.
 
 ### Dashboard Admin (`/dashboard`)
 

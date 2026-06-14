@@ -1550,15 +1550,15 @@ Se já existir artefato equivalente, a tarefa deve ampliá-lo ou substituí-lo c
 - Não expor ações de aprovação, suspensão ou pagamento no app profissional
 
 **DoD Fase 24:**
-- [ ] Broadcast/notificações possui contrato único e histórico
-- [ ] Campanhas admin foram portadas ou consolidadas com decisão registrada
-- [ ] Embaixadores cobre operação e pagamentos auditáveis
-- [ ] UI identifica claramente o público de cada comunicação
-- [ ] Growth admin não conflita com growth profissional
-- [ ] `/embaixadores` admin e `/parceiros` profissional usam permissões e experiências distintas
-- [ ] `/afiliados` redireciona para `/embaixadores` sem implementação paralela
-- [ ] `/broadcast` é a única implementação de comunicação admin
-- [ ] `/leads` usa contratos da plataforma e não lê ou altera o `/funil` de profissionais
+- [x] Broadcast/notificações possui contrato único e histórico
+- [x] Campanhas admin foram portadas ou consolidadas com decisão registrada
+- [x] Embaixadores cobre operação e pagamentos auditáveis
+- [x] UI identifica claramente o público de cada comunicação
+- [x] Growth admin não conflita com growth profissional
+- [x] `/embaixadores` admin e `/parceiros` profissional usam permissões e experiências distintas
+- [x] `/afiliados` redireciona para `/embaixadores` sem implementação paralela
+- [x] `/broadcast` é a única implementação de comunicação admin
+- [x] `/leads` usa contratos da plataforma e não lê ou altera o `/funil` de profissionais
 
 ---
 
