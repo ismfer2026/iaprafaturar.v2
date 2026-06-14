@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Building2, Pencil, Save, UserRound, Users } from "lucide-react";
+import { ArrowLeft, Building2, Clock, Pencil, Save, UserRound, Users } from "lucide-react";
 import {
   Badge,
   Button,
@@ -27,6 +27,7 @@ import type {
 } from "@iaprafaturar/domain";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBusinessHours } from "@/hooks/useBusinessHours";
+import { useOperationalRules, type OperationalRulesInput } from "@/hooks/useOperationalRules";
 import { useI18n, type TranslationKey } from "@/i18n";
 
 const DEFAULT_TIMEZONE = "America/Sao_Paulo";
@@ -188,12 +189,21 @@ export default function ConfiguracoesAgendaPage() {
   const { t } = useI18n();
   const { professionalId, role } = useAuth();
   const query = useBusinessHours(professionalId);
+  const operationalRules = useOperationalRules(professionalId);
 
   const [clinicWeekly, setClinicWeekly] = useState<WeeklyFormState>(DEFAULT_WEEKLY);
   const [clinicTimezone, setClinicTimezone] = useState(DEFAULT_TIMEZONE);
   const [clinicExceptions, setClinicExceptions] = useState<BusinessHoursException[]>([]);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState(false);
+  const [rulesForm, setRulesForm] = useState<OperationalRulesInput>({
+    cancelWindowHours: 24,
+    rescheduleWindowHours: 24,
+    relationshipCheckinsEnabled: true,
+    relationshipCheckinIntervalDays: 45,
+  });
+  const [rulesSaved, setRulesSaved] = useState(false);
+  const [rulesSaveError, setRulesSaveError] = useState(false);
 
   const [editingMember, setEditingMember] = useState<ScheduleTeamMemberSummary | null>(null);
   const [memberForm, setMemberForm] = useState<MemberFormState | null>(null);
@@ -209,6 +219,12 @@ export default function ConfiguracoesAgendaPage() {
     }
   }, [query.data?.clinicHours]);
 
+  useEffect(() => {
+    if (operationalRules.data) {
+      setRulesForm(operationalRules.data);
+    }
+  }, [operationalRules.data]);
+
   async function handleSaveClinic() {
     setSaved(false);
     setSaveError(false);
@@ -217,6 +233,17 @@ export default function ConfiguracoesAgendaPage() {
       setSaved(true);
     } catch {
       setSaveError(true);
+    }
+  }
+
+  async function handleSaveOperationalRules() {
+    setRulesSaved(false);
+    setRulesSaveError(false);
+    try {
+      await operationalRules.saveOperationalRules(rulesForm);
+      setRulesSaved(true);
+    } catch {
+      setRulesSaveError(true);
     }
   }
 
@@ -243,7 +270,7 @@ export default function ConfiguracoesAgendaPage() {
     setIsMemberSheetOpen(false);
   }
 
-  if (!professionalId || query.isLoading) {
+  if (!professionalId || query.isLoading || operationalRules.isLoading) {
     return (
       <div className="space-y-4 p-4">
         <Skeleton className="h-8 w-48" />
@@ -320,6 +347,103 @@ export default function ConfiguracoesAgendaPage() {
               <p className="text-sm text-zinc-500">{clinicTimezone}</p>
             </div>
             <WeeklyHoursEditor weekly={clinicWeekly} onChange={setClinicWeekly} t={t} />
+          </CardContent>
+        </Card>
+      )}
+
+      {isGestor && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 text-violet-700">
+                <Clock className="h-5 w-5" />
+              </div>
+              <div>
+                <CardTitle>{t("settings.operationalRules.title")}</CardTitle>
+                <CardDescription>{t("settings.operationalRules.description", { assistantName: "Rosane" })}</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1">
+                <label htmlFor="cancelWindowHours" className="text-sm font-medium text-zinc-700">
+                  {t("settings.operationalRules.cancelWindow")}
+                </label>
+                <Input
+                  id="cancelWindowHours"
+                  type="number"
+                  min={1}
+                  max={168}
+                  value={rulesForm.cancelWindowHours}
+                  onChange={(event) =>
+                    setRulesForm((current) => ({ ...current, cancelWindowHours: Number(event.target.value) }))
+                  }
+                />
+              </div>
+              <div className="space-y-1">
+                <label htmlFor="rescheduleWindowHours" className="text-sm font-medium text-zinc-700">
+                  {t("settings.operationalRules.rescheduleWindow")}
+                </label>
+                <Input
+                  id="rescheduleWindowHours"
+                  type="number"
+                  min={1}
+                  max={168}
+                  value={rulesForm.rescheduleWindowHours}
+                  onChange={(event) =>
+                    setRulesForm((current) => ({
+                      ...current,
+                      rescheduleWindowHours: Number(event.target.value),
+                    }))
+                  }
+                />
+              </div>
+            </div>
+
+            <label className="flex items-start gap-3 rounded-lg border border-zinc-200 px-3 py-3">
+              <input
+                type="checkbox"
+                className="mt-1 h-4 w-4 rounded border-zinc-300 text-violet-600"
+                checked={rulesForm.relationshipCheckinsEnabled}
+                onChange={(event) =>
+                  setRulesForm((current) => ({ ...current, relationshipCheckinsEnabled: event.target.checked }))
+                }
+              />
+              <span>
+                <span className="block text-sm font-medium text-zinc-900">{t("settings.operationalRules.checkins")}</span>
+                <span className="mt-0.5 block text-sm leading-5 text-zinc-500">
+                  {t("settings.operationalRules.checkinsDescription", { assistantName: "Rosane" })}
+                </span>
+              </span>
+            </label>
+
+            <div className="space-y-1">
+              <label htmlFor="relationshipCheckinIntervalDays" className="text-sm font-medium text-zinc-700">
+                {t("settings.operationalRules.checkinInterval")}
+              </label>
+              <Input
+                id="relationshipCheckinIntervalDays"
+                type="number"
+                min={7}
+                max={180}
+                value={rulesForm.relationshipCheckinIntervalDays}
+                onChange={(event) =>
+                  setRulesForm((current) => ({
+                    ...current,
+                    relationshipCheckinIntervalDays: Number(event.target.value),
+                  }))
+                }
+              />
+            </div>
+
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button type="button" onClick={handleSaveOperationalRules} disabled={operationalRules.isSavingOperationalRules}>
+                {operationalRules.isSavingOperationalRules ? t("common.saving") : t("settings.schedule.save")}
+              </Button>
+            </div>
+            {rulesSaved && <p className="text-sm text-emerald-700">{t("settings.operationalRules.saved")}</p>}
+            {rulesSaveError && <p className="text-sm text-red-700">{t("settings.operationalRules.error.save")}</p>}
           </CardContent>
         </Card>
       )}

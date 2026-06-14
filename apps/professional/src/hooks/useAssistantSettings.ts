@@ -7,12 +7,9 @@ export interface AssistantSettingsInput {
   shadowMode: boolean;
   autoRespond: boolean;
   enabledAgents: string[];
+  agentConfigs: Record<string, unknown>;
   sendGoogleReviewAfterPositiveNps: boolean;
   googleReviewUrl: string;
-  cancelWindowHours: number;
-  rescheduleWindowHours: number;
-  relationshipCheckinsEnabled: boolean;
-  relationshipCheckinIntervalDays: number;
 }
 
 export function useAssistantSettings(professionalId: string | null) {
@@ -24,7 +21,7 @@ export function useAssistantSettings(professionalId: string | null) {
     queryFn: async () => {
       if (!professionalId) throw new Error("professionalId is required");
 
-      const [agentResult, whatsappResult, professionalResult] = await Promise.all([
+      const [agentResult, whatsappResult] = await Promise.all([
         supabase
           .from("professional_agents")
           .select("id, agent_name, shadow_mode, auto_respond, enabled_agents, agent_configs")
@@ -38,21 +35,14 @@ export function useAssistantSettings(professionalId: string | null) {
           .order("is_connected", { ascending: false })
           .limit(1)
           .maybeSingle(),
-        supabase
-          .from("professionals")
-          .select("settings")
-          .eq("id", professionalId)
-          .maybeSingle(),
       ]);
 
       if (agentResult.error) throw agentResult.error;
       if (whatsappResult.error) throw whatsappResult.error;
-      if (professionalResult.error) throw professionalResult.error;
 
       const configs = (agentResult.data?.agent_configs ?? {}) as Record<string, unknown>;
       const postCare = (configs["post_care"] ?? {}) as Record<string, unknown>;
-      const professionalSettings = (professionalResult.data?.settings ?? {}) as Record<string, unknown>;
-      const appointmentRules = (professionalSettings["appointment_rules"] ?? {}) as Record<string, unknown>;
+      const agentsV2 = (configs["agents_v2"] ?? {}) as Record<string, unknown>;
 
       return {
         agent: agentResult.data,
@@ -65,14 +55,11 @@ export function useAssistantSettings(professionalId: string | null) {
           enabledAgents: Array.isArray(agentResult.data?.enabled_agents)
             ? (agentResult.data.enabled_agents as string[])
             : ["duvidas", "agendamento", "lembrete"],
+          agentConfigs: agentsV2,
           sendGoogleReviewAfterPositiveNps: Boolean(
             postCare["send_google_review_after_positive_nps"] ?? false,
           ),
           googleReviewUrl: typeof postCare["google_review_url"] === "string" ? postCare["google_review_url"] : "",
-          cancelWindowHours: Number(appointmentRules["cancel_window_hours"] ?? 24),
-          rescheduleWindowHours: Number(appointmentRules["reschedule_window_hours"] ?? 24),
-          relationshipCheckinsEnabled: appointmentRules["relationship_checkins_enabled"] !== false,
-          relationshipCheckinIntervalDays: Number(appointmentRules["relationship_checkin_interval_days"] ?? 45),
         },
       };
     },
@@ -95,6 +82,7 @@ export function useAssistantSettings(professionalId: string | null) {
           agent_configs: {
             ...existingConfigs,
             tone: input.tone,
+            agents_v2: input.agentConfigs,
             post_care: {
               ...((existingConfigs["post_care"] ?? {}) as Record<string, unknown>),
               send_google_review_after_positive_nps: input.sendGoogleReviewAfterPositiveNps,
@@ -105,17 +93,6 @@ export function useAssistantSettings(professionalId: string | null) {
         .eq("id", query.data.agent.id);
 
       if (error) throw error;
-
-      const { error: rulesError } = await supabase.rpc("update_operational_rules", {
-        p_rules: {
-          cancel_window_hours: input.cancelWindowHours,
-          reschedule_window_hours: input.rescheduleWindowHours,
-          relationship_checkins_enabled: input.relationshipCheckinsEnabled,
-          relationship_checkin_interval_days: input.relationshipCheckinIntervalDays,
-        },
-      });
-
-      if (rulesError) throw rulesError;
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["assistant-settings", professionalId] });

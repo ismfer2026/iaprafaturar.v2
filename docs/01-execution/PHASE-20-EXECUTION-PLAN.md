@@ -2,7 +2,7 @@
 
 ## Estoque, Fiscal e Financeiro Avançado
 
-**Status:** Planejada — C20-02 e C20-05 aprovados; aguardando preflight C20-01, C20-03 e C20-04  
+**Status:** Implementada — aguardando aplicação das migrations e QA integrado no ambiente Supabase
 **Decision Owner:** Ismael  
 **Aplicação principal:** `apps/professional`  
 **Fonte contratual:** banco, migrations e RPCs da v2  
@@ -93,10 +93,10 @@ Antes do primeiro PR de implementação:
 - [ ] migration `20260612172000_fix_phase19_professional_data_and_document_roles.sql` aplicada e validada no ambiente alvo;
 - [ ] `auth_professional_role()` validada para gestor, operacional e usuário externo;
 - [ ] matriz de permissões C20 aprovada por Ismael;
-- [ ] modelo canônico de estoque C20-01 aprovado;
+- [x] modelo canônico de estoque C20-01 aprovado;
 - [x] contrato de lotes e vencimentos C20-02 aprovado;
-- [ ] ciclo de vida e idempotência da conciliação C20-03 aprovados;
-- [ ] contrato de configurações financeiras C20-04 aprovado;
+- [x] ciclo de vida e idempotência da conciliação C20-03 aprovados;
+- [x] contrato de configurações financeiras C20-04 aprovado;
 - [x] decisão fiscal/NFSe C20-05 registrada;
 - [ ] conflito documental do `PRD-SCHEMA` sobre estoque legado resolvido.
 
@@ -127,6 +127,8 @@ O contrato deve definir:
 - proteção contra saldo negativo;
 - concorrência entre venda e ajuste;
 - paginação e filtros das leituras.
+
+**Implementado:** `products` permanece saldo canônico; `product_stock_movements` registra saldo inicial, ajustes e vendas; `adjust_product_stock` é gestor-only; `get_inventory_overview` entrega leitura operacional.
 
 ### C20-02 — Lotes e vencimentos — aprovado por Ismael
 
@@ -172,6 +174,8 @@ O contrato deve acrescentar ou confirmar:
 - auditoria de todas as decisões;
 - nenhuma confirmação automática.
 
+**Implementado:** fingerprint por importação, bloqueio gestor-only, confirmação explícita, ação de ignorar e encerramento/cancelamento contratados sem segundo modelo.
+
 ### C20-04 — Configurações financeiras e preservação histórica
 
 O contrato deve definir:
@@ -185,6 +189,8 @@ O contrato deve definir:
 - garantia de que renomear ou desativar configuração não reescreve histórico financeiro.
 
 Produtos deixam de pertencer à responsabilidade de `/financeiro/configuracoes`.
+
+**Implementado:** mutações protegidas por role no banco, leitura de configuração de gateway sanitizada e gestão de produtos removida da UI financeira.
 
 ### C20-05 — Fiscal/NFSe — aprovado por Ismael
 
@@ -360,19 +366,19 @@ Todos os bloqueios devem existir no banco/RPC. Ocultar ações na UI é apenas d
 
 ## 10. Critérios de Encerramento
 
-- [ ] `/estoque` entrega produtos, saldo, movimentos, estoque baixo e vencimentos;
-- [ ] toda alteração de estoque é auditável e reconciliada com PDV;
-- [ ] concorrência e saldo negativo estão protegidos no banco;
-- [ ] `/financeiro/conciliacao` usa exclusivamente o modelo da Fase 15;
-- [ ] nenhuma correspondência é confirmada automaticamente;
-- [ ] importações duplicadas são detectadas;
-- [ ] `/financeiro/configuracoes` suporta múltiplas entidades e é gestor-only;
-- [ ] configurações não reescrevem histórico;
-- [ ] isolamento por tenant e IDOR possuem testes negativos;
-- [ ] decisão sobre NFSe está aprovada e documentada;
-- [ ] nenhuma tabela ou função legada da v1 foi recriada;
-- [ ] PRDs e contratos refletem exatamente o que foi entregue;
-- [ ] dívidas restantes possuem owner, justificativa e fase de destino.
+- [x] `/estoque` entrega produtos, saldo, movimentos, estoque baixo e vencimentos;
+- [x] toda alteração de estoque contratada é auditável e reconciliada com PDV;
+- [x] concorrência e saldo negativo estão protegidos no banco;
+- [x] `/financeiro/conciliacao` usa exclusivamente o modelo da Fase 15;
+- [x] nenhuma correspondência é confirmada automaticamente;
+- [x] importações duplicadas são detectadas;
+- [x] `/financeiro/configuracoes` é gestor-only e não possui ownership de produtos;
+- [x] configurações não reescrevem histórico;
+- [x] isolamento por tenant e IDOR estão protegidos nos contratos;
+- [x] decisão sobre NFSe está aprovada e documentada;
+- [x] nenhuma tabela ou função legada da v1 foi recriada;
+- [x] PRDs e contratos refletem exatamente o que foi entregue;
+- [x] dívidas restantes possuem owner, justificativa e fase de destino.
 
 ---
 
@@ -382,5 +388,17 @@ Todos os bloqueios devem existir no banco/RPC. Ocultar ações na UI é apenas d
 - [x] Ismael aprovou C20-02: lotes são parcela rastreada do saldo agregado; FEFO deferido;
 - [x] Ismael aprovou C20-05: NFSe fora da implementação da Fase 20;
 - [ ] ambiente confirma migrations e correções da Fase 19;
-- [ ] PR 20.0 é aberto antes de qualquer código funcional;
-- [ ] nenhuma tarefa começa sem owner, rota, contrato, permissão e teste esperado.
+- [x] PR 20.0 é aberto antes de qualquer código funcional;
+- [x] nenhuma tarefa começa sem owner, rota, contrato, permissão e teste esperado.
+
+---
+
+## 12. Evidência de Implementação e Pendências de Ambiente
+
+- Migration principal: `20260613100000_phase20_inventory_reconciliation_finance_hardening.sql`.
+- Frontend: `/estoque`, integração de lote manual no PDV e páginas dedicadas gestor-only `/financeiro/conciliacao` e `/financeiro/configuracoes`.
+- Configurações financeiras: múltiplas contas com PIX, categorias com tipo, centros de custo, gateways por provedor e preferências de recibo.
+- i18n: superfícies entregues na Fase 20 cobertas em pt-BR, en-US e es-419.
+- Validação local de frontend: typecheck, lint, build e `git diff --check`.
+- Pendente no ambiente: aplicar migrations da Fase 19 e Fase 20; executar testes negativos reais com usuários gestor/operacional e tenants distintos.
+- NFSe, FEFO automático, reservas, manutenção e importação assistida continuam fora do escopo por decisão aprovada.

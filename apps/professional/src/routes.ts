@@ -42,7 +42,7 @@ export interface RouteAlias {
 const OnboardingPage = lazy(() => import("@/pages/OnboardingPage"));
 const DashboardPage = lazy(() => import("@/pages/DashboardPage"));
 const AgendaPage = lazy(() => import("@/pages/AgendaPage"));
-const ConfiguracoesPage = lazy(() => import("@/pages/ConfiguracoesPage"));
+const AgentesPage = lazy(() => import("@/pages/AgentesPage"));
 const ConfiguracoesIndexPage = lazy(() => import("@/pages/ConfiguracoesIndexPage"));
 const ConfiguracoesEquipePage = lazy(() => import("@/pages/ConfiguracoesEquipePage"));
 const ConfiguracoesNotificacoesPage = lazy(() => import("@/pages/ConfiguracoesNotificacoesPage"));
@@ -52,9 +52,17 @@ const ClientsPage = lazy(() => import("@/pages/ClientsPage"));
 const ClientProfilePage = lazy(() => import("@/pages/ClientProfilePage"));
 const ServicesPage = lazy(() => import("@/pages/ServicesPage"));
 const FinanceiroPage = lazy(() => import("@/pages/FinanceiroPage"));
+const FinanceReconciliationPage = lazy(() => import("@/pages/FinanceReconciliationPage"));
+const FinanceSettingsPage = lazy(() => import("@/pages/FinanceSettingsPage"));
+const InventoryPage = lazy(() => import("@/pages/InventoryPage"));
 const ConversasPage = lazy(() => import("@/pages/ConversasPage"));
 const DocumentsPackagesPage = lazy(() => import("@/pages/DocumentsPackagesPage"));
 const GrowthPage = lazy(() => import("@/pages/GrowthPage"));
+const CampaignsPage = lazy(() => import("@/pages/CampaignsPage"));
+const RfmPage = lazy(() => import("@/pages/RfmPage"));
+const RewardsPage = lazy(() => import("@/pages/RewardsPage"));
+const BirthdaysPage = lazy(() => import("@/pages/BirthdaysPage"));
+const PartnersPage = lazy(() => import("@/pages/PartnersPage"));
 const FunilPage = lazy(() => import("@/pages/FunilPage"));
 const ReportsPage = lazy(() => import("@/pages/ReportsPage"));
 const PlanosPage = lazy(() => import("@/pages/PlanosPage"));
@@ -109,8 +117,16 @@ export const professionalRoutes: ProfessionalRouteDefinition[] = [
     desktopNav: true,
     moreNav: { descriptionKey: "more.finance.description", tone: "bg-emerald-50 text-emerald-700" },
   },
-  { path: "/financeiro/conciliacao", component: FinanceiroPage, ownerPhase: 20 },
-  { path: "/financeiro/configuracoes", component: FinanceiroPage, ownerPhase: 20 },
+  { path: "/financeiro/conciliacao", component: FinanceReconciliationPage, ownerPhase: 20 },
+  { path: "/financeiro/configuracoes", component: FinanceSettingsPage, ownerPhase: 20 },
+  {
+    path: "/estoque",
+    component: InventoryPage,
+    ownerPhase: 20,
+    labelKey: "nav.inventory",
+    icon: Box,
+    moreNav: { descriptionKey: "more.inventory.description", tone: "bg-amber-50 text-amber-700" },
+  },
   {
     path: "/conversas",
     component: ConversasPage,
@@ -138,9 +154,11 @@ export const professionalRoutes: ProfessionalRouteDefinition[] = [
     desktopNav: true,
     moreNav: { descriptionKey: "more.growth.description", tone: "bg-violet-50 text-violet-700" },
   },
-  { path: "/campanhas", component: GrowthPage, ownerPhase: 21 },
-  { path: "/rfm", component: GrowthPage, ownerPhase: 21 },
-  { path: "/recompensas", component: GrowthPage, ownerPhase: 21 },
+  { path: "/campanhas", component: CampaignsPage, ownerPhase: 21 },
+  { path: "/rfm", component: RfmPage, ownerPhase: 21 },
+  { path: "/recompensas", component: RewardsPage, ownerPhase: 21 },
+  { path: "/aniversariantes", component: BirthdaysPage, ownerPhase: 21 },
+  { path: "/parceiros", component: PartnersPage, ownerPhase: 21 },
   {
     path: "/relatorios",
     component: ReportsPage,
@@ -171,7 +189,7 @@ export const professionalRoutes: ProfessionalRouteDefinition[] = [
   { path: "/documentos/anamnese", component: DocumentsPackagesPage, ownerPhase: 19 },
   {
     path: "/agentes",
-    component: ConfiguracoesPage,
+    component: AgentesPage,
     ownerPhase: 22,
     labelKey: "nav.settings",
     icon: Sparkles,

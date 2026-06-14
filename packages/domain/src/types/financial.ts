@@ -117,6 +117,41 @@ export interface Product {
   updated_at: string;
 }
 
+export interface InventoryProduct extends Product {
+  tracked_quantity: number;
+  untracked_quantity: number;
+  low_stock: boolean;
+}
+
+export interface ProductBatch {
+  id: string;
+  professional_id: string;
+  product_id: string;
+  lot_code: string;
+  quantity: number;
+  expires_at: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductStockMovement {
+  id: string;
+  professional_id: string;
+  product_id: string;
+  batch_id: string | null;
+  quantity_change: number;
+  reason: "pdv_sale" | "manual_adjustment" | "return";
+  note: string | null;
+  created_at: string;
+}
+
+export interface InventoryOverview {
+  products: InventoryProduct[];
+  batches: ProductBatch[];
+  movements: ProductStockMovement[];
+}
+
 export interface FinanceSettings {
   bankAccounts: FinanceBankAccount[];
   categories: FinanceCategory[];
@@ -129,6 +164,7 @@ export interface PosSaleItemInput {
   item_type: "service" | "product" | "package" | "custom";
   service_id?: string | null;
   product_id?: string | null;
+  batch_id?: string | null;
   service_package_id?: string | null;
   description: string;
   quantity: number;

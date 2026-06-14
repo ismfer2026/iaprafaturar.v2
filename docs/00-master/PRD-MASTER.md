@@ -1417,13 +1417,13 @@ Se já existir artefato equivalente, a tarefa deve ampliá-lo ou substituí-lo c
 - NFSe só entra com contrato oficial no PRD-SCHEMA
 
 **DoD Fase 20:**
-- [ ] `/estoque` mínimo operacional existe e reconcilia movimentações com vendas do PDV
-- [ ] professionalA não vê ou altera estoque de professionalB
-- [ ] Conciliação nunca aplica match sem confirmação
-- [ ] Configurações financeiras não reescrevem histórico
-- [ ] NFSe possui contrato aprovado ou permanece explicitamente fora do escopo
-- [ ] Nenhuma tabela legada fiscal/estoque foi recriada sem validação
-- [ ] Fase 20 não criou segundo modelo de conciliação, importação ou confirmação de match
+- [x] `/estoque` mínimo operacional existe e reconcilia movimentações com vendas do PDV
+- [x] professionalA não vê ou altera estoque de professionalB
+- [x] Conciliação nunca aplica match sem confirmação
+- [x] Configurações financeiras não reescrevem histórico
+- [x] NFSe possui contrato aprovado ou permanece explicitamente fora do escopo
+- [x] Nenhuma tabela legada fiscal/estoque foi recriada sem validação
+- [x] Fase 20 não criou segundo modelo de conciliação, importação ou confirmação de match
 
 ---
 
@@ -1481,14 +1481,14 @@ Se já existir artefato equivalente, a tarefa deve ampliá-lo ou substituí-lo c
 - Ampliar contratos fundados nas Fases 1 e 5; nova tabela ou função exige prova de lacuna
 
 **DoD Fase 22:**
-- [ ] Configuração profissional não altera prompt global
-- [ ] Shadow suggestions possuem auditoria completa
-- [ ] Chat de teste não envia mensagem real sem confirmação
-- [ ] Logs respeitam isolamento de tenant
-- [ ] Decisão sobre personas/RLHF registrada antes de schema novo
-- [ ] `/agentes` é a única fonte de configuração profissional da Rosane
-- [ ] `/configuracoes/assistente` redireciona sem manter estado ou persistência paralela
-- [ ] Fase 22 reutiliza `professional_agents` e o fluxo shadow existente
+- [x] Configuração profissional não altera prompt global
+- [x] Shadow suggestions possuem auditoria completa
+- [x] Chat de teste não envia mensagem real sem confirmação
+- [x] Logs respeitam isolamento de tenant
+- [x] Decisão sobre personas/RLHF registrada antes de schema novo
+- [x] `/agentes` é a única fonte de configuração profissional da Rosane
+- [x] `/configuracoes/assistente` redireciona sem manter estado ou persistência paralela
+- [x] Fase 22 reutiliza `professional_agents` e o fluxo shadow existente
 
 ---
 

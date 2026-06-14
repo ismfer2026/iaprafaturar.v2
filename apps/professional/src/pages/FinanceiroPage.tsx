@@ -4,15 +4,11 @@ import {
   Banknote,
   CalendarClock,
   CheckCircle2,
-  Download,
-  Landmark,
   PackageCheck,
   Plus,
   ReceiptText,
   Send,
-  Settings2,
   ShoppingCart,
-  Upload,
   XCircle,
 } from "lucide-react";
 import {
@@ -37,7 +33,7 @@ import type {
   FinancialTransactionWithClient,
   PosSaleItemInput,
   Product,
-  ReconciliationItem,
+  ProductBatch,
   Service,
   Session,
 } from "@iaprafaturar/domain";
@@ -48,25 +44,24 @@ import {
   useFinanceSettings,
   useFinancialSummary,
   useFinancialTransactions,
-  useReconciliation,
 } from "@/hooks/useFinancial";
 import { useServices } from "@/hooks/useServices";
 import { useSessions } from "@/hooks/useSessions";
+import { useInventory } from "@/hooks/useInventory";
 import { useI18n, type Locale, type TranslationKey } from "@/i18n";
 import { friendlyErrorMessage } from "@/lib/friendlyError";
 
-type FinanceTab = "extrato" | "pdv" | "conciliacao" | "configuracoes";
+type FinanceTab = "extrato" | "pdv";
+type FinanceDestination = FinanceTab | "conciliacao" | "configuracoes";
 
-const FINANCE_TAB_PATHS: Record<FinanceTab, string> = {
+const FINANCE_TAB_PATHS: Record<FinanceDestination, string> = {
   extrato: "/financeiro",
   pdv: "/financeiro?tab=pdv",
   conciliacao: "/financeiro/conciliacao",
   configuracoes: "/financeiro/configuracoes",
 };
 
-function financeTabFromLocation(pathname: string, search: string): FinanceTab {
-  if (pathname === "/financeiro/conciliacao") return "conciliacao";
-  if (pathname === "/financeiro/configuracoes") return "configuracoes";
+function financeTabFromLocation(search: string): FinanceTab {
   if (new URLSearchParams(search).get("tab") === "pdv") return "pdv";
   return "extrato";
 }
@@ -87,6 +82,7 @@ interface PosFormState {
   clientId: string;
   itemType: PosSaleItemInput["item_type"];
   itemId: string;
+  batchId: string;
   description: string;
   quantity: string;
   unitAmount: string;
@@ -96,22 +92,6 @@ interface PosFormState {
   categoryId: string;
   costCenterId: string;
   notes: string;
-}
-
-interface EditableSettings {
-  bankName: string;
-  bankDisplayName: string;
-  pixKey: string;
-  incomeCategory: string;
-  expenseCategory: string;
-  costCenter: string;
-  gatewayProvider: "manual" | "asaas" | "mercadopago" | "efibank" | "stripe" | "outros";
-  gatewayName: string;
-  gatewayActive: boolean;
-  productName: string;
-  productSku: string;
-  productPrice: string;
-  productStock: string;
 }
 
 const EMPTY_FORM: TransactionFormState = {
@@ -130,6 +110,7 @@ const EMPTY_POS_FORM: PosFormState = {
   clientId: "",
   itemType: "service",
   itemId: "",
+  batchId: "",
   description: "",
   quantity: "1",
   unitAmount: "",
@@ -201,36 +182,6 @@ function transactionTone(type: FinancialTransactionType) {
 function sessionLabel(session: Session, locale: Locale) {
   const date = formatDate(session.session_date, locale);
   return `${date ?? ""} - ${formatCurrency(session.session_value, locale)}`.trim();
-}
-
-function parseReconciliationText(fileName: string, content: string) {
-  const fileType = fileName.toLowerCase().endsWith(".ofx") ? "ofx" : "csv";
-
-  if (fileType === "ofx") {
-    const entries = [...content.matchAll(/<STMTTRN>([\s\S]*?)(?=<STMTTRN>|<\/BANKTRANLIST>)/gi)];
-    return entries.map((entry, index) => {
-      const block = entry[1] ?? "";
-      const amount = Number((block.match(/<TRNAMT>([^\r\n<]+)/i)?.[1] ?? "0").replace(",", "."));
-      const rawDate = block.match(/<DTPOSTED>(\d{8})/i)?.[1] ?? toDateKey(new Date()).replaceAll("-", "");
-      return {
-        occurred_on: `${rawDate.slice(0, 4)}-${rawDate.slice(4, 6)}-${rawDate.slice(6, 8)}`,
-        description: (block.match(/<MEMO>([^\r\n<]+)/i)?.[1] ?? block.match(/<NAME>([^\r\n<]+)/i)?.[1] ?? "OFX").trim(),
-        amount,
-        external_id: block.match(/<FITID>([^\r\n<]+)/i)?.[1] ?? `ofx-${index}`,
-      };
-    });
-  }
-
-  const lines = content.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  return lines.slice(lines[0]?.toLowerCase().includes("data") ? 1 : 0).map((line, index) => {
-    const parts = line.includes(";") ? line.split(";") : line.split(",");
-    return {
-      occurred_on: parts[0]?.trim() ?? toDateKey(new Date()),
-      description: parts[1]?.trim() ?? "CSV",
-      amount: numberFromInput(parts[2]?.trim() ?? "0"),
-      external_id: parts[3]?.trim() || `csv-${index}`,
-    };
-  });
 }
 
 function TransactionCard({
@@ -325,49 +276,33 @@ export default function FinanceiroPage() {
   const { professionalId } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<FinanceTab>(() => financeTabFromLocation(location.pathname, location.search));
+  const [activeTab, setActiveTab] = useState<FinanceTab>(() => financeTabFromLocation(location.search));
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [form, setForm] = useState<TransactionFormState>(EMPTY_FORM);
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
-    setActiveTab(financeTabFromLocation(location.pathname, location.search));
-  }, [location.pathname, location.search]);
+    setActiveTab(financeTabFromLocation(location.search));
+  }, [location.search]);
 
-  function selectTab(tab: FinanceTab) {
-    setActiveTab(tab);
+  function selectTab(tab: FinanceDestination) {
+    if (tab === "extrato" || tab === "pdv") setActiveTab(tab);
     navigate(FINANCE_TAB_PATHS[tab]);
   }
   const [posForm, setPosForm] = useState<PosFormState>(EMPTY_POS_FORM);
   const [posItems, setPosItems] = useState<PosSaleItemInput[]>([]);
   const [posError, setPosError] = useState<string | null>(null);
-  const [settingsForm, setSettingsForm] = useState<EditableSettings>({
-    bankName: "",
-    bankDisplayName: "",
-    pixKey: "",
-    incomeCategory: "",
-    expenseCategory: "",
-    costCenter: "",
-    gatewayProvider: "manual",
-    gatewayName: "",
-    gatewayActive: false,
-    productName: "",
-    productSku: "",
-    productPrice: "",
-    productStock: "",
-  });
-  const [settingsLoaded, setSettingsLoaded] = useState(false);
-  const [reconciliationError, setReconciliationError] = useState<string | null>(null);
   const range = useMemo(() => monthRange(), []);
 
   const transactionsQuery = useFinancialTransactions(professionalId);
   const summaryQuery = useFinancialSummary(professionalId, range.from, range.to);
-  const settingsQuery = useFinanceSettings(professionalId);
-  const reconciliationQuery = useReconciliation(professionalId);
+  const pdvProfessionalId = activeTab === "pdv" ? professionalId : null;
+  const settingsQuery = useFinanceSettings(pdvProfessionalId);
+  const inventoryQuery = useInventory(pdvProfessionalId);
   const clientsQuery = useClients(professionalId);
   const sessionsQuery = useSessions(professionalId);
-  const servicesQuery = useServices(professionalId);
-  const packagesQuery = useServicePackages(professionalId);
+  const servicesQuery = useServices(pdvProfessionalId);
+  const packagesQuery = useServicePackages(pdvProfessionalId);
 
   const transactions = transactionsQuery.data ?? [];
   const settings = settingsQuery.data;
@@ -376,26 +311,6 @@ export default function FinanceiroPage() {
   const services = servicesQuery.data?.services ?? [];
   const servicePackages = packagesQuery.data ?? [];
   const summary = summaryQuery.data;
-  const paidTransactions = transactions.filter((transaction) => transaction.status === "pago");
-
-  if (settings && !settingsLoaded) {
-    setSettingsLoaded(true);
-    setSettingsForm({
-      bankName: settings.bankAccounts[0]?.name ?? "",
-      bankDisplayName: settings.bankAccounts[0]?.bank_name ?? "",
-      pixKey: settings.bankAccounts[0]?.pix_key ?? "",
-      incomeCategory: settings.categories.find((category) => category.type === "receita")?.name ?? "",
-      expenseCategory: settings.categories.find((category) => category.type === "despesa")?.name ?? "",
-      costCenter: settings.costCenters[0]?.name ?? "",
-      gatewayProvider: settings.gateways[0]?.provider ?? "manual",
-      gatewayName: settings.gateways[0]?.display_name ?? "",
-      gatewayActive: settings.gateways[0]?.is_active ?? false,
-      productName: "",
-      productSku: "",
-      productPrice: "",
-      productStock: "",
-    });
-  }
 
   const posTotal = posItems.reduce((total, item) => total + item.quantity * item.unit_amount, 0);
   const posDiscount = numberFromInput(posForm.discountAmount || "0");
@@ -467,6 +382,7 @@ export default function FinanceiroPage() {
       ...current,
       itemType,
       itemId,
+      batchId: "",
       description: product?.name ?? "",
       unitAmount: product ? String(product.unit_price) : current.unitAmount,
     }));
@@ -492,13 +408,14 @@ export default function FinanceiroPage() {
         item_type: posForm.itemType,
         service_id: posForm.itemType === "service" ? posForm.itemId || null : null,
         product_id: posForm.itemType === "product" ? posForm.itemId || null : null,
+        batch_id: posForm.itemType === "product" ? posForm.batchId || null : null,
         service_package_id: posForm.itemType === "package" ? posForm.itemId || null : null,
         description: posForm.description.trim(),
         quantity,
         unit_amount: unitAmount,
       },
     ]);
-    setPosForm((current) => ({ ...current, itemId: "", description: "", quantity: "1", unitAmount: "" }));
+    setPosForm((current) => ({ ...current, itemId: "", batchId: "", description: "", quantity: "1", unitAmount: "" }));
   }
 
   async function createPosSale() {
@@ -523,97 +440,6 @@ export default function FinanceiroPage() {
       setPosForm(EMPTY_POS_FORM);
     } catch (err) {
       setPosError(friendlyErrorMessage(err, t, "finance.pdv.error"));
-    }
-  }
-
-  async function handleSaveSettings(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const current = settings ?? ({ bankAccounts: [], categories: [], costCenters: [], gateways: [], products: [] } as FinanceSettings);
-
-    await settingsQuery.saveSettings({
-      bankAccounts: settingsForm.bankName.trim()
-        ? [{
-          ...current.bankAccounts[0],
-          id: current.bankAccounts[0]?.id ?? "",
-          professional_id: professionalId ?? "",
-          name: settingsForm.bankName.trim(),
-          bank_name: settingsForm.bankDisplayName.trim() || null,
-          account_type: current.bankAccounts[0]?.account_type ?? "corrente",
-          pix_key: settingsForm.pixKey.trim() || null,
-          opening_balance: current.bankAccounts[0]?.opening_balance ?? 0,
-          is_default: true,
-          is_active: true,
-          created_at: current.bankAccounts[0]?.created_at ?? "",
-          updated_at: current.bankAccounts[0]?.updated_at ?? "",
-        }]
-        : [],
-      categories: [
-        settingsForm.incomeCategory.trim()
-          ? {
-            ...current.categories.find((category) => category.type === "receita"),
-            id: current.categories.find((category) => category.type === "receita")?.id ?? "",
-            professional_id: professionalId ?? "",
-            name: settingsForm.incomeCategory.trim(),
-            type: "receita",
-            is_default: true,
-            is_active: true,
-            created_at: "",
-            updated_at: "",
-          }
-          : null,
-        settingsForm.expenseCategory.trim()
-          ? {
-            ...current.categories.find((category) => category.type === "despesa"),
-            id: current.categories.find((category) => category.type === "despesa")?.id ?? "",
-            professional_id: professionalId ?? "",
-            name: settingsForm.expenseCategory.trim(),
-            type: "despesa",
-            is_default: true,
-            is_active: true,
-            created_at: "",
-            updated_at: "",
-          }
-          : null,
-      ].filter(Boolean) as FinanceSettings["categories"],
-      costCenters: settingsForm.costCenter.trim()
-        ? [{
-          ...current.costCenters[0],
-          id: current.costCenters[0]?.id ?? "",
-          professional_id: professionalId ?? "",
-          name: settingsForm.costCenter.trim(),
-          description: null,
-          is_default: true,
-          is_active: true,
-          created_at: "",
-          updated_at: "",
-        }]
-        : [],
-      gateways: [{
-        id: current.gateways[0]?.id ?? "",
-        provider: settingsForm.gatewayProvider,
-        display_name: settingsForm.gatewayName.trim() || settingsForm.gatewayProvider,
-        is_active: settingsForm.gatewayActive,
-        created_at: "",
-        updated_at: "",
-      }],
-    });
-  }
-
-  async function handleImportFile(file: File | null) {
-    if (!file) return;
-    setReconciliationError(null);
-    try {
-      const text = await file.text();
-      const items = parseReconciliationText(file.name, text).filter((item) => item.description && Number.isFinite(item.amount));
-      if (!items.length) throw new Error(t("finance.conciliation.emptyFile"));
-      await reconciliationQuery.importItems({
-        bankAccountId: settings?.bankAccounts[0]?.id ?? null,
-        fileName: file.name,
-        fileType: file.name.toLowerCase().endsWith(".ofx") ? "ofx" : "csv",
-        items,
-      });
-    } catch (err) {
-      setReconciliationError(friendlyErrorMessage(err, t, "finance.conciliation.importError"));
     }
   }
 
@@ -710,6 +536,7 @@ export default function FinanceiroPage() {
           clients={clients}
           services={services}
           products={settings?.products ?? []}
+          batches={inventoryQuery.data?.batches ?? []}
           packages={servicePackages}
           total={posTotal}
           net={posNet}
@@ -718,38 +545,6 @@ export default function FinanceiroPage() {
           onCatalogChange={applySelectedCatalogItem}
           onAddItem={addPosItem}
           onCreateSale={createPosSale}
-        />
-      ) : null}
-
-      {activeTab === "conciliacao" ? (
-        <ReconciliationTab
-          items={reconciliationQuery.data ?? []}
-          transactions={paidTransactions}
-          error={reconciliationError}
-          isBusy={reconciliationQuery.isImportingItems || reconciliationQuery.isConfirmingMatch}
-          onImportFile={handleImportFile}
-          onConfirm={(item, transactionId) => reconciliationQuery.confirmMatch({ reconciliationItemId: item.id, transactionId })}
-        />
-      ) : null}
-
-      {activeTab === "configuracoes" ? (
-        <SettingsTab
-          form={settingsForm}
-          setForm={setSettingsForm}
-          products={settings?.products ?? []}
-          isBusy={settingsQuery.isSavingSettings || settingsQuery.isSavingProduct}
-          onSubmit={handleSaveSettings}
-          onSaveProduct={async () => {
-            const unitPrice = numberFromInput(settingsForm.productPrice);
-            const stockQuantity = numberFromInput(settingsForm.productStock);
-            await settingsQuery.saveProduct({
-              name: settingsForm.productName,
-              sku: settingsForm.productSku || null,
-              unitPrice: Number.isFinite(unitPrice) ? unitPrice : 0,
-              stockQuantity: Number.isFinite(stockQuantity) ? stockQuantity : 0,
-            });
-            setSettingsForm((current) => ({ ...current, productName: "", productSku: "", productPrice: "", productStock: "" }));
-          }}
         />
       ) : null}
 
@@ -857,6 +652,7 @@ function PosTab({
   clients,
   services,
   products,
+  batches,
   packages,
   total,
   net,
@@ -874,6 +670,7 @@ function PosTab({
   clients: Array<{ id: string; full_name: string }>;
   services: Service[];
   products: Product[];
+  batches: ProductBatch[];
   packages: Array<{ id: string; name: string; price: number }>;
   total: number;
   net: number;
@@ -902,7 +699,7 @@ function PosTab({
           </div>
           <SelectField label={t("finance.form.client")} value={form.clientId} onChange={(value) => setForm((current) => ({ ...current, clientId: value }))} options={[{ value: "", label: t("finance.noClient") }, ...clients.map((client) => ({ value: client.id, label: client.full_name }))]} />
           <div className="grid gap-3 md:grid-cols-3">
-            <SelectField label={t("finance.pdv.itemType")} value={form.itemType} onChange={(value) => setForm((current) => ({ ...current, itemType: value as PosSaleItemInput["item_type"], itemId: "", description: "", unitAmount: "" }))} options={[{ value: "service", label: t("finance.pdv.service") }, { value: "product", label: t("finance.pdv.product") }, { value: "package", label: t("finance.pdv.package") }, { value: "custom", label: t("finance.pdv.custom") }]} />
+            <SelectField label={t("finance.pdv.itemType")} value={form.itemType} onChange={(value) => setForm((current) => ({ ...current, itemType: value as PosSaleItemInput["item_type"], itemId: "", batchId: "", description: "", unitAmount: "" }))} options={[{ value: "service", label: t("finance.pdv.service") }, { value: "product", label: t("finance.pdv.product") }, { value: "package", label: t("finance.pdv.package") }, { value: "custom", label: t("finance.pdv.custom") }]} />
             {form.itemType === "custom" ? (
               <TextField label={t("finance.form.description")} value={form.description} onChange={(value) => setForm((current) => ({ ...current, description: value }))} />
             ) : (
@@ -910,6 +707,9 @@ function PosTab({
             )}
             <TextField label={t("finance.form.amount")} value={form.unitAmount} onChange={(value) => setForm((current) => ({ ...current, unitAmount: value }))} inputMode="decimal" />
           </div>
+          {form.itemType === "product" && batches.some((item) => item.product_id === form.itemId) ? (
+            <SelectField label={t("inventory.batch.optional")} value={form.batchId} onChange={(value) => setForm((current) => ({ ...current, batchId: value }))} options={[{ value: "", label: t("inventory.batch.useUntracked") }, ...batches.filter((item) => item.product_id === form.itemId).map((item) => ({ value: item.id, label: `${item.lot_code} (${item.quantity})` }))]} />
+          ) : null}
           <div className="grid gap-3 md:grid-cols-[120px_1fr]">
             <TextField label={t("finance.pdv.quantity")} value={form.quantity} onChange={(value) => setForm((current) => ({ ...current, quantity: value }))} inputMode="decimal" />
             {form.itemType !== "custom" ? <TextField label={t("finance.form.description")} value={form.description} onChange={(value) => setForm((current) => ({ ...current, description: value }))} /> : null}
@@ -948,128 +748,6 @@ function PosTab({
         </CardContent>
       </Card>
     </section>
-  );
-}
-
-function ReconciliationTab({ items, transactions, error, isBusy, onImportFile, onConfirm }: {
-  items: ReconciliationItem[];
-  transactions: FinancialTransactionWithClient[];
-  error: string | null;
-  isBusy: boolean;
-  onImportFile: (file: File | null) => void;
-  onConfirm: (item: ReconciliationItem, transactionId: string) => void;
-}) {
-  const { locale, t } = useI18n();
-  const [selected, setSelected] = useState<Record<string, string>>({});
-
-  return (
-    <section className="space-y-4">
-      <Card className="rounded-lg border-zinc-200">
-        <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h2 className="text-base font-semibold text-zinc-950">{t("finance.conciliation.title")}</h2>
-            <p className="text-sm text-zinc-500">{t("finance.conciliation.subtitle")}</p>
-          </div>
-          <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md bg-zinc-950 px-4 py-2 text-sm font-medium text-white">
-            <Upload className="h-4 w-4" />
-            {t("finance.conciliation.import")}
-            <input className="hidden" type="file" accept=".csv,.ofx,text/csv" onChange={(event) => onImportFile(event.target.files?.[0] ?? null)} />
-          </label>
-        </CardContent>
-      </Card>
-      {error ? <ErrorBox>{error}</ErrorBox> : null}
-      <div className="space-y-3">
-        {items.length ? items.map((item) => (
-          <Card key={item.id} className="rounded-lg border-zinc-200">
-            <CardContent className="grid gap-3 p-4 md:grid-cols-[1fr_280px_auto] md:items-center">
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge className={cn("border", item.status === "confirmed" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700")}>{t(`finance.conciliation.status.${item.status}` as TranslationKey)}</Badge>
-                  {item.suggestion_score ? <span className="text-xs text-zinc-500">{Math.round(item.suggestion_score * 100)}%</span> : null}
-                </div>
-                <p className="mt-2 font-semibold text-zinc-950">{item.description}</p>
-                <p className="text-sm text-zinc-500">{formatDate(item.occurred_on, locale)}</p>
-              </div>
-              <div>
-                <p className={cn("text-lg font-semibold", item.amount >= 0 ? "text-emerald-700" : "text-red-700")}>{formatCurrency(item.amount, locale)}</p>
-                <select className="mt-2 h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm shadow-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100" value={selected[item.id] ?? item.suggested_transaction_id ?? ""} onChange={(event) => setSelected((current) => ({ ...current, [item.id]: event.target.value }))} disabled={item.status === "confirmed"}>
-                  <option value="">{t("finance.conciliation.noMatch")}</option>
-                  {transactions.map((transaction) => <option key={transaction.id} value={transaction.id}>{transaction.description} - {formatCurrency(transaction.net_amount, locale)}</option>)}
-                </select>
-              </div>
-              <Button variant="outline" className="gap-2" disabled={isBusy || item.status === "confirmed" || !(selected[item.id] ?? item.suggested_transaction_id)} onClick={() => onConfirm(item, selected[item.id] ?? item.suggested_transaction_id ?? "")}>
-                <CheckCircle2 className="h-4 w-4" />{t("finance.conciliation.confirm")}
-              </Button>
-            </CardContent>
-          </Card>
-        )) : <p className="rounded-lg border border-dashed border-zinc-300 bg-white p-6 text-center text-sm text-zinc-500">{t("finance.conciliation.empty")}</p>}
-      </div>
-    </section>
-  );
-}
-
-function SettingsTab({ form, setForm, products, isBusy, onSubmit, onSaveProduct }: {
-  form: EditableSettings;
-  setForm: Dispatch<SetStateAction<EditableSettings>>;
-  products: Product[];
-  isBusy: boolean;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-  onSaveProduct: () => void;
-}) {
-  const { t } = useI18n();
-  return (
-    <form onSubmit={onSubmit} className="grid gap-4 lg:grid-cols-4">
-      <SettingsCard icon={Landmark} title={t("finance.settings.bankTitle")}>
-        <TextField label={t("finance.settings.bankAccount")} value={form.bankName} onChange={(value) => setForm((current) => ({ ...current, bankName: value }))} />
-        <TextField label={t("finance.settings.bankName")} value={form.bankDisplayName} onChange={(value) => setForm((current) => ({ ...current, bankDisplayName: value }))} />
-        <TextField label={t("finance.settings.pixKey")} value={form.pixKey} onChange={(value) => setForm((current) => ({ ...current, pixKey: value }))} />
-      </SettingsCard>
-      <SettingsCard icon={Settings2} title={t("finance.settings.categoriesTitle")}>
-        <TextField label={t("finance.settings.incomeCategory")} value={form.incomeCategory} onChange={(value) => setForm((current) => ({ ...current, incomeCategory: value }))} />
-        <TextField label={t("finance.settings.expenseCategory")} value={form.expenseCategory} onChange={(value) => setForm((current) => ({ ...current, expenseCategory: value }))} />
-        <TextField label={t("finance.settings.costCenter")} value={form.costCenter} onChange={(value) => setForm((current) => ({ ...current, costCenter: value }))} />
-      </SettingsCard>
-      <SettingsCard icon={Download} title={t("finance.settings.gatewayTitle")}>
-        <SelectField label={t("finance.settings.gateway")} value={form.gatewayProvider} onChange={(value) => setForm((current) => ({ ...current, gatewayProvider: value as EditableSettings["gatewayProvider"] }))} options={["manual", "asaas", "mercadopago", "efibank", "stripe", "outros"].map((value) => ({ value, label: value }))} />
-        <TextField label={t("finance.settings.gatewayName")} value={form.gatewayName} onChange={(value) => setForm((current) => ({ ...current, gatewayName: value }))} />
-        <label className="flex items-center gap-2 text-sm text-zinc-700">
-          <input type="checkbox" checked={form.gatewayActive} onChange={(event) => setForm((current) => ({ ...current, gatewayActive: event.target.checked }))} />
-          {t("finance.settings.gatewayActive")}
-        </label>
-        <Button type="submit" disabled={isBusy}>{isBusy ? t("common.saving") : t("common.save")}</Button>
-      </SettingsCard>
-      <SettingsCard icon={PackageCheck} title={t("finance.settings.productsTitle")}>
-        <TextField label={t("finance.settings.productName")} value={form.productName} onChange={(value) => setForm((current) => ({ ...current, productName: value }))} />
-        <TextField label={t("finance.settings.productSku")} value={form.productSku} onChange={(value) => setForm((current) => ({ ...current, productSku: value }))} />
-        <div className="grid grid-cols-2 gap-2">
-          <TextField label={t("finance.settings.productPrice")} value={form.productPrice} onChange={(value) => setForm((current) => ({ ...current, productPrice: value }))} inputMode="decimal" />
-          <TextField label={t("finance.settings.productStock")} value={form.productStock} onChange={(value) => setForm((current) => ({ ...current, productStock: value }))} inputMode="decimal" />
-        </div>
-        <Button type="button" variant="outline" disabled={isBusy || !form.productName.trim()} onClick={onSaveProduct}>{t("finance.settings.addProduct")}</Button>
-        <div className="space-y-2">
-          {products.slice(0, 4).map((product) => (
-            <div key={product.id} className="rounded-md bg-zinc-50 px-3 py-2 text-sm">
-              <p className="font-medium text-zinc-950">{product.name}</p>
-              <p className="text-zinc-500">{product.stock_quantity} · {product.sku || t("common.none")}</p>
-            </div>
-          ))}
-        </div>
-      </SettingsCard>
-    </form>
-  );
-}
-
-function SettingsCard({ icon: Icon, title, children }: { icon: typeof Landmark; title: string; children: ReactNode }) {
-  return (
-    <Card className="rounded-lg border-zinc-200">
-      <CardContent className="space-y-4 p-4">
-        <div className="flex items-center gap-2">
-          <Icon className="h-5 w-5 text-teal-700" />
-          <h2 className="text-base font-semibold text-zinc-950">{title}</h2>
-        </div>
-        {children}
-      </CardContent>
-    </Card>
   );
 }
 

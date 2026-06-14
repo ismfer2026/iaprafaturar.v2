@@ -255,39 +255,10 @@ export function useFinanceSettings(professionalId: string | null) {
     },
   });
 
-  const saveProduct = useMutation({
-    mutationFn: async (input: {
-      productId?: string | null;
-      name: string;
-      sku?: string | null;
-      unitPrice: number;
-      stockQuantity: number;
-      minStock?: number;
-      isActive?: boolean;
-    }) => {
-      const { data, error } = await supabase.rpc("upsert_product", {
-        p_product_id: input.productId ?? null,
-        p_name: input.name,
-        p_sku: input.sku ?? null,
-        p_unit_price: input.unitPrice,
-        p_stock_quantity: input.stockQuantity,
-        p_min_stock: input.minStock ?? 0,
-        p_is_active: input.isActive ?? true,
-      });
-      if (error) throw error;
-      return data as { product_id: string };
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: crmKeys.financeSettings(professionalId) });
-    },
-  });
-
   return {
     ...query,
     saveSettings: saveSettings.mutateAsync,
     isSavingSettings: saveSettings.isPending,
-    saveProduct: saveProduct.mutateAsync,
-    isSavingProduct: saveProduct.isPending,
   };
 }
 
@@ -343,11 +314,59 @@ export function useReconciliation(professionalId: string | null) {
     onSuccess: invalidate,
   });
 
+  const ignoreItem = useMutation({
+    mutationFn: async (reconciliationItemId: string) => {
+      const { data, error } = await supabase.rpc("ignore_reconciliation_item", {
+        p_reconciliation_item_id: reconciliationItemId,
+      });
+      if (error) throw error;
+      return data as { reconciliation_item_id: string; status: "ignored" };
+    },
+    onSuccess: invalidate,
+  });
+
   return {
     ...query,
     importItems: importItems.mutateAsync,
     isImportingItems: importItems.isPending,
     confirmMatch: confirmMatch.mutateAsync,
     isConfirmingMatch: confirmMatch.isPending,
+    ignoreItem: ignoreItem.mutateAsync,
+    isIgnoringItem: ignoreItem.isPending,
+  };
+}
+
+export interface FinanceReceiptSettings {
+  enabled?: boolean;
+  auto_send?: boolean;
+  include_notes?: boolean;
+  footer?: string;
+}
+
+export function useFinanceReceiptSettings(professionalId: string | null) {
+  const queryClient = useQueryClient();
+  const key = ["crm", "finance-receipt-settings", professionalId] as const;
+  const query = useQuery({
+    queryKey: key,
+    enabled: Boolean(professionalId),
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_finance_receipt_settings");
+      if (error) throw error;
+      return data as FinanceReceiptSettings;
+    },
+  });
+  const mutation = useMutation({
+    mutationFn: async (settings: FinanceReceiptSettings) => {
+      const { data, error } = await supabase.rpc("upsert_finance_receipt_settings", { p_settings: settings });
+      if (error) throw error;
+      return data as FinanceReceiptSettings;
+    },
+    onSuccess: (data) => queryClient.setQueryData(key, data),
+  });
+  return {
+    ...query,
+    save: mutation.mutateAsync,
+    isSaving: mutation.isPending,
+    setLocal: (settings: FinanceReceiptSettings) => queryClient.setQueryData(key, settings),
   };
 }

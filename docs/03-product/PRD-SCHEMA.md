@@ -6172,3 +6172,13 @@ Timeout = 10 segundos por tentativa
 - `professionals` não permite `UPDATE` direto para `authenticated`; configurações e identidade da clínica usam RPCs validadas.
 - Escritas em `service_packages`, `quotes`, `modelos` e `contracts` exigem gestor também no banco.
 - Preferências pessoais do dono usam `professionals.settings.owner_notifications`; defaults da clínica permanecem em `professionals.settings.notifications`.
+## Nota de implementação — Fase 20
+
+- O estoque canônico da v2 usa `products`, `product_stock_movements` e `product_batches`.
+- `products.stock_quantity` é a fonte de verdade do saldo vendável.
+- Lotes são decomposição rastreada e devem respeitar `SUM(product_batches.quantity) <= products.stock_quantity`.
+- Quantidade sem lote é derivada e nunca persistida.
+- FEFO automático, reservas, manutenção, importação assistida e NFSe permanecem fora do escopo.
+- A conciliação reutiliza `finance_reconciliation_imports` e `finance_reconciliation_items`; nenhuma correspondência é aplicada automaticamente.
+- Configurações financeiras multi-entidade reutilizam `finance_bank_accounts`, `finance_categories`, `finance_cost_centers` e `finance_gateway_settings`; referências históricas são preservadas por desativação.
+- Preferências de recibo são armazenadas em `professionals.settings.finance_receipts` e acessadas exclusivamente pelas RPCs gestor-only `get_finance_receipt_settings()` e `upsert_finance_receipt_settings(jsonb)`.

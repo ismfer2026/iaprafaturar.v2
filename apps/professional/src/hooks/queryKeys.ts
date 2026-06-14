@@ -29,6 +29,7 @@ export const crmKeys = {
   financialSummary: (professionalId: string | null, dateFrom?: string | null, dateTo?: string | null) =>
     ["crm", "financial-summary", professionalId, dateFrom ?? "open", dateTo ?? "open"] as const,
   financeSettings: (professionalId: string | null) => ["crm", "finance-settings", professionalId] as const,
+  inventory: (professionalId: string | null) => ["crm", "inventory", professionalId] as const,
   reconciliationItems: (professionalId: string | null) => ["crm", "reconciliation-items", professionalId] as const,
   funnelBoard: (professionalId: string | null) => ["crm", "funnel-board", professionalId] as const,
   conversations: (professionalId: string | null) => ["crm", "conversations", professionalId] as const,
@@ -47,4 +48,11 @@ export const crmKeys = {
   teamMembers: (professionalId: string | null) => ["crm", "team-members", professionalId] as const,
   notificationSettings: (professionalId: string | null) => ["crm", "notification-settings", professionalId] as const,
   scheduleSettings: (professionalId: string | null) => ["crm", "schedule-settings", professionalId] as const,
+  growthOverview: (professionalId: string | null) => ["crm", "growth-overview", professionalId] as const,
+  campaigns: (professionalId: string | null) => ["crm", "campaigns", professionalId] as const,
+  rfm: (professionalId: string | null) => ["crm", "rfm", professionalId] as const,
+  rewards: (professionalId: string | null) => ["crm", "rewards", professionalId] as const,
+  birthdays: (professionalId: string | null, month: number | null, search: string) =>
+    ["crm", "birthdays", professionalId, month ?? "all", search] as const,
+  partners: (professionalId: string | null) => ["crm", "partners", professionalId] as const,
 };
