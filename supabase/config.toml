@@ -407,6 +407,12 @@ verify_jwt = false
 [functions.public-chat-handler]
 verify_jwt = false
 
+[functions.public-package-handler]
+verify_jwt = false
+
+[functions.public-quote-handler]
+verify_jwt = false
+
 [functions.email-dispatcher]
 verify_jwt = false
 

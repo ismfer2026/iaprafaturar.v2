@@ -88,6 +88,7 @@ export const PublicBookingErrorOutputSchema = z.object({
     'invalid_input',
     'service_not_available',
     'scheduled_at_must_be_future',
+    'rate_limited',
     'internal_error',
   ]),
   locale: PublicLocaleSchema.optional(),

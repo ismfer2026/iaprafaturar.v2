@@ -75,6 +75,7 @@ export const PublicAnamneseErrorOutputSchema = z.object({
     'already_completed',
     'lgpd_required',
     'invalid_input',
+    'rate_limited',
     'internal_error',
   ]),
   status: PublicAnamneseStatusSchema.optional(),

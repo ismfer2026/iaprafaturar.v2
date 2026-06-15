@@ -7,6 +7,7 @@ import {
 
 import { isDryRun } from '../_shared/dry-run.ts'
 import { jsonResponse } from '../_shared/http.ts'
+import { assertPublicRateLimit } from '../_shared/public-rate-limit.ts'
 import { createServiceClient } from '../_shared/supabase.ts'
 
 const CORS_HEADERS = {
@@ -58,6 +59,10 @@ function mapError(error: unknown): { status: number; body: unknown } {
 
   if (message.includes('invalid_input') || message.includes('lgpd_required')) {
     return { status: 400, body: { ok: false, error: 'invalid_input' } }
+  }
+
+  if (message.includes('rate_limited')) {
+    return { status: 429, body: { ok: false, error: 'rate_limited' } }
   }
 
   return { status: 500, body: { ok: false, error: 'internal_error' } }
@@ -115,6 +120,13 @@ Deno.serve(async (request) => {
     const input = validatePublicBookingHandlerInput(await request.json())
     const supabase = createServiceClient()
     const dryRun = isDryRun(request)
+    await assertPublicRateLimit({
+      supabase,
+      request,
+      action: `public-booking:${input.mode}`,
+      subject: input.slug,
+      limit: input.mode === 'get_context' ? 60 : 10,
+    })
 
     if (input.mode === 'get_context') {
       const { data, error } = await supabase.rpc('get_public_booking_context', {

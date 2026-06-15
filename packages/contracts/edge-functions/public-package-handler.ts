@@ -29,6 +29,7 @@ export const PublicPackageErrorOutputSchema = z.object({
   error: z.enum([
     'not_found',
     'invalid_input',
+    'rate_limited',
     'internal_error',
   ]),
 }).strict()

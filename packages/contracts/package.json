@@ -34,6 +34,8 @@
     "./edge-functions/public-package-handler.ts": "./edge-functions/public-package-handler.ts",
     "./edge-functions/public-quote-handler": "./edge-functions/public-quote-handler.ts",
     "./edge-functions/public-quote-handler.ts": "./edge-functions/public-quote-handler.ts",
+    "./edge-functions/public-chat-handler": "./edge-functions/public-chat-handler.ts",
+    "./edge-functions/public-chat-handler.ts": "./edge-functions/public-chat-handler.ts",
     "./edge-functions/quote-dispatcher": "./edge-functions/quote-dispatcher.ts",
     "./edge-functions/quote-dispatcher.ts": "./edge-functions/quote-dispatcher.ts",
     "./edge-functions/billing-collection-agent": "./edge-functions/billing-collection-agent.ts",

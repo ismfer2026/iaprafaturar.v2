@@ -330,6 +330,8 @@ useMoveClientStage()      // otimistic update
 
 ## apps/client — PWA do Cliente
 
+> **Implementação Fase 25 (2026-06-14):** as rotas canônicas atuais são `/cliente/:slug`, `/agendar/:slug`, `/agendamento/:token`, `/anamnese/:token`, `/pacote/:slug`, `/orcamento/:token`, `/chat/:slug`, `/portal/:token` e as subrotas `/portal/home|historico|pacotes|agendar|onboarding`. O portal usa sessão tokenizada em `sessionStorage`, histórico paginado por cursor, i18n pt-BR/en-US/es-419 e ações de perfil, cancelamento e reagendamento pelos contratos canônicos. As rotas antigas abaixo permanecem como visão histórica e não autorizam implementações paralelas.
+
 ### Características PWA
 - `display: standalone` — nunca alterar
 - `theme_color`: definido dinamicamente pelo `professionals.settings.primary_color`

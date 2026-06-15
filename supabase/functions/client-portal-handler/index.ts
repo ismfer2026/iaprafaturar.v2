@@ -1,56 +1,8 @@
 import { isDryRun } from '../_shared/dry-run.ts'
 import { jsonResponse } from '../_shared/http.ts'
-
-type ClientPortalInput =
-  | {
-    mode: 'start_session'
-    slug: string
-    full_name: string
-    phone_whatsapp: string
-    email?: string
-    lgpd_accepted: true
-    lang?: 'pt-BR' | 'en-US' | 'es-419'
-  }
-  | {
-    mode:
-      | 'get_context'
-      | 'get_history'
-      | 'get_packages'
-      | 'get_booking_context'
-      | 'logout'
-    session_token: string
-    lang?: 'pt-BR' | 'en-US' | 'es-419'
-    limit?: number
-    cursor?: string
-  }
-  | {
-    mode: 'update_profile' | 'complete_onboarding'
-    session_token: string
-    full_name: string
-    email?: string
-    contact_preference?: 'whatsapp' | 'email' | 'both'
-    reminders_opt_in?: boolean
-    lgpd_accepted?: true
-  }
-  | {
-    mode: 'create_appointment'
-    session_token: string
-    service_id: string
-    scheduled_at: string
-    use_client_package_id?: string | null
-  }
-  | {
-    mode: 'cancel_appointment'
-    session_token: string
-    appointment_id: string
-    reason?: string | null
-  }
-  | {
-    mode: 'reschedule_appointment'
-    session_token: string
-    appointment_id: string
-    new_scheduled_at: string
-  }
+import { assertPublicRateLimit } from '../_shared/public-rate-limit.ts'
+import { createServiceClient } from '../_shared/supabase.ts'
+import { validateClientPortalHandlerInput } from '@iaprafaturar/contracts/edge-functions/client-portal-handler.ts'
 
 type ClientPortalMutationOutput = {
   ok: boolean
@@ -143,119 +95,11 @@ function mapError(error: unknown): { status: number; body: unknown } {
     return { status: 400, body: { ok: false, error: 'invalid_input' } }
   }
 
+  if (message.includes('rate_limited')) {
+    return { status: 429, body: { ok: false, error: 'rate_limited' } }
+  }
+
   return { status: 500, body: { ok: false, error: 'internal_error' } }
-}
-
-function readString(input: Record<string, unknown>, key: string): string | undefined {
-  const value = input[key]
-  return typeof value === 'string' && value.trim() ? value : undefined
-}
-
-function readLocale(input: Record<string, unknown>): 'pt-BR' | 'en-US' | 'es-419' | undefined {
-  const value = readString(input, 'lang')
-  if (value === 'pt-BR' || value === 'en-US' || value === 'es-419') return value
-  return undefined
-}
-
-function validateEmail(value: string | undefined): string | undefined {
-  if (!value) return undefined
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) throw new Error('invalid_input')
-  return value
-}
-
-function assertToken(input: Record<string, unknown>): string {
-  const token = readString(input, 'session_token')
-  if (!token || token.length < 20) throw new Error('invalid_input')
-  return token
-}
-
-function validateInput(raw: unknown): ClientPortalInput {
-  if (!raw || typeof raw !== 'object') throw new Error('invalid_input')
-  const input = raw as Record<string, unknown>
-  const mode = readString(input, 'mode')
-
-  if (mode === 'start_session') {
-    const slug = readString(input, 'slug')
-    const fullName = readString(input, 'full_name')
-    const phone = readString(input, 'phone_whatsapp')
-    if (!slug || !fullName || !phone || phone.length < 8 || input.lgpd_accepted !== true) {
-      throw new Error('invalid_input')
-    }
-    return {
-      mode,
-      slug,
-      full_name: fullName,
-      phone_whatsapp: phone,
-      email: validateEmail(readString(input, 'email')),
-      lgpd_accepted: true,
-      lang: readLocale(input),
-    }
-  }
-
-  if (mode === 'get_context' || mode === 'get_booking_context' || mode === 'get_packages' || mode === 'logout') {
-    return { mode, session_token: assertToken(input), lang: readLocale(input) }
-  }
-
-  if (mode === 'get_history') {
-    const limit = typeof input.limit === 'number' ? Math.max(1, Math.min(input.limit, 50)) : undefined
-    const cursor = readString(input, 'cursor')
-    return { mode, session_token: assertToken(input), limit, cursor }
-  }
-
-  if (mode === 'update_profile' || mode === 'complete_onboarding') {
-    const fullName = readString(input, 'full_name')
-    if (!fullName) throw new Error('invalid_input')
-    if (mode === 'complete_onboarding' && input.lgpd_accepted !== true) throw new Error('invalid_input')
-    const preference = readString(input, 'contact_preference') ?? 'whatsapp'
-    if (preference !== 'whatsapp' && preference !== 'email' && preference !== 'both') throw new Error('invalid_input')
-    return {
-      mode,
-      session_token: assertToken(input),
-      full_name: fullName,
-      email: validateEmail(readString(input, 'email')),
-      contact_preference: preference,
-      reminders_opt_in: typeof input.reminders_opt_in === 'boolean' ? input.reminders_opt_in : true,
-      ...(mode === 'complete_onboarding' ? { lgpd_accepted: true } : {}),
-    }
-  }
-
-  if (mode === 'create_appointment') {
-    const serviceId = readString(input, 'service_id')
-    const scheduledAt = readString(input, 'scheduled_at')
-    if (!serviceId || !scheduledAt) throw new Error('invalid_input')
-    return {
-      mode,
-      session_token: assertToken(input),
-      service_id: serviceId,
-      scheduled_at: scheduledAt,
-      use_client_package_id: readString(input, 'use_client_package_id') ?? null,
-    }
-  }
-
-  if (mode === 'cancel_appointment') {
-    const appointmentId = readString(input, 'appointment_id')
-    if (!appointmentId) throw new Error('invalid_input')
-    return {
-      mode,
-      session_token: assertToken(input),
-      appointment_id: appointmentId,
-      reason: readString(input, 'reason') ?? null,
-    }
-  }
-
-  if (mode === 'reschedule_appointment') {
-    const appointmentId = readString(input, 'appointment_id')
-    const newScheduledAt = readString(input, 'new_scheduled_at')
-    if (!appointmentId || !newScheduledAt) throw new Error('invalid_input')
-    return {
-      mode,
-      session_token: assertToken(input),
-      appointment_id: appointmentId,
-      new_scheduled_at: newScheduledAt,
-    }
-  }
-
-  throw new Error('invalid_input')
 }
 
 function isRpcErrorOutput(data: unknown): data is { ok: false; error: string } {
@@ -329,10 +173,19 @@ Deno.serve(async (request) => {
   }
 
   try {
-    const input = validateInput(await request.json())
+    const input = validateClientPortalHandlerInput(await request.json())
     const dryRun = isDryRun(request)
     const ip = clientIp(request)
     const ua = userAgent(request)
+    const rateLimitClient = createServiceClient()
+    await assertPublicRateLimit({
+      supabase: rateLimitClient,
+      request,
+      action: `client-portal:${input.mode}`,
+      subject: 'session_token' in input ? input.session_token : input.slug,
+      limit: input.mode === 'get_context' || input.mode === 'get_history' || input.mode === 'get_packages' || input.mode === 'get_booking_context' ? 80 : 12,
+      windowSeconds: input.mode === 'start_session' ? 300 : 60,
+    })
 
     if (input.mode === 'start_session') {
       const { data, error } = await rpc('create_client_portal_session', {

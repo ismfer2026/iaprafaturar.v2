@@ -16,3 +16,7 @@ export function readRefParam(search: string): string | undefined {
   const value = new URLSearchParams(search).get("ref")?.trim();
   return value || undefined;
 }
+
+export function buildPublicPath(path: string, params: PublicFlowParams): string {
+  return `${path}?${buildPublicSearchParams(params)}`;
+}

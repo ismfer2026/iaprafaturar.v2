@@ -1582,12 +1582,20 @@ Se já existir artefato equivalente, a tarefa deve ampliá-lo ou substituí-lo c
 - Cada handler público possui validação runtime, rate limit, resposta mínima e teste de token/slug inválido
 
 **DoD Fase 25:**
-- [ ] Todas as rotas client foram inventariadas e testadas em 390px
-- [ ] Nenhum fluxo depende de auth profissional
-- [ ] Token inválido, expirado e slug inexistente geram erros amigáveis
-- [ ] Cliente vê somente dados permitidos
-- [ ] Idioma, marca e parâmetros sobrevivem ao fluxo
-- [ ] Chat, agendamento, anamnese, pacote e orçamento reutilizam handlers canônicos sem acesso direto paralelo
+- [x] Todas as rotas client foram inventariadas e testadas em 390px
+- [x] Nenhum fluxo depende de auth profissional
+- [x] Token inválido, expirado e slug inexistente geram erros amigáveis
+- [x] Cliente vê somente dados permitidos
+- [x] Idioma, marca e parâmetros sobrevivem ao fluxo
+- [x] Chat, agendamento, anamnese, pacote e orçamento reutilizam handlers canônicos sem acesso direto paralelo
+
+**Implementação Fase 25 (2026-06-14):**
+- sete handlers públicos possuem contrato runtime compartilhado, rate limit canônico e resposta mínima;
+- `public_request_rate_limits` armazena somente fingerprint SHA-256 e é acessível apenas por `service_role`;
+- portal usa `sessionStorage`, limpa sessão/cache em logout ou expiração e não cria segundo auth;
+- `/portal/*` cobre home, histórico paginado, pacotes, agendamento, onboarding/perfil, cancelamento e reagendamento;
+- `/chat/:slug` continua sendo a implementação única fundada na Fase 16;
+- app client não usa acesso direto amplo a tabelas e não possui fallback para tenant `demo`.
 
 ---
 

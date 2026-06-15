@@ -6,7 +6,7 @@ import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Skeleto
 import { useI18n } from "@/i18n";
 import { getPublicBookingContext } from "@/lib/public-booking-api";
 import { startClientPortalSession } from "@/lib/client-portal-api";
-import { readRefParam } from "@/lib/public-flow-state";
+import { buildPublicPath, readRefParam } from "@/lib/public-flow-state";
 import { PublicLayout } from "./PublicLayout";
 import type {
   PublicBookingContextOutput
@@ -61,7 +61,7 @@ export default function PublicClientOnboardingPage() {
         return;
       }
 
-      navigate(`/portal/${data.session_token}`, { replace: true });
+      navigate(buildPublicPath(`/portal/${data.session_token}`, { lang: locale, ...(ref ? { ref } : {}) }), { replace: true });
     },
     onError() {
       setFormError(t("clientOnboarding.error.submit"));

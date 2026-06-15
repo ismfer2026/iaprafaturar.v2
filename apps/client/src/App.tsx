@@ -1,5 +1,5 @@
 import { Suspense, lazy } from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Skeleton } from "@iaprafaturar/ui";
 import { I18nProvider } from "@/i18n";
@@ -35,7 +35,7 @@ function AppRoutes() {
       <Suspense fallback={<PageLoader />}>
         <Routes>
           {clientRoutes.map(({ path, component: Component }) => <Route key={path} path={path} element={<Component />} />)}
-          <Route path="/" element={<Navigate to="/agendar/demo" replace />} />
+          <Route path="/" element={<PublicNotFoundPage />} />
           <Route path="*" element={<PublicNotFoundPage />} />
         </Routes>
       </Suspense>

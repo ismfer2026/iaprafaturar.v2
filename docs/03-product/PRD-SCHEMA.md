@@ -6188,3 +6188,13 @@ Timeout = 10 segundos por tentativa
 - A conciliação reutiliza `finance_reconciliation_imports` e `finance_reconciliation_items`; nenhuma correspondência é aplicada automaticamente.
 - Configurações financeiras multi-entidade reutilizam `finance_bank_accounts`, `finance_categories`, `finance_cost_centers` e `finance_gateway_settings`; referências históricas são preservadas por desativação.
 - Preferências de recibo são armazenadas em `professionals.settings.finance_receipts` e acessadas exclusivamente pelas RPCs gestor-only `get_finance_receipt_settings()` e `upsert_finance_receipt_settings(jsonb)`.
+# Implementação Fase 25 — Rate limit público
+
+Migration: `20260614120000_phase25_public_rate_limit.sql`.
+
+- `public_request_rate_limits`: contador técnico por ação, fingerprint SHA-256 e janela;
+- sem `professional_id`, token, telefone, e-mail ou mensagem em texto;
+- RLS habilitada e sem grants para `anon`/`authenticated`;
+- `claim_public_request_rate_limit(text,text,integer,integer)` é `SECURITY DEFINER`, `search_path=''` e executável somente por `service_role`;
+- índice `idx_public_request_rate_limits_cleanup` suporta limpeza de janelas antigas;
+- handlers continuam responsáveis por validar tenant/token nos RPCs canônicos.

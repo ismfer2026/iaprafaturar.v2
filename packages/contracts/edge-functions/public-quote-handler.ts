@@ -30,6 +30,7 @@ export const PublicQuoteErrorOutputSchema = z.object({
     'already_converted',
     'invalid_input',
     'signature_required',
+    'rate_limited',
     'internal_error',
   ]),
 }).strict()

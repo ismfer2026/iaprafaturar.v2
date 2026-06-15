@@ -162,6 +162,7 @@ export const ClientPortalContextOutputSchema = z.object({
 export const ClientPortalHistoryOutputSchema = z.object({
   ok: z.literal(true),
   items: z.array(ClientPortalHistoryItemSchema),
+  next_cursor: z.string().nullable().optional(),
 }).passthrough()
 
 export const ClientPortalPackagesOutputSchema = z.object({
@@ -209,6 +210,7 @@ export const ClientPortalErrorOutputSchema = z.object({
     'slot_unavailable',
     'package_not_available',
     'appointment_not_found',
+    'rate_limited',
     'already_cancelled',
     'invalid_status',
     'window_closed',

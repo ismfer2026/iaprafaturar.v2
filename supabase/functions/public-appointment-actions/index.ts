@@ -4,6 +4,7 @@ import {
 } from '@iaprafaturar/contracts/edge-functions/public-appointment-actions.ts'
 
 import { jsonResponse } from '../_shared/http.ts'
+import { assertPublicRateLimit } from '../_shared/public-rate-limit.ts'
 import { createServiceClient } from '../_shared/supabase.ts'
 
 const CORS_HEADERS = {
@@ -34,6 +35,10 @@ function mapError(error: unknown): { status: number; body: unknown } {
     return { status: 400, body: { ok: false, error: 'invalid_input' } }
   }
 
+  if (error instanceof Error && error.message.includes('rate_limited')) {
+    return { status: 429, body: { ok: false, error: 'rate_limited' } }
+  }
+
   return { status: 500, body: { ok: false, error: 'internal_error' } }
 }
 
@@ -49,6 +54,14 @@ Deno.serve(async (request) => {
   try {
     const input = validatePublicAppointmentActionsInput(await request.json())
     const supabase = createServiceClient()
+    await assertPublicRateLimit({
+      supabase,
+      request,
+      action: `public-appointment-actions:${input.mode}`,
+      subject: input.appointment_token,
+      limit: 8,
+      windowSeconds: 300,
+    })
 
     if (input.mode === 'cancel') {
       const { data, error } = await supabase.rpc('cancel_public_appointment', {

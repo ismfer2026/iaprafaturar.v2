@@ -996,3 +996,14 @@ Output: { alerts_sent }
 | platform-health-agent | Internal token | 11 |
 | nerissa-lifecycle | Internal token | 11 |
 | smtp-config | JWT Supabase | 1 |
+# Implementação Fase 25 — Handlers públicos
+
+Em 2026-06-14, os handlers públicos foram consolidados sob o mesmo padrão:
+
+- `public-booking-handler`, `client-portal-handler`, `anamnese-public-handler`, `public-appointment-actions`, `public-package-handler`, `public-quote-handler` e `public-chat-handler`;
+- todos usam contrato runtime compartilhado em `@iaprafaturar/contracts`;
+- todos aplicam `claim_public_request_rate_limit()` antes da operação;
+- chave antiabuso usa IP + sujeito com SHA-256; tokens e PII não são persistidos em texto;
+- erros públicos usam envelope mínimo e não retornam mensagens SQL;
+- todos são publicados com `verify_jwt = false`, mas usam somente RPCs `service_role` curadas;
+- `public-chat-handler` continua sendo o único chat público e não envia WhatsApp automaticamente.

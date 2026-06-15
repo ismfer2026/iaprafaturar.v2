@@ -1,11 +1,14 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { useParams } from "react-router-dom";
-import { MessageCircle, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { Button, Card, CardContent, Input, Skeleton } from "@iaprafaturar/ui";
 import { getPublicChatContext, sendPublicChatMessage } from "@/lib/public-chat-api";
+import { useI18n } from "@/i18n";
+import { PublicLayout } from "./PublicLayout";
 
 export default function PublicChatPage() {
   const { slug = "" } = useParams();
+  const { t } = useI18n();
   const [context, setContext] = useState<{ name: string; welcome: string; enabled: boolean } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
@@ -15,15 +18,16 @@ export default function PublicChatPage() {
   useEffect(() => {
     getPublicChatContext(slug)
       .then((result) => {
+        if (!result.ok) throw new Error(result.error);
         setContext({
-          name: result.context?.professional?.name ?? "Profissional",
-          welcome: result.context?.config?.welcome_message ?? "Ola! Como posso ajudar?",
-          enabled: result.context?.config?.enabled ?? false,
+          name: result.context.professional.name,
+          welcome: result.context.config.welcome_message,
+          enabled: result.context.config.enabled,
         });
       })
-      .catch(() => setMessage("Nao foi possivel carregar o chat."))
+      .catch(() => setMessage(t("chat.error.load")))
       .finally(() => setIsLoading(false));
-  }, [slug]);
+  }, [slug, t]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -41,14 +45,14 @@ export default function PublicChatPage() {
       });
 
       if (!result.ok) {
-        setMessage(result.error ?? "Nao foi possivel enviar.");
+        setMessage(t(result.error === "rate_limited" ? "chat.error.rateLimited" : "chat.error.send"));
         return;
       }
 
-      setMessage("Mensagem enviada. O profissional recebeu seu contato.");
+      setMessage(t("chat.success"));
       setForm({ name: "", email: "", phone: "", text: "", website: "" });
     } catch {
-      setMessage("Nao foi possivel enviar.");
+      setMessage(t("chat.error.send"));
     } finally {
       setIsSending(false);
     }
@@ -56,7 +60,7 @@ export default function PublicChatPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-dvh items-center justify-center bg-emerald-50 px-4">
+      <div className="flex min-h-dvh items-center justify-center bg-[#f7fbf9] px-4">
         <div className="w-full max-w-md space-y-3">
           <Skeleton className="h-10 w-2/3" />
           <Skeleton className="h-72 rounded-lg" />
@@ -66,42 +70,34 @@ export default function PublicChatPage() {
   }
 
   return (
-    <div className="min-h-dvh bg-emerald-50 px-4 py-8">
+    <PublicLayout eyebrow={t("chat.eyebrow")} title={context?.name ?? t("chat.title")} subtitle={context?.welcome ?? t("chat.subtitle")}>
       <main className="mx-auto flex w-full max-w-md flex-col gap-4">
-        <header>
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-700 text-white">
-            <MessageCircle className="h-6 w-6" />
-          </div>
-          <h1 className="mt-4 text-2xl font-semibold text-zinc-950">{context?.name}</h1>
-          <p className="mt-1 text-sm text-zinc-600">{context?.welcome}</p>
-        </header>
-
         <Card className="rounded-lg border-emerald-100 bg-white">
           <CardContent className="p-4">
             {context?.enabled ? (
               <form className="space-y-3" onSubmit={submit}>
                 <input className="hidden" tabIndex={-1} autoComplete="off" value={form.website} onChange={(event) => setForm((current) => ({ ...current, website: event.target.value }))} />
-                <Field label="Nome"><Input value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} required /></Field>
-                <Field label="E-mail"><Input type="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} /></Field>
-                <Field label="WhatsApp"><Input inputMode="tel" value={form.phone} onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))} /></Field>
+                <Field label={t("chat.name")}><Input value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} required /></Field>
+                <Field label={t("chat.email")}><Input type="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} /></Field>
+                <Field label={t("chat.phone")}><Input inputMode="tel" value={form.phone} onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))} /></Field>
                 <label className="block space-y-1">
-                  <span className="text-xs font-semibold text-zinc-600">Mensagem</span>
+                  <span className="text-xs font-semibold text-zinc-600">{t("chat.message")}</span>
                   <textarea className="min-h-28 w-full rounded-md border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100" value={form.text} onChange={(event) => setForm((current) => ({ ...current, text: event.target.value }))} required />
                 </label>
                 <Button className="w-full gap-2 bg-emerald-700 hover:bg-emerald-800" type="submit" disabled={isSending}>
                   <Send className="h-4 w-4" />
-                  Enviar
+                  {isSending ? t("common.sending") : t("chat.send")}
                 </Button>
               </form>
             ) : (
-              <p className="text-sm text-zinc-600">Chat indisponivel no momento.</p>
+              <p className="text-sm text-zinc-600">{t("chat.unavailable")}</p>
             )}
           </CardContent>
         </Card>
 
         {message ? <div className="rounded-lg border border-emerald-100 bg-white px-3 py-2 text-sm text-zinc-700">{message}</div> : null}
       </main>
-    </div>
+    </PublicLayout>
   );
 }
 

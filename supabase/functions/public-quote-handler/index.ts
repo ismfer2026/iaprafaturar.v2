@@ -1,6 +1,7 @@
 import { validatePublicQuoteHandlerInput } from '../../../packages/contracts/edge-functions/public-quote-handler.ts'
 
 import { jsonResponse } from '../_shared/http.ts'
+import { assertPublicRateLimit } from '../_shared/public-rate-limit.ts'
 import { createServiceClient } from '../_shared/supabase.ts'
 
 const CORS_HEADERS = {
@@ -64,6 +65,10 @@ function mapError(error: unknown): { status: number; body: unknown } {
     return { status: 400, body: { ok: false, error: 'invalid_input' } }
   }
 
+  if (message.includes('rate_limited')) {
+    return { status: 429, body: { ok: false, error: 'rate_limited' } }
+  }
+
   return { status: 500, body: { ok: false, error: 'internal_error' } }
 }
 
@@ -79,6 +84,14 @@ Deno.serve(async (request) => {
   try {
     const input = validatePublicQuoteHandlerInput(await request.json())
     const supabase = createServiceClient()
+    await assertPublicRateLimit({
+      supabase,
+      request,
+      action: `public-quote:${input.mode}`,
+      subject: input.token,
+      limit: input.mode === 'get_context' ? 40 : 8,
+      windowSeconds: input.mode === 'get_context' ? 60 : 300,
+    })
 
     if (input.mode === 'get_context') {
       const { data, error } = await supabase.rpc('get_public_quote_context', {

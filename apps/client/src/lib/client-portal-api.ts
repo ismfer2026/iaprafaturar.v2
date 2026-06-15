@@ -52,11 +52,47 @@ export function getClientPortalContext(sessionToken: string, lang: Locale): Prom
   });
 }
 
-export function getClientPortalHistory(sessionToken: string): Promise<ClientPortalResult<ClientPortalHistoryOutput>> {
+export function getClientPortalHistory(sessionToken: string, cursor?: string): Promise<ClientPortalResult<ClientPortalHistoryOutput>> {
   return invokePortal<ClientPortalHistoryOutput>({
     mode: "get_history",
     session_token: sessionToken,
-    limit: 20
+    limit: 20,
+    ...(cursor ? { cursor } : {})
+  });
+}
+
+export function updateClientPortalProfile(input: {
+  sessionToken: string;
+  fullName: string;
+  email?: string;
+  contactPreference: "whatsapp" | "email" | "both";
+  remindersOptIn: boolean;
+}): Promise<ClientPortalResult<ClientPortalMutationOutput>> {
+  return invokePortal<ClientPortalMutationOutput>({
+    mode: "update_profile",
+    session_token: input.sessionToken,
+    full_name: input.fullName,
+    ...(input.email ? { email: input.email } : {}),
+    contact_preference: input.contactPreference,
+    reminders_opt_in: input.remindersOptIn
+  });
+}
+
+export function cancelClientPortalAppointment(sessionToken: string, appointmentId: string, reason?: string) {
+  return invokePortal<ClientPortalMutationOutput>({
+    mode: "cancel_appointment",
+    session_token: sessionToken,
+    appointment_id: appointmentId,
+    ...(reason ? { reason } : {})
+  });
+}
+
+export function rescheduleClientPortalAppointment(sessionToken: string, appointmentId: string, newScheduledAt: string) {
+  return invokePortal<ClientPortalMutationOutput>({
+    mode: "reschedule_appointment",
+    session_token: sessionToken,
+    appointment_id: appointmentId,
+    new_scheduled_at: newScheduledAt
   });
 }
 
