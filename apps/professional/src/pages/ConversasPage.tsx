@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Bot, Check, MessageSquare, Send, ShieldAlert, UserCheck, X } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Bot, CalendarPlus, Check, MessageSquare, Send, ShieldAlert, UserCheck, X } from "lucide-react";
+import { toast } from "sonner";
 import {
   Badge,
   Button,
@@ -8,6 +10,12 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
   Skeleton,
   cn,
 } from "@iaprafaturar/ui";
@@ -21,6 +29,8 @@ import {
   type ConversationListItem,
   type ShadowSuggestion,
 } from "@/hooks/useConversations";
+import { useServices } from "@/hooks/useServices";
+import { supabase } from "@/lib/supabase";
 import { useI18n, type TranslationKey } from "@/i18n";
 
 const CONVERSATION_STATUS_KEYS: Record<ConversationListItem["rosane_status"], TranslationKey> = {
@@ -42,6 +52,14 @@ function formatConversationTime(value: string | null) {
 
 function getConversationTitle(conversation: ConversationListItem) {
   return conversation.client_name || conversation.phone || conversation.channel;
+}
+
+function defaultScheduledAt() {
+  const d = new Date();
+  d.setHours(d.getHours() + 1);
+  d.setMinutes(Math.ceil(d.getMinutes() / 15) * 15, 0, 0);
+  // datetime-local needs YYYY-MM-DDTHH:MM without seconds
+  return d.toISOString().slice(0, 16);
 }
 
 function ConversationSkeleton() {
@@ -121,12 +139,24 @@ function ShadowSuggestionCard({
 export default function ConversasPage() {
   const { t } = useI18n();
   const { professionalId } = useAuth();
+  const queryClient = useQueryClient();
   const conversations = useConversations(professionalId);
   const suggestions = useShadowSuggestions(professionalId);
   const actions = useConversationActions(professionalId);
+  const services = useServices(professionalId);
+
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(false);
   const [manualText, setManualText] = useState("");
+
+  // Schedule sheet state
+  const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [scheduleServiceId, setScheduleServiceId] = useState("");
+  const [scheduleDuration, setScheduleDuration] = useState("");
+  const [scheduleNotes, setScheduleNotes] = useState("");
+  const [scheduleSendWhatsapp, setScheduleSendWhatsapp] = useState(false);
+  const [isCreatingSchedule, setIsCreatingSchedule] = useState(false);
 
   const conversationList = useMemo(() => conversations.data ?? [], [conversations.data]);
 
@@ -180,6 +210,46 @@ export default function ConversasPage() {
     if (!selectedConversation || !manualText.trim()) return;
     await actions.sendManualMessage({ conversationId: selectedConversation.id, text: manualText.trim() });
     setManualText("");
+  }
+
+  function handleOpenSchedule() {
+    setScheduleDate(defaultScheduledAt());
+    setScheduleServiceId("");
+    setScheduleDuration("");
+    setScheduleNotes("");
+    setScheduleSendWhatsapp(false);
+    setIsScheduleOpen(true);
+  }
+
+  async function handleCreateSchedule() {
+    if (!selectedConversation?.client_id || !scheduleDate) return;
+    setIsCreatingSchedule(true);
+    try {
+      const { data, error } = await supabase.rpc("create_appointment", {
+        p_client_id: selectedConversation.client_id,
+        p_service_id: scheduleServiceId || null,
+        p_scheduled_at: new Date(scheduleDate).toISOString(),
+        p_duration_minutes: scheduleDuration ? parseInt(scheduleDuration, 10) : null,
+        p_notes: scheduleNotes.trim() || null,
+      });
+      if (error) throw error;
+
+      const appointmentId = (data as { appointment_id: string } | null)?.appointment_id;
+
+      if (scheduleSendWhatsapp && appointmentId) {
+        await supabase.functions.invoke("appointment-confirmation-agent", {
+          body: { mode: "send_confirmation", appointment_id: appointmentId },
+        });
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ["crm", "appointments", professionalId] });
+      toast.success(t("conversations.schedule.success"));
+      setIsScheduleOpen(false);
+    } catch {
+      toast.error(t("conversations.schedule.error"));
+    } finally {
+      setIsCreatingSchedule(false);
+    }
   }
 
   return (
@@ -331,28 +401,41 @@ export default function ConversasPage() {
                       <span className="text-xs text-red-600">{t("conversations.actions.error")}</span>
                     ) : null}
                   </div>
-                  {selectedConversation.rosane_status === "human_takeover" ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="gap-2"
-                      disabled={actions.isReleasing}
-                      onClick={handleRelease}
-                    >
-                      <Bot className="h-4 w-4" />
-                      {t("conversations.actions.release")}
-                    </Button>
-                  ) : (
-                    <Button
-                      type="button"
-                      className="gap-2"
-                      disabled={actions.isTakingOver}
-                      onClick={handleTakeOver}
-                    >
-                      <UserCheck className="h-4 w-4" />
-                      {t("conversations.actions.takeOver")}
-                    </Button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {selectedConversation.client_id ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="gap-2"
+                        onClick={handleOpenSchedule}
+                      >
+                        <CalendarPlus className="h-4 w-4" />
+                        {t("conversations.schedule.button")}
+                      </Button>
+                    ) : null}
+                    {selectedConversation.rosane_status === "human_takeover" ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="gap-2"
+                        disabled={actions.isReleasing}
+                        onClick={handleRelease}
+                      >
+                        <Bot className="h-4 w-4" />
+                        {t("conversations.actions.release")}
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        className="gap-2"
+                        disabled={actions.isTakingOver}
+                        onClick={handleTakeOver}
+                      >
+                        <UserCheck className="h-4 w-4" />
+                        {t("conversations.actions.takeOver")}
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -431,6 +514,103 @@ export default function ConversasPage() {
           )}
         </section>
       </div>
+
+      {/* Schedule Sheet */}
+      <Sheet open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
+        <SheetContent side="right" className="w-full max-w-md overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>{t("conversations.schedule.title")}</SheetTitle>
+            {selectedConversation ? (
+              <SheetDescription>
+                {selectedConversation.client_name ?? selectedConversation.phone ?? selectedConversation.channel}
+              </SheetDescription>
+            ) : null}
+          </SheetHeader>
+
+          <div className="mt-6 space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-zinc-700">
+                {t("conversations.schedule.service")}
+              </label>
+              <select
+                className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 shadow-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                value={scheduleServiceId}
+                onChange={(e) => setScheduleServiceId(e.target.value)}
+              >
+                <option value="">—</option>
+                {(services.data?.services ?? [])
+                  .filter((s) => s.is_active)
+                  .map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-zinc-700">
+                {t("conversations.schedule.datetime")}
+              </label>
+              <input
+                type="datetime-local"
+                className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 shadow-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                value={scheduleDate}
+                onChange={(e) => setScheduleDate(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-zinc-700">
+                {t("conversations.schedule.duration")}
+              </label>
+              <input
+                type="number"
+                min="15"
+                max="480"
+                step="15"
+                placeholder="60"
+                className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 shadow-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                value={scheduleDuration}
+                onChange={(e) => setScheduleDuration(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-zinc-700">
+                {t("conversations.schedule.notes")}
+              </label>
+              <textarea
+                className="min-h-20 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm leading-6 text-zinc-800 shadow-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                value={scheduleNotes}
+                onChange={(e) => setScheduleNotes(e.target.value)}
+              />
+            </div>
+
+            <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+              <input
+                type="checkbox"
+                className="accent-violet-600"
+                checked={scheduleSendWhatsapp}
+                onChange={(e) => setScheduleSendWhatsapp(e.target.checked)}
+              />
+              <span className="text-sm text-zinc-700">{t("conversations.schedule.whatsapp")}</span>
+            </label>
+          </div>
+
+          <SheetFooter className="mt-6">
+            <Button
+              type="button"
+              className="w-full"
+              disabled={isCreatingSchedule || !scheduleDate}
+              onClick={handleCreateSchedule}
+            >
+              {t("conversations.schedule.submit")}
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

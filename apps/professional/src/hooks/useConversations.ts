@@ -138,21 +138,29 @@ export function useShadowSuggestions(professionalId: string | null) {
 
   const approve = useMutation({
     mutationFn: async (input: { suggestionId: string; actualText?: string | null }) => {
-      const { data, error } = await supabase.functions.invoke("approve-shadow-suggestion", {
-        body: {
-          suggestion_id: input.suggestionId,
-          actual_text: input.actualText ?? undefined,
-        },
+      const { data: rpcData, error: rpcError } = await supabase.rpc("approve_shadow_suggestion", {
+        p_suggestion_id: input.suggestionId,
+        p_actual_text: input.actualText ?? null,
       });
 
-      if (error) throw error;
-      return data as {
-        approved: boolean;
-        sent?: boolean;
-        dry_run: boolean;
+      if (rpcError) throw rpcError;
+
+      const result = rpcData as {
         suggestion_id: string;
-        skipped_reason?: string;
+        status: string;
+        conversation_id: string | null;
+        message_event_id: string | null;
+        text_to_send: string | null;
       };
+
+      if (result.text_to_send && result.conversation_id) {
+        const { error: sendError } = await supabase.functions.invoke("send-conversation-message", {
+          body: { conversation_id: result.conversation_id, text: result.text_to_send },
+        });
+        if (sendError) throw sendError;
+      }
+
+      return { approved: true, suggestion_id: result.suggestion_id };
     },
     onSuccess: invalidate,
   });

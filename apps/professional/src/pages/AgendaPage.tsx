@@ -291,7 +291,7 @@ function WeekTimeGrid({
   appointments,
   weekStart,
   clients,
-  services,
+  services: _services,
   locale,
   onSlotClick,
   onAppointmentClick,
@@ -593,7 +593,7 @@ export default function AgendaPage() {
     [clientPackagesQuery.data],
   );
 
-  const agendaAppointments = agendaQuery.data ?? [];
+  const agendaAppointments = useMemo(() => agendaQuery.data ?? [], [agendaQuery.data]);
 
   const historicoAppointments = useMemo(() => {
     const now = new Date();
