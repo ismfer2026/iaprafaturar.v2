@@ -26,6 +26,7 @@ import {
   cn,
 } from "@iaprafaturar/ui";
 import type {
+  Client,
   FinanceSettings,
   FinancialPaymentMethod,
   FinancialTransactionStatus,
@@ -36,6 +37,7 @@ import type {
   ProductBatch,
   Service,
   Session,
+  TeamMember,
 } from "@iaprafaturar/domain";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClients } from "@/hooks/useClients";
@@ -48,21 +50,33 @@ import {
 import { useServices } from "@/hooks/useServices";
 import { useSessions } from "@/hooks/useSessions";
 import { useInventory } from "@/hooks/useInventory";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useI18n, type Locale, type TranslationKey } from "@/i18n";
 import { friendlyErrorMessage } from "@/lib/friendlyError";
 
-type FinanceTab = "extrato" | "pdv";
+type FinanceTab = "extrato" | "pdv" | "caixa" | "conta_cliente" | "fluxo" | "repasses";
 type FinanceDestination = FinanceTab | "conciliacao" | "configuracoes";
+
+const INLINE_TABS: FinanceTab[] = ["extrato", "pdv", "caixa", "conta_cliente", "fluxo", "repasses"];
 
 const FINANCE_TAB_PATHS: Record<FinanceDestination, string> = {
   extrato: "/financeiro",
   pdv: "/financeiro?tab=pdv",
+  caixa: "/financeiro?tab=caixa",
+  conta_cliente: "/financeiro?tab=conta_cliente",
+  fluxo: "/financeiro?tab=fluxo",
+  repasses: "/financeiro?tab=repasses",
   conciliacao: "/financeiro/conciliacao",
   configuracoes: "/financeiro/configuracoes",
 };
 
 function financeTabFromLocation(search: string): FinanceTab {
-  if (new URLSearchParams(search).get("tab") === "pdv") return "pdv";
+  const tab = new URLSearchParams(search).get("tab");
+  if (tab === "pdv") return "pdv";
+  if (tab === "caixa") return "caixa";
+  if (tab === "conta_cliente") return "conta_cliente";
+  if (tab === "fluxo") return "fluxo";
+  if (tab === "repasses") return "repasses";
   return "extrato";
 }
 
@@ -286,15 +300,20 @@ export default function FinanceiroPage() {
   }, [location.search]);
 
   function selectTab(tab: FinanceDestination) {
-    if (tab === "extrato" || tab === "pdv") setActiveTab(tab);
+    if ((INLINE_TABS as string[]).includes(tab)) setActiveTab(tab as FinanceTab);
     navigate(FINANCE_TAB_PATHS[tab]);
   }
   const [posForm, setPosForm] = useState<PosFormState>(EMPTY_POS_FORM);
   const [posItems, setPosItems] = useState<PosSaleItemInput[]>([]);
   const [posError, setPosError] = useState<string | null>(null);
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const range = useMemo(() => monthRange(), []);
 
   const transactionsQuery = useFinancialTransactions(professionalId);
+  const clientTransactionsQuery = useFinancialTransactions(
+    activeTab === "conta_cliente" && selectedClientId ? professionalId : null,
+    { clientId: selectedClientId },
+  );
   const summaryQuery = useFinancialSummary(professionalId, range.from, range.to);
   const pdvProfessionalId = activeTab === "pdv" ? professionalId : null;
   const settingsQuery = useFinanceSettings(pdvProfessionalId);
@@ -302,6 +321,7 @@ export default function FinanceiroPage() {
   const clientsQuery = useClients(professionalId);
   const sessionsQuery = useSessions(professionalId);
   const servicesQuery = useServices(pdvProfessionalId);
+  const teamMembersQuery = useTeamMembers(activeTab === "repasses" ? professionalId : null);
   const packagesQuery = useServicePackages(pdvProfessionalId);
 
   const transactions = transactionsQuery.data ?? [];
@@ -485,20 +505,22 @@ export default function FinanceiroPage() {
         <SummaryCard icon={ReceiptText} value={formatCurrency(summary?.net ?? 0, locale)} label={t("finance.summary.net")} tone="sky" />
       </section>
 
-      <div className="grid grid-cols-2 rounded-lg bg-zinc-100 p-1 md:grid-cols-4">
-        {(["extrato", "pdv", "conciliacao", "configuracoes"] as const).map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            className={cn(
-              "rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              activeTab === tab ? "bg-white text-zinc-950 shadow-sm" : "text-zinc-500",
-            )}
-            onClick={() => selectTab(tab)}
-          >
-            {t(`finance.tab.${tab}` as TranslationKey)}
-          </button>
-        ))}
+      <div className="overflow-x-auto">
+        <div className="flex min-w-max gap-1 rounded-lg bg-zinc-100 p-1">
+          {(INLINE_TABS as FinanceDestination[]).concat(["conciliacao", "configuracoes"]).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              className={cn(
+                "whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                activeTab === tab ? "bg-white text-zinc-950 shadow-sm" : "text-zinc-500",
+              )}
+              onClick={() => selectTab(tab)}
+            >
+              {t(`finance.tab.${tab}` as TranslationKey)}
+            </button>
+          ))}
+        </div>
       </div>
 
       {transactionsQuery.isLoading || summaryQuery.isLoading || settingsQuery.isLoading ? (
@@ -546,6 +568,28 @@ export default function FinanceiroPage() {
           onAddItem={addPosItem}
           onCreateSale={createPosSale}
         />
+      ) : null}
+
+      {activeTab === "caixa" ? (
+        <CaixaTab transactions={transactionsQuery.data ?? []} />
+      ) : null}
+
+      {activeTab === "fluxo" ? (
+        <FluxoTab transactions={transactionsQuery.data ?? []} />
+      ) : null}
+
+      {activeTab === "conta_cliente" ? (
+        <ContaClienteTab
+          clients={clients}
+          selectedClientId={selectedClientId}
+          onSelectClient={setSelectedClientId}
+          transactions={clientTransactionsQuery.data ?? []}
+          isLoading={clientTransactionsQuery.isLoading}
+        />
+      ) : null}
+
+      {activeTab === "repasses" ? (
+        <RepassesTab members={teamMembersQuery.data ?? []} isLoading={teamMembersQuery.isLoading} />
       ) : null}
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
@@ -785,4 +829,236 @@ function SelectField({ label, value, onChange, options }: {
 
 function ErrorBox({ children }: { children: ReactNode }) {
   return <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{children}</div>;
+}
+
+function formatCurrencyBRL(value: number) {
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+}
+
+function CaixaTab({ transactions }: { transactions: FinancialTransactionWithClient[] }) {
+  const { t } = useI18n();
+
+  const byDay = useMemo(() => {
+    const map = new Map<string, { income: number; expenses: number }>();
+    for (const tx of transactions) {
+      if (tx.status !== "pago") continue;
+      const day = (tx.paid_at ?? tx.created_at ?? "").slice(0, 10);
+      if (!day) continue;
+      const existing = map.get(day) ?? { income: 0, expenses: 0 };
+      if (tx.type === "receita") existing.income += Number(tx.net_amount ?? tx.amount);
+      else existing.expenses += Number(tx.net_amount ?? tx.amount);
+      map.set(day, existing);
+    }
+    return Array.from(map.entries())
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([day, { income, expenses }]) => ({ day, income, expenses, balance: income - expenses }));
+  }, [transactions]);
+
+  if (!byDay.length) {
+    return <p className="py-8 text-center text-sm text-zinc-500">{t("finance.caixa.empty")}</p>;
+  }
+
+  return (
+    <section className="overflow-x-auto">
+      <table className="w-full min-w-[480px] text-sm">
+        <thead>
+          <tr className="border-b border-zinc-200 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">
+            <th className="pb-2 pr-4">{t("finance.caixa.date")}</th>
+            <th className="pb-2 pr-4 text-right">{t("finance.caixa.income")}</th>
+            <th className="pb-2 pr-4 text-right">{t("finance.caixa.expenses")}</th>
+            <th className="pb-2 text-right">{t("finance.caixa.balance")}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {byDay.map(({ day, income, expenses, balance }) => (
+            <tr key={day} className="border-b border-zinc-100 last:border-0">
+              <td className="py-3 pr-4 font-medium text-zinc-900">{new Date(`${day}T12:00:00`).toLocaleDateString("pt-BR")}</td>
+              <td className="py-3 pr-4 text-right text-emerald-700">{formatCurrencyBRL(income)}</td>
+              <td className="py-3 pr-4 text-right text-red-600">{formatCurrencyBRL(expenses)}</td>
+              <td className={cn("py-3 text-right font-semibold", balance >= 0 ? "text-emerald-700" : "text-red-600")}>
+                {formatCurrencyBRL(balance)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  );
+}
+
+function FluxoTab({ transactions }: { transactions: FinancialTransactionWithClient[] }) {
+  const { t } = useI18n();
+
+  const byMonth = useMemo(() => {
+    const map = new Map<string, { paid: number; pending: number; expenses: number }>();
+    for (const tx of transactions) {
+      const month = (tx.created_at ?? "").slice(0, 7);
+      if (!month) continue;
+      const existing = map.get(month) ?? { paid: 0, pending: 0, expenses: 0 };
+      if (tx.type === "receita") {
+        if (tx.status === "pago") existing.paid += Number(tx.net_amount ?? tx.amount);
+        else if (tx.status === "pendente") existing.pending += Number(tx.net_amount ?? tx.amount);
+      } else if (tx.type === "despesa" && tx.status === "pago") {
+        existing.expenses += Number(tx.net_amount ?? tx.amount);
+      }
+      map.set(month, existing);
+    }
+    return Array.from(map.entries())
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .slice(0, 12)
+      .map(([month, { paid, pending, expenses }]) => ({ month, paid, pending, expenses, net: paid - expenses }));
+  }, [transactions]);
+
+  if (!byMonth.length) {
+    return <p className="py-8 text-center text-sm text-zinc-500">{t("finance.fluxo.empty")}</p>;
+  }
+
+  return (
+    <section className="overflow-x-auto">
+      <table className="w-full min-w-[560px] text-sm">
+        <thead>
+          <tr className="border-b border-zinc-200 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">
+            <th className="pb-2 pr-4">{t("finance.fluxo.month")}</th>
+            <th className="pb-2 pr-4 text-right">{t("finance.fluxo.paid")}</th>
+            <th className="pb-2 pr-4 text-right">{t("finance.fluxo.pending")}</th>
+            <th className="pb-2 pr-4 text-right">{t("finance.fluxo.expenses")}</th>
+            <th className="pb-2 text-right">{t("finance.fluxo.net")}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {byMonth.map(({ month, paid, pending, expenses, net }) => (
+            <tr key={month} className="border-b border-zinc-100 last:border-0">
+              <td className="py-3 pr-4 font-medium text-zinc-900">
+                {new Date(`${month}-01T12:00:00`).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })}
+              </td>
+              <td className="py-3 pr-4 text-right text-emerald-700">{formatCurrencyBRL(paid)}</td>
+              <td className="py-3 pr-4 text-right text-amber-600">{formatCurrencyBRL(pending)}</td>
+              <td className="py-3 pr-4 text-right text-red-600">{formatCurrencyBRL(expenses)}</td>
+              <td className={cn("py-3 text-right font-semibold", net >= 0 ? "text-emerald-700" : "text-red-600")}>
+                {formatCurrencyBRL(net)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  );
+}
+
+function ContaClienteTab({
+  clients,
+  selectedClientId,
+  onSelectClient,
+  transactions,
+  isLoading,
+}: {
+  clients: Client[];
+  selectedClientId: string | null;
+  onSelectClient: (id: string | null) => void;
+  transactions: FinancialTransactionWithClient[];
+  isLoading: boolean;
+}) {
+  const { t, locale } = useI18n();
+
+  return (
+    <section className="grid gap-4">
+      <div>
+        <label className="block space-y-1.5 text-sm">
+          <span className="font-medium text-zinc-700">{t("finance.conta_cliente.select")}</span>
+          <select
+            className="h-10 w-full max-w-sm rounded-md border border-zinc-200 bg-white px-3 text-sm shadow-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+            value={selectedClientId ?? ""}
+            onChange={(e) => onSelectClient(e.target.value || null)}
+          >
+            <option value="">{t("finance.conta_cliente.select")}</option>
+            {clients.map((c) => (
+              <option key={c.id} value={c.id}>{c.full_name}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      {!selectedClientId ? (
+        <p className="py-8 text-center text-sm text-zinc-500">{t("finance.conta_cliente.empty")}</p>
+      ) : isLoading ? (
+        <div className="space-y-2">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+        </div>
+      ) : !transactions.length ? (
+        <p className="py-8 text-center text-sm text-zinc-500">{t("finance.conta_cliente.noTransactions")}</p>
+      ) : (
+        <section className="space-y-2">
+          {transactions.map((tx) => (
+            <div key={tx.id} className="flex items-center justify-between gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3">
+              <div>
+                <p className="text-sm font-medium text-zinc-900">{tx.description}</p>
+                <p className="mt-0.5 text-xs text-zinc-500">
+                  {tx.paid_at
+                    ? new Date(tx.paid_at).toLocaleDateString(locale)
+                    : tx.due_date
+                    ? new Date(`${tx.due_date}T12:00:00`).toLocaleDateString(locale)
+                    : new Date(tx.created_at ?? "").toLocaleDateString(locale)}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className={cn("text-sm font-semibold", tx.type === "receita" ? "text-emerald-700" : "text-red-600")}>
+                  {tx.type === "despesa" ? "- " : ""}{formatCurrencyBRL(Number(tx.net_amount ?? tx.amount))}
+                </p>
+                <Badge variant={tx.status === "pago" ? "success" : "secondary"} className="text-xs">
+                  {tx.status}
+                </Badge>
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
+    </section>
+  );
+}
+
+function RepassesTab({ members, isLoading }: { members: TeamMember[]; isLoading: boolean }) {
+  const { t } = useI18n();
+
+  const withComissao = members.filter((m) => Number(m.comissao) > 0);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-16 w-full" />
+      </div>
+    );
+  }
+
+  if (!withComissao.length) {
+    return <p className="py-8 text-center text-sm text-zinc-500">{t("finance.repasses.empty")}</p>;
+  }
+
+  return (
+    <section className="grid gap-3">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[360px] text-sm">
+          <thead>
+            <tr className="border-b border-zinc-200 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              <th className="pb-2 pr-4">{t("finance.repasses.member")}</th>
+              <th className="pb-2 text-right">{t("finance.repasses.comissao")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {withComissao.map((m) => (
+              <tr key={m.id} className="border-b border-zinc-100 last:border-0">
+                <td className="py-3 pr-4">
+                  <p className="font-medium text-zinc-900">{m.name}</p>
+                  {m.funcao ? <p className="text-xs text-zinc-500">{m.funcao}</p> : null}
+                </td>
+                <td className="py-3 text-right font-semibold text-zinc-900">{Number(m.comissao).toFixed(1)}%</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs text-zinc-400">{t("finance.repasses.note")}</p>
+    </section>
+  );
 }

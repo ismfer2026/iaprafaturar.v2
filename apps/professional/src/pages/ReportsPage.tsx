@@ -4,6 +4,7 @@ import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Skeleton, cn }
 import type { ReportsOccupancySlot, ReportsServiceRanking, ReportsTopClient } from "@iaprafaturar/domain";
 import { useAuth } from "@/contexts/AuthContext";
 import { useReports } from "@/hooks/useReports";
+import { useFinancialTransactions } from "@/hooks/useFinancial";
 import { useI18n, type Locale, type TranslationKey } from "@/i18n";
 
 type ReportsTab = "summary" | "clients" | "services" | "occupancy";
@@ -79,6 +80,36 @@ export default function ReportsPage() {
   const reports = reportsQuery.data;
   const monthInputValue = useMemo(() => month.slice(0, 7), [month]);
 
+  const monthFrom = month;
+  const monthTo = useMemo(() => {
+    const parts = month.split("-").map(Number);
+    const year = parts[0] ?? new Date().getFullYear();
+    const mon = parts[1] ?? (new Date().getMonth() + 1);
+    return mon === 12 ? `${year + 1}-01-01` : `${year}-${String(mon + 1).padStart(2, "0")}-01`;
+  }, [month]);
+  const transactionsQuery = useFinancialTransactions(professionalId, { dateFrom: monthFrom, dateTo: monthTo });
+
+  function handleExportContador() {
+    const txs = transactionsQuery.data;
+    if (!txs) return;
+    const header = ["Data", "Descrição", "Tipo", "Status", "Método", "Valor (R$)", "Desconto (R$)", "Líquido (R$)", "Cliente"];
+    const rows = [
+      header,
+      ...txs.map((tx) => [
+        tx.paid_at ? new Date(tx.paid_at).toLocaleDateString("pt-BR") : tx.due_date ? new Date(`${tx.due_date}T12:00:00`).toLocaleDateString("pt-BR") : new Date(tx.created_at ?? "").toLocaleDateString("pt-BR"),
+        tx.description,
+        tx.type,
+        tx.status,
+        tx.payment_method ?? "",
+        String(tx.amount),
+        String(tx.discount_amount ?? 0),
+        String(tx.net_amount ?? tx.amount),
+        tx.client_name ?? "",
+      ]),
+    ];
+    exportReportsCsv(rows, `iaprafaturar-contador-${month.slice(0, 7)}.csv`);
+  }
+
   function handleExport() {
     if (!reports) return;
 
@@ -126,6 +157,10 @@ export default function ReportsPage() {
           <Button type="button" className="gap-2" onClick={handleExport} disabled={!reports}>
             <Download className="h-4 w-4" />
             {t("reports.action.exportCsv")}
+          </Button>
+          <Button type="button" variant="outline" className="gap-2" onClick={handleExportContador} disabled={!transactionsQuery.data}>
+            <Download className="h-4 w-4" />
+            {t("finance.export.action")}
           </Button>
         </div>
       </div>
