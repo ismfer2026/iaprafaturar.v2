@@ -37,7 +37,7 @@ BEGIN
   ) THEN
     CREATE TRIGGER campaign_templates_updated_at
       BEFORE UPDATE ON public.campaign_templates
-      FOR EACH ROW EXECUTE FUNCTION fn_update_updated_at();
+      FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
   END IF;
 END;
 $$;
