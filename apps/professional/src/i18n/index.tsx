@@ -1070,6 +1070,7 @@ const ptBR = {
   "onboarding.item.assistant.description": "Nome, tom e comportamento inicial da sua assistente.",
   "onboarding.item.whatsapp.label": "WhatsApp conectado",
   "onboarding.item.whatsapp.description": "Canal que {assistantName} usará para falar com seus clientes.",
+  "pwa.offline.banner": "Sem conexão — algumas funcionalidades podem estar indisponíveis."
 } as const;
 
 export type TranslationKey = keyof typeof ptBR;
@@ -2126,6 +2127,7 @@ const enUS: Record<TranslationKey, string> = {
   "onboarding.item.assistant.description": "Name, tone, and initial behavior of your assistant.",
   "onboarding.item.whatsapp.label": "WhatsApp connected",
   "onboarding.item.whatsapp.description": "Channel {assistantName} will use to talk to your clients.",
+  "pwa.offline.banner": "No connection — some features may be unavailable.",
 };
 
 const es419: Record<TranslationKey, string> = {
@@ -3166,6 +3168,7 @@ const es419: Record<TranslationKey, string> = {
   "onboarding.item.assistant.description": "Nombre, tono y comportamiento inicial de tu asistente.",
   "onboarding.item.whatsapp.label": "WhatsApp conectado",
   "onboarding.item.whatsapp.description": "Canal que {assistantName} usará para hablar con tus clientes.",
+  "pwa.offline.banner": "Sin conexion — algunas funciones pueden no estar disponibles.",
 };
 
 const messages: Record<Locale, Record<TranslationKey, string>> = {

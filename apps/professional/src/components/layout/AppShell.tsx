@@ -1,12 +1,26 @@
+import { useEffect, useState } from "react";
 import { Outlet, NavLink } from "react-router-dom";
-import { Settings } from "lucide-react";
+import { Settings, WifiOff } from "lucide-react";
 import { cn } from "@iaprafaturar/ui";
 import { useI18n } from "@/i18n";
 import { desktopNavRoutes, mobileNavRoutes } from "@/routes";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 
+function useOnlineStatus() {
+  const [isOnline, setIsOnline] = useState(() => navigator.onLine);
+  useEffect(() => {
+    const online = () => setIsOnline(true);
+    const offline = () => setIsOnline(false);
+    window.addEventListener("online", online);
+    window.addEventListener("offline", offline);
+    return () => { window.removeEventListener("online", online); window.removeEventListener("offline", offline); };
+  }, []);
+  return isOnline;
+}
+
 export default function AppShell() {
   const { t } = useI18n();
+  const isOnline = useOnlineStatus();
 
   return (
     <div className="flex h-screen">
@@ -55,6 +69,12 @@ export default function AppShell() {
       </aside>
 
       <main className="flex flex-1 flex-col overflow-hidden">
+        {!isOnline && (
+          <div className="flex items-center gap-2 bg-amber-50 px-4 py-2 text-xs font-medium text-amber-800 border-b border-amber-200">
+            <WifiOff className="h-3.5 w-3.5 shrink-0" />
+            {t("pwa.offline.banner")}
+          </div>
+        )}
         <div className="flex-1 overflow-y-auto pb-20 md:pb-4">
           <Outlet />
         </div>
