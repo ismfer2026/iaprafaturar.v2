@@ -205,6 +205,9 @@ const ptBR = {
   "chat.error.send": "Não foi possível enviar a mensagem.",
   "chat.error.rateLimited": "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
 
+  "indicacao.title": "Você foi indicado!",
+  "indicacao.description": "Um profissional recebeu sua indicação. Em breve você receberá mais informações sobre os próximos passos.",
+
   "portal.title": "Portal do cliente",
   "portal.validating": "Validando acesso",
   "portal.validatingSubtitle": "Abrindo seu portal com segurança.",
@@ -451,6 +454,9 @@ const enUS: Record<TranslationKey, string> = {
   "chat.error.send": "Unable to send the message.",
   "chat.error.rateLimited": "Too many attempts. Wait a few minutes and try again.",
 
+  "indicacao.title": "You were referred!",
+  "indicacao.description": "A professional received your referral. You will soon receive more information about the next steps.",
+
   "portal.title": "Client portal",
   "portal.validating": "Validating access",
   "portal.validatingSubtitle": "Opening your portal securely.",
@@ -694,6 +700,9 @@ const es419: Record<TranslationKey, string> = {
   "chat.error.load": "No fue posible cargar el chat.",
   "chat.error.send": "No fue posible enviar el mensaje.",
   "chat.error.rateLimited": "Demasiados intentos. Espera unos minutos e intenta nuevamente.",
+
+  "indicacao.title": "¡Fuiste referido!",
+  "indicacao.description": "Un profesional recibió tu referencia. Pronto recibirás más información sobre los próximos pasos.",
 
   "portal.title": "Portal del cliente",
   "portal.validating": "Validando acceso",

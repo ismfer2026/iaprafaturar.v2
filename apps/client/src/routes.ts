@@ -17,6 +17,7 @@ const PublicPackagePage = lazy(() => import("@/pages/PublicPackagePage"));
 const PublicQuotePage = lazy(() => import("@/pages/PublicQuotePage"));
 const ClientPortalPage = lazy(() => import("@/pages/ClientPortalPage"));
 const PublicChatPage = lazy(() => import("@/pages/PublicChatPage"));
+const PublicIndicacaoPage = lazy(() => import("@/pages/PublicIndicacaoPage"));
 
 export const clientRoutes: ClientRouteDefinition[] = [
   { path: "/cliente/:slug", component: PublicClientOnboardingPage, access: "public-slug", ownerPhase: 25 },
@@ -26,6 +27,7 @@ export const clientRoutes: ClientRouteDefinition[] = [
   { path: "/pacote/:slug", component: PublicPackagePage, access: "public-slug", ownerPhase: 14 },
   { path: "/orcamento/:token", component: PublicQuotePage, access: "public-token", ownerPhase: 13 },
   { path: "/chat/:slug", component: PublicChatPage, access: "public-slug", ownerPhase: 16 },
+  { path: "/indicacao/:codigo", component: PublicIndicacaoPage, access: "public-slug", ownerPhase: 27 },
   { path: "/portal/home", component: ClientPortalPage, access: "portal-token", ownerPhase: 25 },
   { path: "/portal/historico", component: ClientPortalPage, access: "portal-token", ownerPhase: 25 },
   { path: "/portal/pacotes", component: ClientPortalPage, access: "portal-token", ownerPhase: 25 },

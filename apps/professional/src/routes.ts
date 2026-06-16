@@ -227,6 +227,8 @@ export const professionalAliases: RouteAlias[] = [
   { from: "/configuracoes/servicos", to: "/servicos" },
   { from: "/configuracoes/anamnese", to: "/documentos/anamnese" },
   { from: "/configuracoes/plano", to: "/planos" },
+  { from: "/indicacoes", to: "/recompensas" },
+  { from: "/fidelidade", to: "/recompensas" },
 ];
 
 export const desktopNavRoutes = professionalRoutes.filter((route) => route.desktopNav);

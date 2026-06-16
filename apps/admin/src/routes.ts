@@ -44,4 +44,5 @@ export const adminAliases = [
   { from: "/afiliados", to: "/embaixadores" },
   { from: "/campanhas", to: "/broadcast" },
   { from: "/notificacoes", to: "/broadcast" },
+  { from: "/metricas", to: "/analytics" },
 ] as const;
