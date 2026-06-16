@@ -1,4 +1,5 @@
 import { type FormEvent, useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
   CalendarDays,
   CheckCircle2,
@@ -6,6 +7,7 @@ import {
   ChevronRight,
   Clock,
   Link2,
+  MessageCircle,
   Plus,
   XCircle,
 } from "lucide-react";
@@ -543,6 +545,9 @@ export default function AgendaPage() {
   const [notes, setNotes] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
+  // Send WhatsApp confirmation after creating
+  const [sendAfterCreate, setSendAfterCreate] = useState(false);
+
   // Recurring series
   const [isRecurring, setIsRecurring] = useState(false);
   const [seriesFrequency, setSeriesFrequency] = useState<"weekly" | "biweekly" | "monthly_day" | "monthly_week">("weekly");
@@ -731,19 +736,41 @@ export default function AgendaPage() {
           setFormError(t("agenda.recurring.error.create"));
           return;
         }
+        // Send confirmation for first occurrence of series if requested
+        if (sendAfterCreate && result.created_appointment_ids?.[0]) {
+          try {
+            await agendaQuery.sendWhatsappConfirmation({ appointmentId: result.created_appointment_ids[0] });
+            toast.success(t("agenda.whatsapp.success"));
+          } catch {
+            toast.error(t("agenda.whatsapp.error"));
+          }
+        }
       } else {
-        await agendaQuery.createAppointment({
+        const created = await agendaQuery.createAppointment({
           clientId,
           serviceId: serviceId || null,
           scheduledAt,
           durationMinutes,
           notes: notes.trim() || null,
         });
+        if (sendAfterCreate && created.appointment_id) {
+          try {
+            const result = await agendaQuery.sendWhatsappConfirmation({ appointmentId: created.appointment_id });
+            if (result.skipped_reason) {
+              toast.info(t("agenda.whatsapp.alreadySent"));
+            } else {
+              toast.success(t("agenda.whatsapp.success"));
+            }
+          } catch {
+            toast.error(t("agenda.whatsapp.error"));
+          }
+        }
       }
 
       setClientId(""); setServiceId(""); setTime("09:00"); setDuration("60");
       setNotes(""); setIsRecurring(false); setSeriesFrequency("weekly");
       setSeriesOccurrenceCount("4"); setSeriesAdjustments({});
+      setSendAfterCreate(false);
       setIsNewOpen(false);
     } catch (err) {
       setFormError(friendlyErrorMessage(err, t, "agenda.error.create"));
@@ -770,6 +797,20 @@ export default function AgendaPage() {
     if (!selectedAppointment) return;
     await agendaQuery.registerOutcome({ appointmentId: selectedAppointment.id, outcome: "falta", notes: t("agenda.noShowReason") });
     setSelectedAppointment(null);
+  }
+
+  async function handleSendWhatsappConfirmation() {
+    if (!selectedAppointment) return;
+    try {
+      const result = await agendaQuery.sendWhatsappConfirmation({ appointmentId: selectedAppointment.id });
+      if (result.skipped_reason) {
+        toast.info(t("agenda.whatsapp.alreadySent"));
+      } else {
+        toast.success(t("agenda.whatsapp.success"));
+      }
+    } catch {
+      toast.error(t("agenda.whatsapp.error"));
+    }
   }
 
   async function handleRegisterSession(event: FormEvent<HTMLFormElement>) {
@@ -1082,6 +1123,20 @@ export default function AgendaPage() {
                 <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("common.optional")} />
               </label>
 
+              {/* WhatsApp confirmation toggle */}
+              <label className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-emerald-300 text-emerald-600"
+                  checked={sendAfterCreate}
+                  onChange={(e) => setSendAfterCreate(e.target.checked)}
+                />
+                <div className="flex items-center gap-2 text-sm font-medium text-zinc-700">
+                  <MessageCircle className="h-4 w-4 text-emerald-600" />
+                  {t("agenda.whatsapp.sendAfterCreate")}
+                </div>
+              </label>
+
               {/* Recurring */}
               <div className="rounded-lg border border-emerald-100 bg-emerald-50/60 p-3">
                 <label className="flex items-start gap-3">
@@ -1198,6 +1253,26 @@ export default function AgendaPage() {
 
                 {(selectedAppointment.status === "agendado" || selectedAppointment.status === "confirmado") && (
                   <div className="grid gap-2">
+                    {/* WhatsApp confirmation */}
+                    {selectedAppointment.status === "agendado" && (
+                      selectedAppointment.confirmation_sent_at ? (
+                        <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                          <MessageCircle className="h-4 w-4 shrink-0" />
+                          {t("agenda.whatsapp.confirmationSent")}
+                        </div>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          className="gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                          onClick={handleSendWhatsappConfirmation}
+                          disabled={agendaQuery.isSendingWhatsappConfirmation}
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                          {agendaQuery.isSendingWhatsappConfirmation ? t("common.saving") : t("agenda.whatsapp.sendConfirmation")}
+                        </Button>
+                      )
+                    )}
+
                     <Button
                       className="gap-2 bg-emerald-600 hover:bg-emerald-700"
                       onClick={() => openSessionForm(selectedAppointment)}

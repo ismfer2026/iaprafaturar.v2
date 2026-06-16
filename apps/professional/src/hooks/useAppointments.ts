@@ -141,6 +141,19 @@ export function useAppointments(professionalId: string | null, range?: Appointme
     },
   });
 
+  const sendWhatsappConfirmation = useMutation({
+    mutationFn: async ({ appointmentId }: { appointmentId: string }) => {
+      const { data, error } = await supabase.functions.invoke("appointment-confirmation-agent", {
+        body: { mode: "send_confirmation", appointment_id: appointmentId },
+      });
+      if (error) throw error;
+      return data as { processed: boolean; sent?: number; skipped_reason?: string };
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["crm", "appointments", professionalId] });
+    },
+  });
+
   const registerOutcome = useMutation({
     mutationFn: async (input: RegisterAppointmentOutcomeInput) => {
       const { data, error } = await supabase.rpc("register_appointment_outcome", {
@@ -173,6 +186,8 @@ export function useAppointments(professionalId: string | null, range?: Appointme
     isCancellingAppointmentSeries: cancelAppointmentSeries.isPending,
     registerOutcome: registerOutcome.mutateAsync,
     isRegisteringOutcome: registerOutcome.isPending,
+    sendWhatsappConfirmation: sendWhatsappConfirmation.mutateAsync,
+    isSendingWhatsappConfirmation: sendWhatsappConfirmation.isPending,
   };
 }
 

@@ -24,6 +24,8 @@ export interface Appointment {
   notes: string | null;
   cancellation_reason: string | null;
   outcome_notes: string | null;
+  confirmation_sent_at?: string | null;
+  confirmation_responded_at?: string | null;
   cancelled_at: string | null;
   completed_at: string | null;
   no_show_at: string | null;
