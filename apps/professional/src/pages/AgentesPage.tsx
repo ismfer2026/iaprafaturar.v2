@@ -39,6 +39,7 @@ import {
 } from "@iaprafaturar/ui";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAssistantSettings, type AssistantSettingsInput } from "@/hooks/useAssistantSettings";
+import { useWhatsappConnection } from "@/hooks/useWhatsappConnection";
 import {
   useConversations,
   useConversationMessages,
@@ -932,6 +933,12 @@ export default function AgentesPage() {
   const [chatPrompt, setChatPrompt] = useState("");
   const [simulatedReply, setSimulatedReply] = useState<string | null>(null);
   const [agentConfigs, setAgentConfigs] = useState<AgentDraftMap>(createDefaultAgentConfigs());
+  const [whatsappMode, setWhatsappMode] = useState<"idle" | "pairing_input">("idle");
+  const [pairingPhone, setPairingPhone] = useState("");
+  const [pairingCode, setPairingCode] = useState<string | null>(null);
+
+  const whatsappConn = useWhatsappConnection(professionalId);
+  const conn = whatsappConn.query.data;
 
   const assistantName = form.agentName.trim() || DEFAULT_ASSISTANT_NAME;
   const assistantParams = { assistantName };
@@ -1207,24 +1214,141 @@ export default function AgentesPage() {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="grid gap-3 text-sm">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="font-medium text-zinc-900">{t("settings.whatsapp.provider")}</p>
-                <p className="text-zinc-500">{settings.data?.whatsapp?.provider ?? t("common.pending")}</p>
+          <CardContent className="grid gap-4 text-sm">
+            {whatsappConn.query.isLoading ? (
+              <div className="grid gap-2">
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-10 w-full" />
               </div>
-              <Badge variant={whatsappStatus.variant}>{whatsappStatus.label}</Badge>
-            </div>
-            <div className="grid gap-2 sm:grid-cols-2">
-              <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2">
-                <p className="font-medium text-zinc-900">{t("settings.whatsapp.connection")}</p>
-                <p className="mt-0.5 text-zinc-500">{settings.data?.whatsapp?.connection_mode ?? t("common.pending")}</p>
-              </div>
-              <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2">
-                <p className="font-medium text-zinc-900">{t("settings.whatsapp.numberType")}</p>
-                <p className="mt-0.5 text-zinc-500">{settings.data?.whatsapp?.number_kind ?? t("settings.whatsapp.notInformed")}</p>
-              </div>
-            </div>
+            ) : conn?.is_connected ? (
+              <>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-zinc-900">{t("settings.whatsapp.phoneNumber")}</p>
+                    <p className="text-zinc-500">{conn.phone_number ?? t("settings.whatsapp.notInformed")}</p>
+                  </div>
+                  <Badge variant="success">{t("settings.whatsapp.connected")}</Badge>
+                </div>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  disabled={whatsappConn.disconnect.isPending}
+                  onClick={() => whatsappConn.disconnect.mutate(undefined, {
+                    onError: () => { /* toast shown by hook */ },
+                  })}
+                >
+                  {whatsappConn.disconnect.isPending ? (
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  ) : null}
+                  {t("settings.whatsapp.disconnect")}
+                </Button>
+              </>
+            ) : conn?.status === "connecting" && conn?.connection_mode === "qr" && conn?.qr_code ? (
+              <>
+                <Badge variant="warning" className="w-fit">{t("settings.whatsapp.connecting")}</Badge>
+                <div className="flex flex-col items-center gap-3">
+                  <img
+                    src={conn.qr_code}
+                    alt="WhatsApp QR code"
+                    className="h-48 w-48 rounded-lg border border-zinc-200"
+                  />
+                  <p className="text-center text-xs text-zinc-500">{t("settings.whatsapp.qr.description")}</p>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => whatsappConn.disconnect.mutate()}
+                  >
+                    {t("settings.whatsapp.back")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    disabled={whatsappConn.startQr.isPending}
+                    onClick={() => whatsappConn.startQr.mutate()}
+                  >
+                    {whatsappConn.startQr.isPending ? (
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    ) : <RefreshCw className="mr-2 h-4 w-4" />}
+                    {t("settings.whatsapp.qr.refresh")}
+                  </Button>
+                </div>
+              </>
+            ) : conn?.status === "connecting" && conn?.connection_mode === "pairing_code" && pairingCode ? (
+              <>
+                <Badge variant="warning" className="w-fit">{t("settings.whatsapp.connecting")}</Badge>
+                <div className="flex flex-col items-center gap-3">
+                  <p className="text-sm font-medium text-zinc-900">{t("settings.whatsapp.pairing.title")}</p>
+                  <p className="rounded-lg bg-zinc-100 px-6 py-4 text-center font-mono text-2xl font-bold tracking-widest text-zinc-900">
+                    {pairingCode}
+                  </p>
+                  <p className="text-center text-xs text-zinc-500">{t("settings.whatsapp.pairing.description")}</p>
+                </div>
+                <Button variant="outline" onClick={() => { setPairingCode(null); setWhatsappMode("idle"); whatsappConn.disconnect.mutate(); }}>
+                  {t("settings.whatsapp.back")}
+                </Button>
+              </>
+            ) : whatsappMode === "pairing_input" ? (
+              <>
+                <div className="grid gap-1.5">
+                  <label className="text-sm font-medium text-zinc-900" htmlFor="pairingPhone">
+                    {t("settings.whatsapp.pairing.phoneLabel")}
+                  </label>
+                  <Input
+                    id="pairingPhone"
+                    type="tel"
+                    inputMode="tel"
+                    placeholder={t("settings.whatsapp.pairing.phonePlaceholder")}
+                    value={pairingPhone}
+                    onChange={(e) => setPairingPhone(e.target.value)}
+                  />
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <Button variant="outline" onClick={() => setWhatsappMode("idle")}>
+                    {t("settings.whatsapp.back")}
+                  </Button>
+                  <Button
+                    disabled={!pairingPhone.trim() || whatsappConn.startPairing.isPending}
+                    onClick={() => {
+                      whatsappConn.startPairing.mutate(pairingPhone.trim(), {
+                        onSuccess: (data) => {
+                          if (data.pairing_code) setPairingCode(data.pairing_code);
+                          setWhatsappMode("idle");
+                        },
+                      });
+                    }}
+                  >
+                    {whatsappConn.startPairing.isPending ? (
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    ) : null}
+                    {t("settings.whatsapp.pairing.action")}
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center justify-between gap-3">
+                  <Badge variant="secondary">{whatsappStatus.label}</Badge>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <Button
+                    variant="outline"
+                    disabled={whatsappConn.startQr.isPending}
+                    onClick={() => whatsappConn.startQr.mutate()}
+                  >
+                    {whatsappConn.startQr.isPending ? (
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    ) : null}
+                    {t("settings.whatsapp.connectQr")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => { setPairingPhone(""); setWhatsappMode("pairing_input"); }}
+                  >
+                    {t("settings.whatsapp.connectPairing")}
+                  </Button>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </section>
