@@ -4,7 +4,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Bot,
+  CalendarCheck,
   CalendarPlus,
+  CalendarX,
   Check,
   CheckCheck,
   CheckCircle2,
@@ -49,7 +51,7 @@ import {
   type ShadowSuggestion,
 } from "@/hooks/useConversations";
 import { useClient } from "@/hooks/useClients";
-import { useClientAppointments } from "@/hooks/useAppointments";
+import { useAppointments, useClientAppointments } from "@/hooks/useAppointments";
 import { useServices } from "@/hooks/useServices";
 import { useCampaignTemplates, type CampaignTemplate } from "@/hooks/useCampaignTemplates";
 import { supabase } from "@/lib/supabase";
@@ -322,6 +324,12 @@ export default function ConversasPage() {
   const [scheduleSendWhatsapp, setScheduleSendWhatsapp] = useState(false);
   const [isCreatingSchedule, setIsCreatingSchedule] = useState(false);
 
+  // Reschedule / cancel appointment state
+  const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
+  const [rescheduleDate, setRescheduleDate] = useState("");
+  const [isRescheduling, setIsRescheduling] = useState(false);
+  const [isCancellingAppt, setIsCancellingAppt] = useState(false);
+
   const conversationList = useMemo(() => conversations.data ?? [], [conversations.data]);
 
   const orderedConversationList = useMemo(() => {
@@ -359,6 +367,17 @@ export default function ConversasPage() {
   );
 
   const isSelectedUrgent = selectedConversation ? isConversationUrgent(selectedConversation) : false;
+
+  const clientAppts = useClientAppointments(professionalId, selectedConversation?.client_id ?? null);
+  const appointmentActions = useAppointments(professionalId);
+  const upcomingAppointment = useMemo(() => {
+    const now = new Date();
+    return (
+      (clientAppts.data ?? [])
+        .filter((a) => a.status === "agendado" && new Date(a.scheduled_at) > now)
+        .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime())[0] ?? null
+    );
+  }, [clientAppts.data]);
 
   const messages = useConversationMessages(professionalId, selectedConversationId);
   const selectedSuggestion = useMemo(
@@ -404,6 +423,53 @@ export default function ConversasPage() {
       await actions.sendManualMessage({ conversationId: selectedConversation.id, text: manualText.trim() });
     }
     setManualText("");
+  }
+
+  async function handleCancelAppointment() {
+    if (!upcomingAppointment) return;
+    setIsCancellingAppt(true);
+    try {
+      await appointmentActions.cancelAppointment({
+        appointmentId: upcomingAppointment.id,
+        reason: "Cancelado pelo profissional via conversa",
+      });
+      toast.success(t("conversations.appointment.cancelSuccess"));
+    } catch {
+      toast.error(t("conversations.appointment.cancelError"));
+    } finally {
+      setIsCancellingAppt(false);
+    }
+  }
+
+  function handleOpenReschedule() {
+    setRescheduleDate(defaultScheduledAt());
+    setIsRescheduleOpen(true);
+  }
+
+  async function handleReschedule() {
+    if (!upcomingAppointment || !rescheduleDate) return;
+    setIsRescheduling(true);
+    try {
+      await appointmentActions.cancelAppointment({
+        appointmentId: upcomingAppointment.id,
+        reason: "Reagendado pelo profissional via conversa",
+      });
+      const { error } = await supabase.rpc("create_appointment", {
+        p_client_id: upcomingAppointment.client_id!,
+        p_service_id: upcomingAppointment.service_id ?? null,
+        p_scheduled_at: new Date(rescheduleDate).toISOString(),
+        p_duration_minutes: upcomingAppointment.duration_minutes ?? null,
+        p_notes: upcomingAppointment.notes ?? null,
+      });
+      if (error) throw error;
+      await queryClient.invalidateQueries({ queryKey: ["crm", "appointments", professionalId] });
+      toast.success(t("conversations.reschedule.success"));
+      setIsRescheduleOpen(false);
+    } catch {
+      toast.error(t("conversations.reschedule.error"));
+    } finally {
+      setIsRescheduling(false);
+    }
   }
 
   function handleOpenSchedule() {
@@ -671,6 +737,29 @@ export default function ConversasPage() {
                         <CalendarPlus className="h-4 w-4" />
                         {t("conversations.schedule.button")}
                       </Button>
+                    ) : null}
+                    {upcomingAppointment ? (
+                      <>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="gap-2"
+                          onClick={handleOpenReschedule}
+                        >
+                          <CalendarCheck className="h-4 w-4" />
+                          {t("conversations.reschedule.button")}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="gap-2 border-red-300 text-red-600 hover:bg-red-50"
+                          disabled={isCancellingAppt}
+                          onClick={handleCancelAppointment}
+                        >
+                          <CalendarX className="h-4 w-4" />
+                          {t("conversations.appointment.cancel")}
+                        </Button>
+                      </>
                     ) : null}
                     {/* Resolver / Reabrir */}
                     {selectedConversation.status === "resolved" ? (
@@ -942,6 +1031,51 @@ export default function ConversasPage() {
           </div>
         ) : null}
       </div>
+
+      {/* Reschedule Sheet */}
+      <Sheet open={isRescheduleOpen} onOpenChange={setIsRescheduleOpen}>
+        <SheetContent side="right" className="w-full max-w-md overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>{t("conversations.reschedule.title")}</SheetTitle>
+            {upcomingAppointment ? (
+              <SheetDescription>
+                {new Intl.DateTimeFormat(undefined, {
+                  day: "2-digit",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }).format(new Date(upcomingAppointment.scheduled_at))}
+              </SheetDescription>
+            ) : null}
+          </SheetHeader>
+
+          <div className="mt-6 space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-zinc-700">
+                {t("conversations.reschedule.datetime")}
+              </label>
+              <input
+                type="datetime-local"
+                className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 shadow-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                value={rescheduleDate}
+                onChange={(e) => setRescheduleDate(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <SheetFooter className="mt-6">
+            <Button
+              type="button"
+              className="w-full"
+              disabled={isRescheduling || !rescheduleDate}
+              onClick={handleReschedule}
+            >
+              {t("conversations.reschedule.submit")}
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
 
       {/* Schedule Sheet */}
       <Sheet open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
