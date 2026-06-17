@@ -377,6 +377,9 @@ const ptBR = {
   "conversations.note.placeholder": "Anotação interna (não enviada ao cliente)...",
   "conversations.note.save": "Salvar nota",
   "conversations.note.disclaimer": "Nota interna — não será enviada ao cliente.",
+  "conversations.manual.placeholderSlash": "Digite / para usar uma resposta pronta...",
+  "conversations.template.search": "Buscar template...",
+  "conversations.template.empty": "Nenhum template encontrado.",
 
   "finance.eyebrow": "Financeiro",
   "finance.title": "Financeiro",
@@ -1516,6 +1519,9 @@ const enUS: Record<TranslationKey, string> = {
   "conversations.note.placeholder": "Internal note (not sent to client)...",
   "conversations.note.save": "Save note",
   "conversations.note.disclaimer": "Internal note — will not be sent to the client.",
+  "conversations.manual.placeholderSlash": "Type / to use a canned response...",
+  "conversations.template.search": "Search template...",
+  "conversations.template.empty": "No templates found.",
 
   "finance.eyebrow": "Finance",
   "finance.title": "Finance",
@@ -2641,6 +2647,9 @@ const es419: Record<TranslationKey, string> = {
   "conversations.note.placeholder": "Nota interna (no enviada al cliente)...",
   "conversations.note.save": "Guardar nota",
   "conversations.note.disclaimer": "Nota interna — no será enviada al cliente.",
+  "conversations.manual.placeholderSlash": "Escribe / para usar una respuesta rápida...",
+  "conversations.template.search": "Buscar plantilla...",
+  "conversations.template.empty": "No se encontraron plantillas.",
 
   "finance.eyebrow": "Finanzas",
   "finance.title": "Finanzas",

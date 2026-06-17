@@ -51,6 +51,7 @@ import {
 import { useClient } from "@/hooks/useClients";
 import { useClientAppointments } from "@/hooks/useAppointments";
 import { useServices } from "@/hooks/useServices";
+import { useCampaignTemplates, type CampaignTemplate } from "@/hooks/useCampaignTemplates";
 import { supabase } from "@/lib/supabase";
 import { useI18n, type TranslationKey } from "@/i18n";
 
@@ -300,11 +301,14 @@ export default function ConversasPage() {
   const suggestions = useShadowSuggestions(professionalId);
   const actions = useConversationActions(professionalId);
   const services = useServices(professionalId);
+  const campaignTemplates = useCampaignTemplates("whatsapp");
 
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(false);
   const [manualText, setManualText] = useState("");
   const [replyMode, setReplyMode] = useState<"message" | "note">("message");
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [templateQuery, setTemplateQuery] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "open" | "resolved">("open");
   const [showContactPanel, setShowContactPanel] = useState(true);
@@ -814,6 +818,59 @@ export default function ConversasPage() {
                   </button>
                 </div>
 
+                {/* Canned responses popover */}
+                {showTemplates && replyMode === "message" ? (
+                  <div className="mb-2 rounded-lg border border-zinc-200 bg-white shadow-lg">
+                    <div className="flex items-center gap-2 border-b border-zinc-100 px-3 py-2">
+                      <Search className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
+                      <input
+                        autoFocus
+                        type="text"
+                        className="flex-1 text-sm text-zinc-800 outline-none placeholder:text-zinc-400"
+                        placeholder={t("conversations.template.search")}
+                        value={templateQuery}
+                        onChange={(e) => setTemplateQuery(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        className="text-zinc-400 hover:text-zinc-600"
+                        onClick={() => { setShowTemplates(false); setTemplateQuery(""); }}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <ul className="max-h-48 overflow-y-auto py-1">
+                      {(campaignTemplates.data ?? [])
+                        .filter((tpl: CampaignTemplate) =>
+                          !templateQuery ||
+                          tpl.name.toLowerCase().includes(templateQuery.toLowerCase()) ||
+                          tpl.content.toLowerCase().includes(templateQuery.toLowerCase()),
+                        )
+                        .map((tpl: CampaignTemplate) => (
+                          <li key={tpl.id}>
+                            <button
+                              type="button"
+                              className="w-full px-3 py-2 text-left hover:bg-violet-50"
+                              onClick={() => {
+                                setManualText(tpl.content);
+                                setShowTemplates(false);
+                                setTemplateQuery("");
+                              }}
+                            >
+                              <p className="text-sm font-medium text-zinc-900">{tpl.name}</p>
+                              <p className="mt-0.5 line-clamp-1 text-xs text-zinc-500">{tpl.content}</p>
+                            </button>
+                          </li>
+                        ))}
+                      {(campaignTemplates.data ?? []).length === 0 ? (
+                        <li className="px-3 py-4 text-center text-xs text-zinc-400">
+                          {t("conversations.template.empty")}
+                        </li>
+                      ) : null}
+                    </ul>
+                  </div>
+                ) : null}
+
                 <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
                   <textarea
                     className={cn(
@@ -825,10 +882,21 @@ export default function ConversasPage() {
                     placeholder={
                       replyMode === "note"
                         ? t("conversations.note.placeholder")
-                        : t("conversations.manual.placeholder")
+                        : replyMode === "message"
+                          ? t("conversations.manual.placeholderSlash")
+                          : t("conversations.manual.placeholder")
                     }
                     value={manualText}
-                    onChange={(event) => setManualText(event.target.value)}
+                    onChange={(event) => {
+                      const val = event.target.value;
+                      setManualText(val);
+                      if (replyMode === "message" && val === "/") {
+                        setShowTemplates(true);
+                        setTemplateQuery("");
+                      } else if (val === "" || !val.startsWith("/")) {
+                        setShowTemplates(false);
+                      }
+                    }}
                     disabled={
                       (replyMode === "message" && selectedConversation.rosane_status !== "human_takeover")
                       || actions.isSendingManualMessage
