@@ -364,6 +364,14 @@ const ptBR = {
   "conversations.message.read": "Lido",
   "conversations.message.failed": "Falhou",
 
+  "conversations.filter.all": "Todas",
+  "conversations.filter.open": "Abertas",
+  "conversations.filter.resolved": "Resolvidas",
+  "conversations.actions.resolve": "Resolver",
+  "conversations.actions.reopen": "Reabrir",
+  "conversations.actions.resolved": "Conversa resolvida.",
+  "conversations.actions.reopened": "Conversa reaberta.",
+
   "finance.eyebrow": "Financeiro",
   "finance.title": "Financeiro",
   "finance.subtitle": "Entradas, pendencias e despesas do mes.",
@@ -1488,6 +1496,15 @@ const enUS: Record<TranslationKey, string> = {
   "conversations.message.delivered": "Delivered",
   "conversations.message.read": "Read",
   "conversations.message.failed": "Failed",
+
+  "conversations.filter.all": "All",
+  "conversations.filter.open": "Open",
+  "conversations.filter.resolved": "Resolved",
+  "conversations.actions.resolve": "Resolve",
+  "conversations.actions.reopen": "Reopen",
+  "conversations.actions.resolved": "Conversation resolved.",
+  "conversations.actions.reopened": "Conversation reopened.",
+
   "finance.eyebrow": "Finance",
   "finance.title": "Finance",
   "finance.subtitle": "Income, pending payments, and monthly expenses.",
@@ -2598,6 +2615,15 @@ const es419: Record<TranslationKey, string> = {
   "conversations.message.delivered": "Entregado",
   "conversations.message.read": "Leído",
   "conversations.message.failed": "Fallido",
+
+  "conversations.filter.all": "Todas",
+  "conversations.filter.open": "Abiertas",
+  "conversations.filter.resolved": "Resueltas",
+  "conversations.actions.resolve": "Resolver",
+  "conversations.actions.reopen": "Reabrir",
+  "conversations.actions.resolved": "Conversación resuelta.",
+  "conversations.actions.reopened": "Conversación reabierta.",
+
   "finance.eyebrow": "Finanzas",
   "finance.title": "Finanzas",
   "finance.subtitle": "Ingresos, pendientes y gastos del mes.",

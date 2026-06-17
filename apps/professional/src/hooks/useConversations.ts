@@ -9,6 +9,8 @@ export interface ConversationListItem {
   channel: string;
   phone: string | null;
   rosane_status: "active" | "shadow" | "paused" | "human_takeover";
+  status: "open" | "resolved";
+  resolved_at: string | null;
   last_message_at: string | null;
   last_message_preview: string | null;
   unread_count: number;
@@ -72,7 +74,7 @@ export function useConversations(professionalId: string | null) {
 
       const { data, error } = await supabase
         .from("conversations")
-        .select("id, professional_id, client_id, channel, phone, rosane_status, last_message_at, last_message_preview, unread_count, created_at, clients(full_name)")
+        .select("id, professional_id, client_id, channel, phone, rosane_status, status, resolved_at, last_message_at, last_message_preview, unread_count, created_at, clients(full_name)")
         .eq("professional_id", professionalId)
         .order("last_message_at", { ascending: false, nullsFirst: false })
         .limit(60);
@@ -241,13 +243,39 @@ export function useConversationActions(professionalId: string | null) {
     onSuccess: (data) => invalidate(data.conversation_id),
   });
 
+  const resolve = useMutation({
+    mutationFn: async (conversationId: string) => {
+      const { data, error } = await supabase.rpc("resolve_conversation", {
+        p_conversation_id: conversationId,
+      });
+      if (error) throw error;
+      return data as { ok: boolean; conversation_id: string; status: string };
+    },
+    onSuccess: (data) => invalidate(data.conversation_id),
+  });
+
+  const reopen = useMutation({
+    mutationFn: async (conversationId: string) => {
+      const { data, error } = await supabase.rpc("reopen_conversation", {
+        p_conversation_id: conversationId,
+      });
+      if (error) throw error;
+      return data as { ok: boolean; conversation_id: string; status: string };
+    },
+    onSuccess: (data) => invalidate(data.conversation_id),
+  });
+
   return {
     takeOverConversation: takeOver.mutateAsync,
     releaseConversation: release.mutateAsync,
     sendManualMessage: sendManualMessage.mutateAsync,
+    resolveConversation: resolve.mutateAsync,
+    reopenConversation: reopen.mutateAsync,
     isTakingOver: takeOver.isPending,
     isReleasing: release.isPending,
     isSendingManualMessage: sendManualMessage.isPending,
-    actionError: takeOver.error ?? release.error ?? sendManualMessage.error,
+    isResolving: resolve.isPending,
+    isReopening: reopen.isPending,
+    actionError: takeOver.error ?? release.error ?? sendManualMessage.error ?? resolve.error ?? reopen.error,
   };
 }

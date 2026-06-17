@@ -7,8 +7,10 @@ import {
   CalendarPlus,
   Check,
   CheckCheck,
+  CheckCircle2,
   ChevronRight,
   MessageSquare,
+  RefreshCw,
   Search,
   Send,
   ShieldAlert,
@@ -303,6 +305,7 @@ export default function ConversasPage() {
   const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(false);
   const [manualText, setManualText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "open" | "resolved">("open");
   const [showContactPanel, setShowContactPanel] = useState(true);
 
   // Schedule sheet state
@@ -326,14 +329,18 @@ export default function ConversasPage() {
   }, [conversationList]);
 
   const filteredConversationList = useMemo(() => {
-    if (!searchQuery.trim()) return orderedConversationList;
+    let list = orderedConversationList;
+    if (statusFilter !== "all") {
+      list = list.filter((c) => c.status === statusFilter);
+    }
+    if (!searchQuery.trim()) return list;
     const q = searchQuery.toLowerCase();
-    return orderedConversationList.filter(
+    return list.filter(
       (c) =>
         c.client_name?.toLowerCase().includes(q) ||
         c.phone?.toLowerCase().includes(q),
     );
-  }, [orderedConversationList, searchQuery]);
+  }, [orderedConversationList, searchQuery, statusFilter]);
 
   useEffect(() => {
     if (!selectedConversationId && conversationList.length > 0) {
@@ -370,6 +377,18 @@ export default function ConversasPage() {
   async function handleRelease() {
     if (!selectedConversation) return;
     await actions.releaseConversation({ conversationId: selectedConversation.id });
+  }
+
+  async function handleResolve() {
+    if (!selectedConversation) return;
+    await actions.resolveConversation(selectedConversation.id);
+    toast.success(t("conversations.actions.resolved"));
+  }
+
+  async function handleReopen() {
+    if (!selectedConversation) return;
+    await actions.reopenConversation(selectedConversation.id);
+    toast.success(t("conversations.actions.reopened"));
   }
 
   async function handleSendManualMessage() {
@@ -453,6 +472,25 @@ export default function ConversasPage() {
       >
         {/* ── Conversation list ── */}
         <section className={cn("space-y-3", isMobileDetailOpen ? "hidden lg:block" : "block")}>
+          {/* Status filter tabs */}
+          <div className="flex rounded-lg border border-zinc-200 bg-white p-1 shadow-sm">
+            {(["open", "all", "resolved"] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setStatusFilter(tab)}
+                className={cn(
+                  "flex-1 rounded-md py-1.5 text-xs font-medium transition-colors",
+                  statusFilter === tab
+                    ? "bg-violet-700 text-white shadow-sm"
+                    : "text-zinc-500 hover:text-zinc-800",
+                )}
+              >
+                {tab === "open" ? t("conversations.filter.open") : tab === "resolved" ? t("conversations.filter.resolved") : t("conversations.filter.all")}
+              </button>
+            ))}
+          </div>
+
           {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
@@ -613,7 +651,7 @@ export default function ConversasPage() {
                       <span className="text-xs text-red-600">{t("conversations.actions.error")}</span>
                     ) : null}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     {selectedConversation.client_id ? (
                       <Button
                         type="button"
@@ -625,6 +663,31 @@ export default function ConversasPage() {
                         {t("conversations.schedule.button")}
                       </Button>
                     ) : null}
+                    {/* Resolver / Reabrir */}
+                    {selectedConversation.status === "resolved" ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="gap-2"
+                        disabled={actions.isReopening}
+                        onClick={handleReopen}
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                        {t("conversations.actions.reopen")}
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="gap-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                        disabled={actions.isResolving}
+                        onClick={handleResolve}
+                      >
+                        <CheckCircle2 className="h-4 w-4" />
+                        {t("conversations.actions.resolve")}
+                      </Button>
+                    )}
+                    {/* TakeOver / Release */}
                     {selectedConversation.rosane_status === "human_takeover" ? (
                       <Button
                         type="button"
