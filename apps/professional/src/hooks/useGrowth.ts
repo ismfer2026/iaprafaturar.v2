@@ -5,6 +5,7 @@ import { crmKeys } from "./queryKeys";
 export interface CampaignRow {
   id: string;
   name: string;
+  message: string | null;
   segment_type: string;
   status: string;
   scheduled_at: string | null;
@@ -98,7 +99,7 @@ export function useCampaigns(professionalId: string | null) {
   const query = useQuery({
     queryKey: key,
     enabled: Boolean(professionalId),
-    queryFn: () => selectRows<CampaignRow>("campaigns", "id,name,segment_type,status,scheduled_at,created_at", professionalId as string),
+    queryFn: () => selectRows<CampaignRow>("campaigns", "id,name,message,segment_type,status,scheduled_at,created_at", professionalId as string),
   });
   const invalidate = () => queryClient.invalidateQueries({ queryKey: key });
   const create = useMutation({
@@ -148,13 +149,28 @@ export function useCampaigns(professionalId: string | null) {
     },
     onSuccess: invalidate,
   });
+  const update = useMutation({
+    mutationFn: async (input: { campaignId: string; name: string; message: string; segment: string; scheduledFor?: string | null }) => {
+      const { data, error } = await supabase.rpc("update_campaign", {
+        p_campaign_id: input.campaignId,
+        p_name: input.name,
+        p_message: input.message,
+        p_segment_type: input.segment,
+        p_scheduled_for: input.scheduledFor ?? null,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: invalidate,
+  });
   return {
     ...query,
     create: create.mutateAsync,
     run: run.mutateAsync,
     schedule: schedule.mutateAsync,
     cancel: cancel.mutateAsync,
-    isSaving: create.isPending || run.isPending || schedule.isPending || cancel.isPending,
+    update: update.mutateAsync,
+    isSaving: create.isPending || run.isPending || schedule.isPending || cancel.isPending || update.isPending,
   };
 }
 
