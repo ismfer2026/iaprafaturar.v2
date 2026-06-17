@@ -71,6 +71,22 @@ function buildConfirmationText(input: {
   ].join('\n')
 }
 
+function buildCancellationText(input: {
+  assistantName: string
+  clientName: string
+  scheduledAt: string
+  serviceName?: string | null
+}): string {
+  const serviceText = input.serviceName ? ` de ${input.serviceName}` : ''
+  return [
+    `Ola, ${input.clientName}. Aqui e ${input.assistantName}.`,
+    '',
+    `Seu atendimento${serviceText} agendado para ${formatWhen(input.scheduledAt)} foi cancelado.`,
+    '',
+    'Entre em contato caso queira reagendar.',
+  ].join('\n')
+}
+
 function classifyAppointmentReply(text: string | null | undefined): 'confirm' | 'cancel' | 'reschedule' | 'unknown' {
   const normalized = String(text ?? '')
     .normalize('NFD')
@@ -220,6 +236,81 @@ async function sendConfirmationForAppointment(
   return { sent: true }
 }
 
+async function sendCancellationForAppointment(
+  supabase: SupabaseClient,
+  appointmentId: string,
+  dryRun: boolean,
+): Promise<{ sent: boolean; skippedReason?: string }> {
+  const { appointment, client, service } = await loadAppointmentBundle(supabase, appointmentId)
+
+  if (appointment.status !== 'cancelado' && appointment.status !== 'reagendado') {
+    return { sent: false, skippedReason: `invalid_status:${appointment.status}` }
+  }
+
+  if (!client?.phone_whatsapp) {
+    return { sent: false, skippedReason: 'missing_client_phone' }
+  }
+
+  const instance = await getConnectedProfessionalWhatsappInstance(supabase, appointment.professional_id)
+  if (!instance) {
+    return { sent: false, skippedReason: 'no_professional_instance' }
+  }
+
+  const baseIdempotencyKey = buildAppointmentAgentIdempotencyKey({
+    agentSlug: AGENT_SLUG,
+    appointmentId: appointment.id,
+    mode: 'send_cancellation',
+  })
+
+  const claim = await claimIdempotency(
+    supabase,
+    dryRun ? `dry-run:${baseIdempotencyKey}:${crypto.randomUUID()}` : baseIdempotencyKey,
+    { appointment_id: appointment.id, dry_run: dryRun },
+  )
+
+  if (!claim.claimed) {
+    return { sent: false, skippedReason: 'duplicate_cancellation_claim' }
+  }
+
+  const config = await getRosaneAgentConfig(supabase, appointment.professional_id)
+  const conversation = await resolveOrCreateWhatsappConversation(supabase, {
+    professionalId: appointment.professional_id,
+    clientId: client.id,
+    phone: client.phone_whatsapp,
+    preview: 'cancelamento de agendamento',
+  })
+
+  await createConversationContext(supabase, {
+    professionalId: appointment.professional_id,
+    conversationId: conversation.id,
+    clientId: client.id,
+    contextType: 'appointment_confirmation',
+    sourceFunction: AGENT_SLUG,
+    refType: 'appointment',
+    refId: appointment.id,
+    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    metadata: { mode: 'send_cancellation' },
+  })
+
+  await sendMessageCore(supabase, {
+    source_webhook: 'professional',
+    professional_id: appointment.professional_id,
+    instance_name: instance.instanceName,
+    to: client.phone_whatsapp,
+    text: buildCancellationText({
+      assistantName: config.agentName,
+      clientName: client.full_name,
+      scheduledAt: appointment.scheduled_at,
+      serviceName: service?.name ?? null,
+    }),
+    actor_type: 'ai',
+    agent_slug: AGENT_SLUG,
+    dry_run: dryRun,
+  })
+
+  return { sent: true }
+}
+
 async function processFallback(
   supabase: SupabaseClient,
   input: AppointmentConfirmationAgentInput,
@@ -328,6 +419,16 @@ Deno.serve(async (request) => {
 
     if (input.mode === 'send_confirmation') {
       const result = await sendConfirmationForAppointment(supabase, input.appointment_id!, dryRun)
+      await completeAgentExecution(supabase, execution.id, { status: result.sent ? 'success' : 'skipped' })
+      return jsonResponse(validateAppointmentConfirmationAgentOutput({
+        processed: result.sent,
+        sent: result.sent ? 1 : 0,
+        skipped_reason: result.skippedReason,
+      }))
+    }
+
+    if (input.mode === 'send_cancellation') {
+      const result = await sendCancellationForAppointment(supabase, input.appointment_id!, dryRun)
       await completeAgentExecution(supabase, execution.id, { status: result.sent ? 'success' : 'skipped' })
       return jsonResponse(validateAppointmentConfirmationAgentOutput({
         processed: result.sent,

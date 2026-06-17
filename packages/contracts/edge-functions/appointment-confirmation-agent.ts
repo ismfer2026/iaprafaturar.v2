@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const AppointmentConfirmationModeSchema = z.enum(['send_confirmation', 'fallback', 'process_reply'])
+export const AppointmentConfirmationModeSchema = z.enum(['send_confirmation', 'send_cancellation', 'fallback', 'process_reply'])
 
 export const AppointmentConfirmationAgentInputSchema = z.object({
   mode: AppointmentConfirmationModeSchema,
@@ -9,11 +9,11 @@ export const AppointmentConfirmationAgentInputSchema = z.object({
   message_event_id: z.string().uuid().optional(),
   dry_run: z.boolean().optional(),
 }).strict().superRefine((value, ctx) => {
-  if (value.mode === 'send_confirmation' && !value.appointment_id) {
+  if ((value.mode === 'send_confirmation' || value.mode === 'send_cancellation') && !value.appointment_id) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['appointment_id'],
-      message: 'appointment_id is required for send_confirmation',
+      message: 'appointment_id is required for send_confirmation and send_cancellation',
     })
   }
 

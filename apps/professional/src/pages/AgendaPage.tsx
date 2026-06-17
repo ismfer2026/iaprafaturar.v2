@@ -783,6 +783,18 @@ export default function AgendaPage() {
     setSelectedAppointment(null);
   }
 
+  async function handleCancelWithWhatsapp() {
+    if (!selectedAppointment) return;
+    try {
+      await agendaQuery.cancelAppointment({ appointmentId: selectedAppointment.id, reason: t("agenda.cancelReason") });
+      await agendaQuery.sendWhatsappCancellation({ appointmentId: selectedAppointment.id });
+      toast.success(t("agenda.whatsapp.cancellationSent"));
+    } catch {
+      toast.error(t("agenda.whatsapp.cancellationError"));
+    }
+    setSelectedAppointment(null);
+  }
+
   async function handleCancelSeries(scope: "from_here" | "all") {
     if (!selectedAppointment?.series_id) return;
     await agendaQuery.cancelAppointmentSeries({
@@ -1289,6 +1301,15 @@ export default function AgendaPage() {
                     >
                       <XCircle className="h-4 w-4" />
                       {t("agenda.cancelAppointment")}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="gap-2 border-red-300 text-red-700 hover:bg-red-50"
+                      onClick={handleCancelWithWhatsapp}
+                      disabled={agendaQuery.isCancellingAppointment || agendaQuery.isSendingWhatsappCancellation}
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      {t("agenda.whatsapp.sendCancellation")}
                     </Button>
                     <Button
                       variant="outline"
