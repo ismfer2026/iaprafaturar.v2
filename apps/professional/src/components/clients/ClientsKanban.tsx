@@ -80,7 +80,7 @@ function DraggableCard({
 function GhostCard({ client }: { client: Client }) {
   const { t } = useI18n();
   return (
-    <Card className="w-[260px] rotate-2 cursor-grabbing rounded-lg border-violet-300 bg-white shadow-xl ring-2 ring-violet-300 select-none">
+    <Card className="w-[260px] rotate-2 cursor-grabbing rounded-lg border-emerald-300 bg-white shadow-xl ring-2 ring-emerald-300 select-none">
       <CardContent className="p-3">
         <h3 className="truncate text-sm font-semibold text-zinc-950">{client.full_name}</h3>
         <p className="truncate text-xs text-zinc-500">
@@ -119,7 +119,7 @@ function KanbanColumn({
       className={[
         "flex min-h-[120px] min-w-[260px] flex-col gap-2 rounded-lg border p-3 transition-colors",
         isOver
-          ? "border-violet-400 bg-violet-50/60"
+          ? "border-emerald-400 bg-emerald-50/60"
           : "border-zinc-200 bg-zinc-50/60",
       ].join(" ")}
     >
@@ -141,7 +141,7 @@ function KanbanColumn({
           <div
             className={[
               "rounded-md border border-dashed p-4 text-center text-xs transition-colors",
-              isOver ? "border-violet-300 text-violet-400" : "border-zinc-200 text-zinc-400",
+              isOver ? "border-emerald-300 text-emerald-500" : "border-zinc-200 text-zinc-400",
             ].join(" ")}
           >
             {isOver ? "Soltar aqui" : t("clients.kanban.empty")}

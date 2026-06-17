@@ -1,5 +1,14 @@
 # PRD — Frontend v2 (Todas as Rotas e Componentes)
 
+## Implementação Fase 26 — Fechamento frontend
+
+- Rotas e aliases canônicos de professional/admin/client são validados por `npm test`.
+- Os três apps usam code splitting por fornecedores; nenhum chunk minificado ultrapassa 500 kB no build final.
+- O PWA profissional não armazena respostas autenticadas do Supabase no service worker.
+- O reexport órfão `CadastroPage.tsx` foi removido; `/cadastro` usa diretamente a tela canônica.
+- Chromium local validou as jornadas declaradas em 390px e desktop; o gate físico Safari iOS/Android Chrome permanece externo.
+- O gate físico Safari iOS/Android Chrome está documentado em `PHASE-26-RUNBOOK.md`.
+
 ---
 
 ## Governança de rotas

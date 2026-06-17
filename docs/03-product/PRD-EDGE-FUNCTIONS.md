@@ -2,6 +2,15 @@
 
 _Todas as Edge Functions com responsabilidade, autenticação, inputs/outputs e dependências._
 
+## Implementação Fase 26 — Fechamento de Edge Functions
+
+- Diretórios locais e funções ativas foram reconciliados.
+- `invite-team-member` foi endurecida com contrato Zod, erros curados e publicada no remoto.
+- `public-booking-handler` foi corrigida e publicada para retornar `404` curado em slug inexistente.
+- O diretório vazio legado `platform-create-checkout-session` foi removido; `platform-checkout` é o owner canônico.
+- As 41 funções locais e remotas foram reconciliadas sem diferença.
+- O audit executável impede handlers públicos sem rate limit/configuração explícita e diretórios incompletos.
+
 ---
 
 ## Convenções

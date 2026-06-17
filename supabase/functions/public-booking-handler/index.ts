@@ -136,6 +136,9 @@ Deno.serve(async (request) => {
       })
 
       if (error) throw error
+      if (data?.ok === false && data?.error === 'not_found') {
+        return publicJsonResponse(data, { status: 404 })
+      }
       return publicJsonResponse(data)
     }
 

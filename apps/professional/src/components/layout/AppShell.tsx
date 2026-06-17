@@ -35,7 +35,7 @@ function NavItem({ route, compact = false }: { route: ProfessionalRouteDefinitio
         cn(
           "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150",
           isActive
-            ? "bg-violet-50 text-violet-700 shadow-[inset_3px_0_0_0] shadow-violet-500"
+            ? "bg-emerald-50 text-emerald-800 shadow-[inset_3px_0_0_0] shadow-emerald-600"
             : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900",
         )
       }
@@ -45,7 +45,7 @@ function NavItem({ route, compact = false }: { route: ProfessionalRouteDefinitio
           <Icon
             className={cn(
               "h-4 w-4 shrink-0 transition-colors",
-              isActive ? "text-violet-600" : (route.iconColor ?? "text-zinc-400"),
+              isActive ? "text-emerald-700" : (route.iconColor ?? "text-zinc-400"),
             )}
           />
           {!compact && (
@@ -81,7 +81,7 @@ export default function AppShell() {
 
         {/* Header */}
         <div className="flex items-center justify-between gap-2 border-b border-zinc-100 px-4 py-4">
-          <span className="text-base font-bold tracking-tight text-violet-700">iaprafaturar</span>
+          <span className="text-base font-bold tracking-tight text-emerald-800">iaprafaturar</span>
           <LanguageSwitcher compact />
         </div>
 
@@ -141,10 +141,10 @@ export default function AppShell() {
               to={path}
               className={cn(
                 "flex min-w-0 flex-col items-center justify-center gap-1 px-1 py-2 text-[11px] font-medium transition-colors",
-                isActive ? "text-violet-700" : "text-zinc-400",
+                isActive ? "text-emerald-700" : "text-zinc-400",
               )}
             >
-              <Icon className={cn("h-5 w-5", isActive ? "text-violet-600" : "text-zinc-400")} />
+              <Icon className={cn("h-5 w-5", isActive ? "text-emerald-600" : "text-zinc-400")} />
               {t(labelKey)}
             </NavLink>
           );

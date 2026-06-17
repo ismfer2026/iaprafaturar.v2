@@ -2,6 +2,10 @@
 
 _Definido em 2026-06-04. Documento delta: o que muda, o que sai, o que consolida._
 
+## Decisão final da Fase 26
+
+Este documento é histórico/aspiracional e não autoriza criação ou remoção de contratos. A reconciliação final preservou os contratos implantados da v2, removeu somente um diretório local vazio sem consumidor e não executou `DROP` ou consolidação destrutiva.
+
 **Propósito:** O PRD-SCHEMA.md acumulou fielmente o que existe no v1 mais as adições necessárias. Este documento identifica redundâncias, remove o que não agrega e propõe um schema v2 mais enxuto — sem perder nenhuma funcionalidade real.
 
 ---

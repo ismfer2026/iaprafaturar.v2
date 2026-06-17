@@ -38,7 +38,19 @@ export default defineConfig({
   },
   build: {
     target: "es2022",
-    sourcemap: true
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules/@supabase")) return "supabase";
+          if (id.includes("node_modules/@tanstack")) return "query";
+          if (id.includes("node_modules/react-router")) return "router";
+          if (id.includes("node_modules/react") || id.includes("node_modules/scheduler")) return "react";
+          if (id.includes("node_modules/@radix-ui") || id.includes("packages/ui")) return "ui";
+          if (id.includes("node_modules/lucide-react")) return "icons";
+        }
+      }
+    }
   },
   server: {
     port: 5174,

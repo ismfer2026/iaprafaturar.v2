@@ -12,10 +12,15 @@
     "build:dev": "turbo run build:dev",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
+    "phase26:audit": "node scripts/phase26-audit.mjs",
+    "phase26:live": "node scripts/phase26-live.mjs",
+    "phase26:ui": "node scripts/phase26-ui.mjs",
+    "test": "npm run phase26:audit",
     "preview": "turbo run preview",
     "clean": "turbo run clean"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.0",
     "@typescript-eslint/eslint-plugin": "^8.60.1",
     "@typescript-eslint/parser": "^8.60.1",
     "eslint": "^8.57.1",

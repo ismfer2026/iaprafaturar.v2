@@ -28,16 +28,6 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/.*\.supabase\.co\//,
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "supabase-cache",
-              expiration: { maxEntries: 100, maxAgeSeconds: 5 * 60 },
-            },
-          },
-        ],
       },
     }),
   ],
@@ -49,6 +39,18 @@ export default defineConfig({
   build: {
     target: "es2022",
     sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules/@supabase")) return "supabase";
+          if (id.includes("node_modules/@tanstack")) return "query";
+          if (id.includes("node_modules/react-router")) return "router";
+          if (id.includes("node_modules/react") || id.includes("node_modules/scheduler")) return "react";
+          if (id.includes("node_modules/@radix-ui") || id.includes("packages/ui")) return "ui";
+          if (id.includes("node_modules/lucide-react")) return "icons";
+        },
+      },
+    },
   },
   server: {
     port: 5173,

@@ -2,6 +2,13 @@
 
 _Todas as tabelas com DDL completo, constraints, índices e RLS._
 
+## Implementação Fase 26 — Fechamento de schema
+
+- Migrations locais e remotas estão alinhadas até `20260614120000`.
+- `supabase db lint --linked --level error` concluiu sem erros.
+- Nenhuma migration destrutiva ou contrato paralelo foi necessário na Fase 26.
+- O banco v2 permanece como única fonte técnica de verdade.
+
 ---
 
 ## Convenções

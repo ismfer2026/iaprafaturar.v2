@@ -42,6 +42,13 @@ docs/**/*.txt
 # Artefatos efêmeros de desenvolvimento (gerados pelo squad, nunca aprovados)
 .squad/
 
+# Análises e pareceres intermediários gerados durante o desenvolvimento
+.analise-*.md
+.parecer-*.md
+.revisao-*.md
+.validacao-*.md
+.audit-*.md
+
 # Memória local do usuário (contexto de IA, não pertence ao repo)
 .claude/projects/
 .claude/settings.json

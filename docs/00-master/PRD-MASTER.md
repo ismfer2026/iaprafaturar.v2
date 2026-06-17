@@ -1600,6 +1600,7 @@ Se já existir artefato equivalente, a tarefa deve ampliá-lo ou substituí-lo c
 ---
 
 ### FASE 26 — Hardening, QA, Migração Final e Anti-Duplicidade
+**Status:** tecnicamente concluída em 2026-06-15; Go comercial aguarda gate físico externo
 **Duração estimada:** 3-4 semanas
 **Entrega:** v2 completa, testada, documentada e sem recursos conflitantes.
 
@@ -1614,17 +1615,62 @@ Se já existir artefato equivalente, a tarefa deve ampliá-lo ou substituí-lo c
 - Validar que cada capacidade possui exatamente um dono, uma rota canônica e uma fonte contratual
 
 **DoD Fase 26:**
-- [ ] Matriz v1/v2 possui decisão final para todos os recursos
-- [ ] Lint, typecheck e build passam no monorepo
-- [ ] RLS/IDOR validado para professionalA, professionalB e admin
-- [ ] Fluxos públicos testados com tokens válidos e inválidos
-- [ ] Nenhum menu aponta para rota sem tela aprovada
-- [ ] Nenhum recurso está duplicado entre admin, professional e client
-- [ ] PRD-MASTER, PRD-FRONTEND, PRD-SCHEMA e PRD-EDGE-FUNCTIONS estão sincronizados
-- [ ] Nenhum domínio possui tabelas, RPCs, Edge Functions, filas ou componentes paralelos com a mesma responsabilidade
-- [ ] Aliases e redirects possuem teste; nenhuma rota consolidada depende apenas de estado local de aba
-- [ ] Matriz de cobertura comprova rota + permissão + contrato + estados + teste para cada jornada
-- [ ] Recursos descartados possuem decisão de produto aprovada e não permanecem em menus, mapas ou contratos órfãos
+- [x] Matriz v1/v2 possui decisão final para todos os recursos
+- [x] Lint, typecheck e build passam no monorepo
+- [x] RLS/IDOR validado para professionalA, professionalB e admin
+- [x] Fluxos públicos testados com tokens válidos e inválidos
+- [x] Nenhum menu aponta para rota sem tela aprovada
+- [x] Nenhum recurso está duplicado entre admin, professional e client
+- [x] PRD-MASTER, PRD-FRONTEND, PRD-SCHEMA e PRD-EDGE-FUNCTIONS estão sincronizados
+- [x] Nenhum domínio possui tabelas, RPCs, Edge Functions, filas ou componentes paralelos com a mesma responsabilidade
+- [x] Aliases e redirects possuem teste; nenhuma rota consolidada depende apenas de estado local de aba
+- [x] Matriz de cobertura comprova rota + permissão + contrato + estados + teste para cada jornada
+- [x] Recursos descartados possuem decisão de produto aprovada e não permanecem em menus, mapas ou contratos órfãos
+
+**Evidências finais:** `PHASE-26-CAPABILITY-LEDGER.md`, `PHASE-26-JOURNEY-MATRIX.md`, `PHASE-26-QA-REPORT.md`, `PHASE-26-RUNBOOK.md`, `npm test`, `npm run phase26:live` e `npm run phase26:ui`.
+
+**Gate externo de release:** Safari iOS e Android Chrome físicos permanecem obrigatórios antes do Go comercial; não são apresentados como executados nesta estação Windows.
+
+---
+
+### FASE 27 — Paridade Percebida v1 -> v2 e Recovery de Recursos
+**Status:** concluída (PRs 27.1, 27.2, 27.3, 27.6, 27.7); PR 27.5 deferido por Ismael; Go/No-Go comercial: decisão de Ismael pendente
+**Duração estimada:** 2-4 semanas
+**Entrega:** v2 preserva ou supera os recursos úteis da v1, sem ressuscitar bugs, rotas conflitantes ou backend duplicado.
+
+**Escopo:**
+- Auditar visualmente v1 profissional, v1 admin, v2 profissional, v2 admin e v2 client
+- Classificar cada recurso v1 como preservado, evoluído, consolidado, redirecionado, recriado com contrato v2 ou descartado por decisão de Ismael
+- Recuperar recursos úteis percebidos como ausentes sem copiar functions/backend da v1
+- Implementar aliases/redirects legados críticos sem estado paralelo
+- Reconstruir experiências financeiras avançadas sobre contratos v2
+- Validar WhatsApp self-service com contrato seguro v2
+- Decidir NFS-e como retorno controlado ou fase futura explicitamente aceita
+- Validar estoque operacional avançado sem segunda fonte de saldo
+- Validar paridade admin em métricas, onboarding profissional, campanhas/templates/gatilhos e embaixadores
+
+**Invariantes:**
+- v1 é referência de jornada e experiência, nunca padrão técnico de DB/functions.
+- DB, migrations, RLS, RPCs e Edge Functions da v2 são fonte técnica de verdade.
+- Nenhum recurso volta criando tabela, RPC, fila, hook ou rota paralela com a mesma responsabilidade.
+- Toda lacuna sem contrato v2 vira tarefa de schema guard antes de UI.
+- Go comercial só pode ocorrer após matriz v1 -> v2 fechada e aprovada por Ismael.
+
+**DoD Fase 27:**
+- [x] Matriz v1 -> v2 cobre todas as rotas/telas profissionais e admin da v1
+- [x] Cada recurso possui decisão explícita: preservar, consolidar, redirecionar, recriar com contrato v2 ou descartar aprovado
+- [x] Financeiro avançado possui paridade aprovada — Caixa, Fluxo, Conta Cliente, Repasses, Export Contador (PR 27.2)
+- [x] NFS-e: decisão explícita de projeto separado (aprovado por Ismael)
+- [x] WhatsApp self-service: QR + pairing code via AgentesPage, sem expor credenciais (PR 27.3)
+- [x] URLs legadas críticas: aliases e redirects implementados (PR 27.1)
+- [x] Estoque avançado: deferido por Ismael (PR 27.5) — não cria segunda fonte de saldo
+- [x] Admin `/metricas` → redirect `/analytics` ✓; campaigns/templates → `campaign_templates` (PR 27.6) ✓; onboarding profissional → `/profissionais/:id` (parcial — aceito)
+- [x] Nenhum contrato/backend/function da v1 foi copiado como padrão
+- [x] Rotas, menus e aliases passam no audit de não-duplicidade
+- [x] PRD-MASTER e documentos satélite refletem decisões finais da Fase 27
+- ⚠️ Gate externo pendente: validação física Safari iOS + Android Chrome (não executável nesta estação Windows)
+
+**Documentos base:** `POST-PHASE-26-V1-V2-PARITY-AUDIT.md`, `PHASE-27-PREFLIGHT.md`, `PHASE-27-EXECUTION-PLAN.md`.
 
 ---
 
