@@ -1,6 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Bot, CalendarPlus, Check, MessageSquare, Send, ShieldAlert, UserCheck, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Bot,
+  CalendarPlus,
+  Check,
+  CheckCheck,
+  ChevronRight,
+  MessageSquare,
+  Search,
+  Send,
+  ShieldAlert,
+  User,
+  UserCheck,
+  X,
+  XCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   Badge,
@@ -27,8 +43,11 @@ import {
   useConversationActions,
   useShadowSuggestions,
   type ConversationListItem,
+  type ConversationMessage,
   type ShadowSuggestion,
 } from "@/hooks/useConversations";
+import { useClient } from "@/hooks/useClients";
+import { useClientAppointments } from "@/hooks/useAppointments";
 import { useServices } from "@/hooks/useServices";
 import { supabase } from "@/lib/supabase";
 import { useI18n, type TranslationKey } from "@/i18n";
@@ -38,6 +57,24 @@ const CONVERSATION_STATUS_KEYS: Record<ConversationListItem["rosane_status"], Tr
   shadow: "conversations.status.shadow",
   paused: "conversations.status.paused",
   human_takeover: "conversations.status.humanTakeover",
+};
+
+const JOURNEY_STAGE_LABELS: Record<string, string> = {
+  lead: "Lead",
+  agendado: "Agendado",
+  em_tratamento: "Em tratamento",
+  pos_tratamento: "Pós-tratamento",
+  cliente_fiel: "Cliente fiel",
+  inativo: "Inativo",
+};
+
+const JOURNEY_STAGE_COLORS: Record<string, string> = {
+  lead: "bg-sky-100 text-sky-700",
+  agendado: "bg-violet-100 text-violet-700",
+  em_tratamento: "bg-emerald-100 text-emerald-700",
+  pos_tratamento: "bg-teal-100 text-teal-700",
+  cliente_fiel: "bg-amber-100 text-amber-700",
+  inativo: "bg-zinc-100 text-zinc-500",
 };
 
 function formatConversationTime(value: string | null) {
@@ -58,10 +95,126 @@ function defaultScheduledAt() {
   const d = new Date();
   d.setHours(d.getHours() + 1);
   d.setMinutes(Math.ceil(d.getMinutes() / 15) * 15, 0, 0);
-  // datetime-local needs YYYY-MM-DDTHH:MM without seconds
   return d.toISOString().slice(0, 16);
 }
 
+// ── Message delivery status icon ──────────────────────────────────────────────
+function MessageStatus({ message }: { message: ConversationMessage }) {
+  if (message.direction !== "outbound") return null;
+  const { status } = message;
+  if (status === "read") {
+    return <CheckCheck className="inline h-3.5 w-3.5 text-sky-400" aria-label="Lido" />;
+  }
+  if (status === "delivered") {
+    return <CheckCheck className="inline h-3.5 w-3.5 text-violet-200" aria-label="Entregue" />;
+  }
+  if (status === "sent") {
+    return <Check className="inline h-3.5 w-3.5 text-violet-200" aria-label="Enviado" />;
+  }
+  if (status === "failed" || status === "dead_lettered") {
+    return <XCircle className="inline h-3.5 w-3.5 text-red-400" aria-label="Falhou" />;
+  }
+  return null;
+}
+
+// ── Contact panel ─────────────────────────────────────────────────────────────
+function ClientContactPanel({
+  clientId,
+  professionalId,
+}: {
+  clientId: string;
+  professionalId: string;
+}) {
+  const { t } = useI18n();
+  const clientQuery = useClient(professionalId, clientId);
+  const appointmentsQuery = useClientAppointments(professionalId, clientId);
+  const client = clientQuery.data;
+  const lastAppointment = appointmentsQuery.data?.[0] ?? null;
+
+  const initials = client?.full_name
+    .split(" ")
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase() ?? "?";
+
+  return (
+    <aside className="flex flex-col gap-4 border-l border-zinc-200 bg-zinc-50 p-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+        {t("conversations.contact.title")}
+      </p>
+
+      {clientQuery.isLoading ? (
+        <div className="space-y-3">
+          <Skeleton className="h-12 w-12 rounded-full" />
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-3 w-24" />
+        </div>
+      ) : client ? (
+        <>
+          {/* Avatar + name */}
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-bold text-violet-700">
+              {initials}
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-zinc-900">{client.full_name}</p>
+              <p className="truncate text-xs text-zinc-500">{client.phone_whatsapp ?? client.email ?? "—"}</p>
+            </div>
+          </div>
+
+          {/* Journey stage */}
+          <div>
+            <span
+              className={cn(
+                "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                JOURNEY_STAGE_COLORS[client.journey_stage] ?? "bg-zinc-100 text-zinc-500",
+              )}
+            >
+              {JOURNEY_STAGE_LABELS[client.journey_stage] ?? client.journey_stage}
+            </span>
+          </div>
+
+          {/* Last appointment */}
+          <div className="rounded-lg border border-zinc-200 bg-white p-3">
+            <p className="mb-1.5 text-xs font-medium text-zinc-500">
+              {t("conversations.contact.lastAppointment")}
+            </p>
+            {lastAppointment ? (
+              <div>
+                <p className="text-sm font-medium text-zinc-900">
+                  {new Intl.DateTimeFormat(undefined, {
+                    day: "2-digit",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }).format(new Date(lastAppointment.scheduled_at))}
+                </p>
+                <p className="mt-0.5 text-xs text-zinc-500 capitalize">{lastAppointment.status}</p>
+              </div>
+            ) : (
+              <p className="text-xs text-zinc-400">{t("conversations.contact.noAppointment")}</p>
+            )}
+          </div>
+
+          {/* View profile link */}
+          <Link
+            to={`/clientes/${clientId}`}
+            className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-violet-700 transition-colors hover:bg-violet-50"
+          >
+            <User className="h-3.5 w-3.5" />
+            {t("conversations.contact.viewProfile")}
+            <ChevronRight className="ml-auto h-3.5 w-3.5 text-zinc-400" />
+          </Link>
+        </>
+      ) : (
+        <p className="text-xs text-zinc-400">{t("conversations.contact.noClient")}</p>
+      )}
+    </aside>
+  );
+}
+
+// ── Shadow suggestion card ─────────────────────────────────────────────────────
 function ConversationSkeleton() {
   return (
     <div className="space-y-3">
@@ -136,6 +289,7 @@ function ShadowSuggestionCard({
   );
 }
 
+// ── Main page ─────────────────────────────────────────────────────────────────
 export default function ConversasPage() {
   const { t } = useI18n();
   const { professionalId } = useAuth();
@@ -148,6 +302,8 @@ export default function ConversasPage() {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(false);
   const [manualText, setManualText] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showContactPanel, setShowContactPanel] = useState(true);
 
   // Schedule sheet state
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
@@ -168,6 +324,16 @@ export default function ConversasPage() {
     }
     return [...urgent, ...rest];
   }, [conversationList]);
+
+  const filteredConversationList = useMemo(() => {
+    if (!searchQuery.trim()) return orderedConversationList;
+    const q = searchQuery.toLowerCase();
+    return orderedConversationList.filter(
+      (c) =>
+        c.client_name?.toLowerCase().includes(q) ||
+        c.phone?.toLowerCase().includes(q),
+    );
+  }, [orderedConversationList, searchQuery]);
 
   useEffect(() => {
     if (!selectedConversationId && conversationList.length > 0) {
@@ -252,6 +418,8 @@ export default function ConversasPage() {
     }
   }
 
+  const hasContactPanel = Boolean(selectedConversation?.client_id && showContactPanel && professionalId);
+
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-4 py-5 pb-24 md:px-6 md:pb-6">
       <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -275,8 +443,28 @@ export default function ConversasPage() {
         </div>
       ) : null}
 
-      <div className="grid min-h-[calc(100vh-220px)] gap-4 lg:grid-cols-[360px_1fr]">
+      <div
+        className={cn(
+          "grid min-h-[calc(100vh-220px)] gap-4",
+          hasContactPanel
+            ? "lg:grid-cols-[360px_1fr_280px]"
+            : "lg:grid-cols-[360px_1fr]",
+        )}
+      >
+        {/* ── Conversation list ── */}
         <section className={cn("space-y-3", isMobileDetailOpen ? "hidden lg:block" : "block")}>
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            <input
+              type="search"
+              placeholder={t("conversations.search.placeholder")}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-9 pr-3 text-sm text-zinc-800 shadow-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+            />
+          </div>
+
           {conversations.isLoading ? <ConversationSkeleton /> : null}
 
           {!conversations.isLoading && conversationList.length === 0 ? (
@@ -293,7 +481,11 @@ export default function ConversasPage() {
             </Card>
           ) : null}
 
-          {orderedConversationList.map((conversation) => {
+          {!conversations.isLoading && conversationList.length > 0 && filteredConversationList.length === 0 ? (
+            <p className="py-6 text-center text-sm text-zinc-400">Nenhuma conversa encontrada.</p>
+          ) : null}
+
+          {filteredConversationList.map((conversation) => {
             const isSelected = conversation.id === selectedConversationId;
             const hasSuggestion = (suggestions.data ?? []).some(
               (suggestion) => suggestion.conversation_id === conversation.id,
@@ -346,6 +538,7 @@ export default function ConversasPage() {
           })}
         </section>
 
+        {/* ── Detail panel ── */}
         <section
           className={cn(
             "min-h-[calc(100vh-180px)] rounded-xl border border-zinc-200 bg-white shadow-sm lg:block lg:min-h-[520px]",
@@ -361,6 +554,7 @@ export default function ConversasPage() {
             </div>
           ) : (
             <div className="flex h-full min-h-[520px] flex-col">
+              {/* Header */}
               <div className="border-b border-zinc-200 p-4">
                 <Button
                   type="button"
@@ -380,7 +574,25 @@ export default function ConversasPage() {
                       {selectedConversation.phone || t("common.noContact")}
                     </p>
                   </div>
-                  <Badge variant="secondary">{selectedConversation.channel}</Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary">{selectedConversation.channel}</Badge>
+                    {/* Toggle contact panel */}
+                    {selectedConversation.client_id ? (
+                      <button
+                        type="button"
+                        title={showContactPanel ? "Ocultar contato" : "Ver contato"}
+                        onClick={() => setShowContactPanel((v) => !v)}
+                        className={cn(
+                          "rounded-md p-1.5 transition-colors",
+                          showContactPanel
+                            ? "bg-violet-100 text-violet-700"
+                            : "text-zinc-400 hover:bg-zinc-100",
+                        )}
+                      >
+                        <User className="h-4 w-4" />
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
                 <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
                   <div className="flex flex-wrap items-center gap-2">
@@ -439,6 +651,7 @@ export default function ConversasPage() {
                 </div>
               </div>
 
+              {/* Messages */}
               <div className="flex-1 space-y-3 overflow-y-auto bg-zinc-50 p-4">
                 {selectedSuggestion ? (
                   <ShadowSuggestionCard
@@ -476,13 +689,16 @@ export default function ConversasPage() {
                       )}
                     >
                       <p>{message.content || t("conversations.messages.noContent")}</p>
-                      <p className={cn("mt-1 text-xs", isOutbound ? "text-violet-100" : "text-zinc-400")}>
-                        {formatConversationTime(message.created_at)}
-                      </p>
+                      <div className={cn("mt-1 flex items-center gap-1 text-xs", isOutbound ? "justify-end text-violet-200" : "text-zinc-400")}>
+                        <span>{formatConversationTime(message.created_at)}</span>
+                        <MessageStatus message={message} />
+                      </div>
                     </div>
                   );
                 })}
               </div>
+
+              {/* Reply area */}
               <div className="border-t border-zinc-200 bg-white p-3">
                 <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
                   <textarea
@@ -513,6 +729,16 @@ export default function ConversasPage() {
             </div>
           )}
         </section>
+
+        {/* ── Contact panel (right sidebar) ── */}
+        {hasContactPanel && professionalId ? (
+          <div className="hidden lg:block">
+            <ClientContactPanel
+              clientId={selectedConversation!.client_id!}
+              professionalId={professionalId}
+            />
+          </div>
+        ) : null}
       </div>
 
       {/* Schedule Sheet */}
@@ -541,9 +767,7 @@ export default function ConversasPage() {
                 {(services.data?.services ?? [])
                   .filter((s) => s.is_active)
                   .map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
+                    <option key={s.id} value={s.id}>{s.name}</option>
                   ))}
               </select>
             </div>

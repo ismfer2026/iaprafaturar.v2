@@ -38,6 +38,8 @@ export interface ConversationMessage {
   sent_by: string | null;
   agent_slug: string | null;
   status: string;
+  sent_at: string | null;
+  delivered_at: string | null;
   created_at: string;
 }
 
@@ -95,7 +97,7 @@ export function useConversationMessages(professionalId: string | null, conversat
 
       const { data, error } = await supabase
         .from("message_events")
-        .select("id, conversation_id, direction, message_type, content, sent_by, agent_slug, status, created_at")
+        .select("id, conversation_id, direction, message_type, content, sent_by, agent_slug, status, sent_at, delivered_at, created_at")
         .eq("professional_id", professionalId)
         .eq("conversation_id", conversationId)
         .order("created_at", { ascending: true })
