@@ -37,6 +37,7 @@ export interface ConversationMessage {
   direction: "inbound" | "outbound";
   message_type: string;
   content: string | null;
+  media_url: string | null;
   sent_by: string | null;
   agent_slug: string | null;
   status: string;
@@ -100,7 +101,7 @@ export function useConversationMessages(professionalId: string | null, conversat
 
       const { data, error } = await supabase
         .from("message_events")
-        .select("id, conversation_id, direction, message_type, content, sent_by, agent_slug, status, is_private, sent_at, delivered_at, created_at")
+        .select("id, conversation_id, direction, message_type, content, media_url, sent_by, agent_slug, status, is_private, sent_at, delivered_at, created_at")
         .eq("professional_id", professionalId)
         .eq("conversation_id", conversationId)
         .order("created_at", { ascending: true })

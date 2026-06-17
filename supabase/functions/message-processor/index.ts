@@ -872,6 +872,54 @@ async function createShadowSuggestion(
   return data as { id: string }
 }
 
+async function interpretImageWithAI(mediaUrl: string, clientName: string): Promise<string> {
+  const apiKey = Deno.env.get('ANTHROPIC_API_KEY')
+  if (!apiKey) return `[Imagem recebida de ${clientName}]`
+
+  try {
+    const imageResp = await fetch(mediaUrl, { signal: AbortSignal.timeout(8000) })
+    if (!imageResp.ok) return `[Imagem recebida de ${clientName}]`
+
+    const buffer = await imageResp.arrayBuffer()
+    const bytes = new Uint8Array(buffer)
+    let binary = ''
+    for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i])
+    const base64 = btoa(binary)
+    const mimeType = imageResp.headers.get('content-type')?.split(';')[0] ?? 'image/jpeg'
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5',
+        max_tokens: 256,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64 } },
+            {
+              type: 'text',
+              text: `Esta imagem foi enviada via WhatsApp por um cliente chamado ${clientName} para um profissional de saúde. Descreva o que está na imagem em português de forma objetiva e profissional (máximo 2 frases). Se for um documento médico, prescrição ou exame, mencione isso.`,
+            },
+          ],
+        }],
+      }),
+      signal: AbortSignal.timeout(15000),
+    })
+
+    if (!resp.ok) return `[Imagem recebida de ${clientName}]`
+    const data = await resp.json() as { content?: Array<{ type: string; text?: string }> }
+    const text = data.content?.find((c) => c.type === 'text')?.text?.trim() ?? ''
+    return text ? `📷 ${clientName} enviou uma imagem: ${text}` : `[Imagem recebida de ${clientName}]`
+  } catch {
+    return `[Imagem recebida de ${clientName}]`
+  }
+}
+
 async function invokeInternalFunction(functionName: string, payload: Record<string, unknown>): Promise<unknown> {
   const baseUrl = Deno.env.get('FUNCTIONS_BASE_URL')
   const internalToken = Deno.env.get('INTERNAL_FUNCTION_TOKEN')
@@ -906,7 +954,7 @@ Deno.serve(async (request) => {
 
     const { data: messageEvent, error } = await supabase
       .from('message_events')
-      .select('id, professional_id, conversation_id, client_id, instance_name, content, metadata')
+      .select('id, professional_id, conversation_id, client_id, instance_name, content, message_type, media_url, metadata')
       .eq('id', input.message_event_id)
       .eq('source_webhook', 'professional')
       .eq('direction', 'inbound')
@@ -1206,6 +1254,35 @@ Deno.serve(async (request) => {
         client_id: conversation.clientId ?? resolvedClient?.id ?? null,
         conversation_id: conversation.id,
         context_id: activeContext.id,
+      })
+    }
+
+    if (messageEvent.message_type === 'image') {
+      const mediaUrl = typeof messageEvent.media_url === 'string' ? messageEvent.media_url : null
+      const clientName = resolvedClient?.full_name || 'Cliente'
+      const suggestionText = mediaUrl
+        ? await interpretImageWithAI(mediaUrl, clientName)
+        : `📷 ${clientName} enviou uma imagem (sem URL disponível).`
+
+      const suggestion = await createShadowSuggestion(supabase, {
+        professionalId: messageEvent.professional_id,
+        conversationId: conversation.id,
+        messageEventId: messageEvent.id,
+        suggestedText: suggestionText,
+        clientId: conversation.clientId ?? resolvedClient?.id ?? null,
+        source: 'message-processor:image',
+      })
+
+      await completeAgentExecution(supabase, execution.id, { status: 'success' })
+      return jsonResponse({
+        processed: true,
+        route: 'image_vision',
+        shadow_suggestion_id: suggestion.id,
+        dry_run: dryRun,
+        message_event_id: messageEvent.id,
+        professional_id: messageEvent.professional_id,
+        client_id: conversation.clientId ?? resolvedClient?.id ?? null,
+        conversation_id: conversation.id,
       })
     }
 

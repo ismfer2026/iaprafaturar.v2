@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   ChevronRight,
   MessageSquare,
+  Paperclip,
   RefreshCw,
   Search,
   Send,
@@ -330,6 +331,12 @@ export default function ConversasPage() {
   const [isRescheduling, setIsRescheduling] = useState(false);
   const [isCancellingAppt, setIsCancellingAppt] = useState(false);
 
+  // Media upload state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+
   const conversationList = useMemo(() => conversations.data ?? [], [conversations.data]);
 
   const orderedConversationList = useMemo(() => {
@@ -509,6 +516,58 @@ export default function ConversasPage() {
       toast.error(t("conversations.schedule.error"));
     } finally {
       setIsCreatingSchedule(false);
+    }
+  }
+
+  function handleMediaSelect(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setMediaFile(file);
+    const objectUrl = URL.createObjectURL(file);
+    setMediaPreview(objectUrl);
+    event.target.value = "";
+  }
+
+  function handleClearMedia() {
+    if (mediaPreview) URL.revokeObjectURL(mediaPreview);
+    setMediaFile(null);
+    setMediaPreview(null);
+  }
+
+  async function handleSendMedia() {
+    if (!mediaFile || !selectedConversationId || !professionalId) return;
+    setIsUploadingMedia(true);
+    try {
+      const ext = mediaFile.name.split(".").pop() ?? "jpg";
+      const path = `${professionalId}/${selectedConversationId}/${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("chat-media")
+        .upload(path, mediaFile, { contentType: mediaFile.type, upsert: false });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from("chat-media").getPublicUrl(path);
+      const mediaUrl = urlData.publicUrl;
+
+      const { error: fnError } = await supabase.functions.invoke("send-conversation-message", {
+        body: {
+          conversation_id: selectedConversationId,
+          text: manualText.trim() || undefined,
+          media_url: mediaUrl,
+          media_type: "image",
+        },
+      });
+      if (fnError) throw fnError;
+
+      await queryClient.invalidateQueries({
+        queryKey: ["crm", "conversation-messages", professionalId, selectedConversationId],
+      });
+      handleClearMedia();
+      setManualText("");
+      toast.success(t("conversations.media.sent"));
+    } catch {
+      toast.error(t("conversations.media.error"));
+    } finally {
+      setIsUploadingMedia(false);
     }
   }
 
@@ -867,7 +926,20 @@ export default function ConversasPage() {
                           : "mr-auto border border-zinc-200 bg-white text-zinc-900",
                       )}
                     >
-                      <p>{message.content || t("conversations.messages.noContent")}</p>
+                      {message.message_type === "image" && message.media_url ? (
+                        <a href={message.media_url} target="_blank" rel="noopener noreferrer">
+                          <img
+                            src={message.media_url}
+                            alt={t("conversations.media.imageAlt")}
+                            className="mb-1.5 max-h-60 max-w-full rounded-lg object-contain"
+                            loading="lazy"
+                          />
+                        </a>
+                      ) : null}
+                      {message.content ? <p>{message.content}</p> : null}
+                      {!message.content && message.message_type !== "image" ? (
+                        <p className="italic opacity-60">{t("conversations.messages.noContent")}</p>
+                      ) : null}
                       <div className={cn("mt-1 flex items-center gap-1 text-xs", isOutbound ? "justify-end text-violet-200" : "text-zinc-400")}>
                         <span>{formatConversationTime(message.created_at)}</span>
                         <MessageStatus message={message} />
@@ -960,6 +1032,23 @@ export default function ConversasPage() {
                   </div>
                 ) : null}
 
+                {/* Media preview */}
+                {mediaPreview ? (
+                  <div className="mb-2 flex items-start gap-2 rounded-lg border border-violet-200 bg-violet-50 p-2">
+                    <img src={mediaPreview} alt="" className="h-16 w-16 rounded object-cover" />
+                    <div className="flex flex-1 flex-col gap-1">
+                      <p className="text-xs font-medium text-violet-700">{mediaFile?.name}</p>
+                      <button
+                        type="button"
+                        className="self-start text-xs text-red-500 hover:text-red-700"
+                        onClick={handleClearMedia}
+                      >
+                        {t("conversations.media.remove")}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+
                 <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
                   <textarea
                     className={cn(
@@ -990,25 +1079,61 @@ export default function ConversasPage() {
                       (replyMode === "message" && selectedConversation.rosane_status !== "human_takeover")
                       || actions.isSendingManualMessage
                       || actions.isAddingNote
+                      || isUploadingMedia
                     }
                   />
-                  <Button
-                    type="button"
-                    className={cn(
-                      "h-full min-h-12 gap-2",
-                      replyMode === "note" && "border-amber-300 bg-amber-500 hover:bg-amber-600",
+                  <div className="flex flex-col gap-2">
+                    {replyMode === "message" && selectedConversation.rosane_status === "human_takeover" ? (
+                      <>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,image/gif"
+                          className="hidden"
+                          onChange={handleMediaSelect}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="h-10 w-full gap-1.5"
+                          title={t("conversations.media.attach")}
+                          disabled={isUploadingMedia}
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <Paperclip className="h-4 w-4" />
+                        </Button>
+                      </>
+                    ) : null}
+                    {mediaFile ? (
+                      <Button
+                        type="button"
+                        className="h-full min-h-12 flex-1 gap-2"
+                        disabled={isUploadingMedia}
+                        onClick={handleSendMedia}
+                      >
+                        <Send className="h-4 w-4" />
+                        {isUploadingMedia ? t("conversations.media.sending") : t("conversations.media.send")}
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        className={cn(
+                          "h-full min-h-12 flex-1 gap-2",
+                          replyMode === "note" && "border-amber-300 bg-amber-500 hover:bg-amber-600",
+                        )}
+                        disabled={
+                          (replyMode === "message" && selectedConversation.rosane_status !== "human_takeover")
+                          || actions.isSendingManualMessage
+                          || actions.isAddingNote
+                          || !manualText.trim()
+                        }
+                        onClick={handleSendManualMessage}
+                      >
+                        <Send className="h-4 w-4" />
+                        {replyMode === "note" ? t("conversations.note.save") : t("conversations.manual.send")}
+                      </Button>
                     )}
-                    disabled={
-                      (replyMode === "message" && selectedConversation.rosane_status !== "human_takeover")
-                      || actions.isSendingManualMessage
-                      || actions.isAddingNote
-                      || !manualText.trim()
-                    }
-                    onClick={handleSendManualMessage}
-                  >
-                    <Send className="h-4 w-4" />
-                    {replyMode === "note" ? t("conversations.note.save") : t("conversations.manual.send")}
-                  </Button>
+                  </div>
                 </div>
                 {replyMode === "message" && selectedConversation.rosane_status !== "human_takeover" ? (
                   <p className="mt-2 text-xs text-zinc-500">{t("conversations.manual.requiresTakeover")}</p>

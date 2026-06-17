@@ -2,9 +2,19 @@ import { z } from 'zod'
 
 export const SendConversationMessageInputSchema = z.object({
   conversation_id: z.string().uuid(),
-  text: z.string().min(1).max(4096),
+  text: z.string().max(4096).optional(),
+  media_url: z.string().url().optional(),
+  media_type: z.enum(['image', 'document', 'video', 'audio']).optional(),
   dry_run: z.boolean().optional(),
-}).strict()
+}).strict().superRefine((val, ctx) => {
+  if (!val.text && !val.media_url) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['text'],
+      message: 'Either text or media_url is required',
+    })
+  }
+})
 
 export const SendConversationMessageOutputSchema = z.object({
   sent: z.boolean(),

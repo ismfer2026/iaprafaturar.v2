@@ -12,6 +12,7 @@ export const NormalizedEvolutionMessageSchema = z.object({
   is_broadcast: z.boolean(),
   message_type: z.enum(['text', 'audio', 'image', 'document', 'unknown']),
   text: z.string().optional(),
+  media_url: z.string().optional(),
   timestamp: z.string(),
   raw: z.unknown(),
 })
@@ -55,6 +56,21 @@ function pickMessageType(message: AnyRecord, text?: string): NormalizedEvolution
   return 'unknown'
 }
 
+function pickMediaUrl(message: AnyRecord): string | undefined {
+  const imageMsg = asRecord(message.imageMessage)
+  const docMsg = asRecord(message.documentMessage)
+  const audioMsg = asRecord(message.audioMessage)
+
+  return (
+    stringValue(imageMsg.url) ??
+    stringValue(imageMsg.directPath) ??
+    stringValue(docMsg.url) ??
+    stringValue(docMsg.directPath) ??
+    stringValue(audioMsg.url) ??
+    stringValue(audioMsg.directPath)
+  )
+}
+
 export function normalizeEvolutionPayload(payload: unknown, sourceWebhook: SourceWebhook): NormalizedEvolutionMessage {
   const root = asRecord(payload)
   const data = asRecord(root.data)
@@ -80,6 +96,7 @@ export function normalizeEvolutionPayload(payload: unknown, sourceWebhook: Sourc
   const text = pickText(data, message)
   const isGroup = rawChat.endsWith('@g.us')
   const isBroadcast = rawChat === 'status@broadcast' || rawChat.endsWith('@broadcast')
+  const mediaUrl = pickMediaUrl(message)
 
   return NormalizedEvolutionMessageSchema.parse({
     source_webhook: sourceWebhook,
@@ -91,6 +108,7 @@ export function normalizeEvolutionPayload(payload: unknown, sourceWebhook: Sourc
     is_broadcast: isBroadcast,
     message_type: pickMessageType(message, text),
     text,
+    media_url: mediaUrl,
     timestamp: new Date().toISOString(),
     raw: payload,
   })

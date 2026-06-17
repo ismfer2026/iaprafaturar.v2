@@ -4,7 +4,7 @@ import {
 } from '@iaprafaturar/contracts/edge-functions/send-conversation-message.ts'
 
 import { isDryRun } from '../_shared/dry-run.ts'
-import { sendEvolutionGoText } from '../_shared/evolution-go.ts'
+import { sendEvolutionGoText, sendEvolutionGoMedia } from '../_shared/evolution-go.ts'
 import { jsonResponse } from '../_shared/http.ts'
 import { createServiceClient } from '../_shared/supabase.ts'
 
@@ -29,6 +29,21 @@ function publicJsonResponse(body: unknown, init: ResponseInit = {}): Response {
       ...(init.headers ?? {}),
     },
   })
+}
+
+function guessMimetype(mediaUrl: string, mediaType: string): string {
+  const ext = mediaUrl.split('?')[0].split('.').pop()?.toLowerCase()
+  if (mediaType === 'image') {
+    if (ext === 'png') return 'image/png'
+    if (ext === 'gif') return 'image/gif'
+    if (ext === 'webp') return 'image/webp'
+    return 'image/jpeg'
+  }
+  if (mediaType === 'document') {
+    if (ext === 'pdf') return 'application/pdf'
+    return 'application/octet-stream'
+  }
+  return 'application/octet-stream'
 }
 
 Deno.serve(async (request) => {
@@ -101,15 +116,34 @@ Deno.serve(async (request) => {
       }))
     }
 
+    const isMedia = Boolean(input.media_url)
+    const resolvedMediaType = input.media_type ?? 'image'
+
     let providerPayload: Record<string, unknown> = {}
     if (!dryRun) {
-      providerPayload = await sendEvolutionGoText({
-        sourceWebhook: 'professional',
-        instanceName: instance.instance_name,
-        to: conversation.phone,
-        text: input.text,
-      })
+      if (isMedia && input.media_url) {
+        providerPayload = await sendEvolutionGoMedia({
+          sourceWebhook: 'professional',
+          instanceName: instance.instance_name,
+          to: conversation.phone,
+          mediaUrl: input.media_url,
+          mediaType: resolvedMediaType,
+          mimetype: guessMimetype(input.media_url, resolvedMediaType),
+          caption: input.text ?? '',
+        })
+      } else {
+        providerPayload = await sendEvolutionGoText({
+          sourceWebhook: 'professional',
+          instanceName: instance.instance_name,
+          to: conversation.phone,
+          text: input.text ?? '',
+        })
+      }
     }
+
+    const previewText = isMedia
+      ? (input.text ? `📷 ${input.text}` : '📷 Imagem')
+      : (input.text ?? '')
 
     const { data: messageEvent, error: insertError } = await supabase
       .from('message_events')
@@ -119,10 +153,11 @@ Deno.serve(async (request) => {
         client_id: conversation.client_id ?? null,
         direction: 'outbound',
         channel: 'whatsapp',
-        message_type: 'text',
+        message_type: isMedia ? resolvedMediaType : 'text',
         source_webhook: 'professional',
         instance_name: instance.instance_name,
-        content: input.text,
+        content: input.text ?? null,
+        media_url: input.media_url ?? null,
         sent_by: 'human',
         status: dryRun ? 'dry_run' : 'sent',
         sent_at: dryRun ? null : new Date().toISOString(),
@@ -138,7 +173,7 @@ Deno.serve(async (request) => {
       .from('conversations')
       .update({
         last_message_at: new Date().toISOString(),
-        last_message_preview: input.text,
+        last_message_preview: previewText,
         unread_count: 0,
       })
       .eq('id', conversation.id)

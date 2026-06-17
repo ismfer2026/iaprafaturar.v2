@@ -43,3 +43,37 @@ export async function sendEvolutionGoText(input: {
 
   return body as Record<string, unknown>
 }
+
+export async function sendEvolutionGoMedia(input: {
+  sourceWebhook: 'admin' | 'professional'
+  instanceName: string
+  to: string
+  mediaUrl: string
+  mediaType: 'image' | 'video' | 'document' | 'audio'
+  mimetype: string
+  caption?: string
+}) {
+  const credentials = getEvolutionGoCredentials(input.sourceWebhook)
+  const response = await fetch(`${credentials.baseUrl}/send/media`, {
+    method: 'POST',
+    headers: {
+      apikey: credentials.apiKey,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      id: input.instanceName,
+      number: input.to,
+      mediatype: input.mediaType,
+      mimetype: input.mimetype,
+      media: input.mediaUrl,
+      caption: input.caption ?? '',
+    }),
+  })
+
+  const body = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    throw new Error(`Evolution Go sendMedia failed: ${response.status} ${JSON.stringify(body)}`)
+  }
+
+  return body as Record<string, unknown>
+}
