@@ -1428,6 +1428,7 @@ Se já existir artefato equivalente, a tarefa deve ampliá-lo ou substituí-lo c
 ---
 
 ### FASE 21 — Growth Profissional, Recompensas e Retenção
+**Status:** concluída em 2026-06-17
 **Duração estimada:** 3-4 semanas
 **Entrega:** growth profissional completo, acionável e separado da comunicação admin.
 
@@ -1451,14 +1452,16 @@ Se já existir artefato equivalente, a tarefa deve ampliá-lo ou substituí-lo c
 - Definir contrato profissional de parceiros separado dos contratos administrativos de aprovação e pagamento
 
 **DoD Fase 21:**
-- [ ] Campanhas profissionais mostram resultados e respeitam consentimento
-- [ ] RFM gera segmentos acionáveis
-- [ ] Recompensas cobre indicação, fidelidade, ranking e resgate
-- [ ] `/aniversariantes` possui UI navegável, lista/filtros e ações permitidas; qualquer consolidação mantém redirect para essa URL canônica
-- [ ] `/parceiros` mostra somente relações e métricas permitidas ao profissional autenticado
-- [ ] Growth profissional não usa contratos de broadcast admin
-- [ ] Campanhas e recompensas ampliam os contratos existentes sem filas, programas ou saldos paralelos
-- [ ] `/growth` não duplica regras, formulários ou fontes de dados das rotas canônicas
+- [x] Campanhas profissionais mostram resultados e respeitam consentimento
+- [x] RFM gera segmentos acionáveis
+- [x] Recompensas cobre indicação, fidelidade, ranking e resgate
+- [x] `/aniversariantes` possui UI navegável, lista/filtros e ações permitidas; qualquer consolidação mantém redirect para essa URL canônica
+- [x] `/parceiros` mostra somente relações e métricas permitidas ao profissional autenticado
+- [x] Growth profissional não usa contratos de broadcast admin
+- [x] Campanhas e recompensas ampliam os contratos existentes sem filas, programas ou saldos paralelos
+- [x] `/growth` não duplica regras, formulários ou fontes de dados das rotas canônicas
+
+**Implementação Fase 21 (2026-06-17):** páginas GrowthPage, CampaignsPage, RfmPage, RewardsPage, BirthdaysPage e PartnersPage implementadas com hooks `useGrowth.ts`; 6 migrations `phase21_*` com RPCs SECURITY DEFINER, RLS por `auth_professional_id()` em todas as tabelas do domínio (campaigns, rfm_scores, client_health_scores, referral_links, referral_events, loyalty_transactions, loyalty_redemptions); `update_campaign` RPC idempotente para edição de draft; rotas em `routes.ts` com ownerPhase: 21; `/growth` apenas agrega atalhos sem duplicar lógica.
 
 ---
 
