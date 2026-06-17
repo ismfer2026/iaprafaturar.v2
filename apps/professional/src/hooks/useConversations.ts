@@ -40,6 +40,7 @@ export interface ConversationMessage {
   sent_by: string | null;
   agent_slug: string | null;
   status: string;
+  is_private: boolean;
   sent_at: string | null;
   delivered_at: string | null;
   created_at: string;
@@ -99,7 +100,7 @@ export function useConversationMessages(professionalId: string | null, conversat
 
       const { data, error } = await supabase
         .from("message_events")
-        .select("id, conversation_id, direction, message_type, content, sent_by, agent_slug, status, sent_at, delivered_at, created_at")
+        .select("id, conversation_id, direction, message_type, content, sent_by, agent_slug, status, is_private, sent_at, delivered_at, created_at")
         .eq("professional_id", professionalId)
         .eq("conversation_id", conversationId)
         .order("created_at", { ascending: true })
@@ -243,6 +244,18 @@ export function useConversationActions(professionalId: string | null) {
     onSuccess: (data) => invalidate(data.conversation_id),
   });
 
+  const addNote = useMutation({
+    mutationFn: async (input: { conversationId: string; text: string }) => {
+      const { data, error } = await supabase.rpc("add_conversation_note", {
+        p_conversation_id: input.conversationId,
+        p_text: input.text,
+      });
+      if (error) throw error;
+      return data as { ok: boolean; message_event_id: string };
+    },
+    onSuccess: (_data, input) => invalidate(input.conversationId),
+  });
+
   const resolve = useMutation({
     mutationFn: async (conversationId: string) => {
       const { data, error } = await supabase.rpc("resolve_conversation", {
@@ -269,13 +282,15 @@ export function useConversationActions(professionalId: string | null) {
     takeOverConversation: takeOver.mutateAsync,
     releaseConversation: release.mutateAsync,
     sendManualMessage: sendManualMessage.mutateAsync,
+    addConversationNote: addNote.mutateAsync,
     resolveConversation: resolve.mutateAsync,
     reopenConversation: reopen.mutateAsync,
     isTakingOver: takeOver.isPending,
     isReleasing: release.isPending,
     isSendingManualMessage: sendManualMessage.isPending,
+    isAddingNote: addNote.isPending,
     isResolving: resolve.isPending,
     isReopening: reopen.isPending,
-    actionError: takeOver.error ?? release.error ?? sendManualMessage.error ?? resolve.error ?? reopen.error,
+    actionError: takeOver.error ?? release.error ?? sendManualMessage.error ?? addNote.error ?? resolve.error ?? reopen.error,
   };
 }

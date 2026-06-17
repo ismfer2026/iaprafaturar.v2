@@ -304,6 +304,7 @@ export default function ConversasPage() {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(false);
   const [manualText, setManualText] = useState("");
+  const [replyMode, setReplyMode] = useState<"message" | "note">("message");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "open" | "resolved">("open");
   const [showContactPanel, setShowContactPanel] = useState(true);
@@ -393,7 +394,11 @@ export default function ConversasPage() {
 
   async function handleSendManualMessage() {
     if (!selectedConversation || !manualText.trim()) return;
-    await actions.sendManualMessage({ conversationId: selectedConversation.id, text: manualText.trim() });
+    if (replyMode === "note") {
+      await actions.addConversationNote({ conversationId: selectedConversation.id, text: manualText.trim() });
+    } else {
+      await actions.sendManualMessage({ conversationId: selectedConversation.id, text: manualText.trim() });
+    }
     setManualText("");
   }
 
@@ -741,6 +746,24 @@ export default function ConversasPage() {
 
                 {(messages.data ?? []).map((message) => {
                   const isOutbound = message.direction === "outbound";
+                  const isNote = message.is_private;
+                  if (isNote) {
+                    return (
+                      <div
+                        key={message.id}
+                        className="ml-auto max-w-[82%] rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 shadow-sm"
+                      >
+                        <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-amber-700">
+                          <ShieldAlert className="h-3.5 w-3.5" />
+                          {t("conversations.note.label")}
+                        </div>
+                        <p className="text-zinc-800">{message.content || t("conversations.messages.noContent")}</p>
+                        <p className="mt-1 text-right text-xs text-amber-500">
+                          {formatConversationTime(message.created_at)}
+                        </p>
+                      </div>
+                    );
+                  }
                   return (
                     <div
                       key={message.id}
@@ -763,30 +786,78 @@ export default function ConversasPage() {
 
               {/* Reply area */}
               <div className="border-t border-zinc-200 bg-white p-3">
+                {/* Mode toggle */}
+                <div className="mb-2 flex rounded-lg border border-zinc-200 bg-zinc-50 p-1">
+                  <button
+                    type="button"
+                    onClick={() => setReplyMode("message")}
+                    className={cn(
+                      "flex-1 rounded-md py-1 text-xs font-medium transition-colors",
+                      replyMode === "message"
+                        ? "bg-white text-violet-700 shadow-sm"
+                        : "text-zinc-500 hover:text-zinc-700",
+                    )}
+                  >
+                    {t("conversations.note.modeMessage")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setReplyMode("note")}
+                    className={cn(
+                      "flex-1 rounded-md py-1 text-xs font-medium transition-colors",
+                      replyMode === "note"
+                        ? "bg-amber-50 text-amber-700 shadow-sm"
+                        : "text-zinc-500 hover:text-zinc-700",
+                    )}
+                  >
+                    {t("conversations.note.modeNote")}
+                  </button>
+                </div>
+
                 <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
                   <textarea
-                    className="min-h-20 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm leading-6 text-zinc-800 shadow-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
-                    placeholder={t("conversations.manual.placeholder")}
+                    className={cn(
+                      "min-h-20 w-full rounded-lg border px-3 py-2 text-sm leading-6 text-zinc-800 shadow-sm outline-none",
+                      replyMode === "note"
+                        ? "border-amber-200 bg-amber-50 focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                        : "border-zinc-200 bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-100",
+                    )}
+                    placeholder={
+                      replyMode === "note"
+                        ? t("conversations.note.placeholder")
+                        : t("conversations.manual.placeholder")
+                    }
                     value={manualText}
                     onChange={(event) => setManualText(event.target.value)}
-                    disabled={selectedConversation.rosane_status !== "human_takeover" || actions.isSendingManualMessage}
+                    disabled={
+                      (replyMode === "message" && selectedConversation.rosane_status !== "human_takeover")
+                      || actions.isSendingManualMessage
+                      || actions.isAddingNote
+                    }
                   />
                   <Button
                     type="button"
-                    className="h-full min-h-12 gap-2"
+                    className={cn(
+                      "h-full min-h-12 gap-2",
+                      replyMode === "note" && "border-amber-300 bg-amber-500 hover:bg-amber-600",
+                    )}
                     disabled={
-                      selectedConversation.rosane_status !== "human_takeover"
+                      (replyMode === "message" && selectedConversation.rosane_status !== "human_takeover")
                       || actions.isSendingManualMessage
+                      || actions.isAddingNote
                       || !manualText.trim()
                     }
                     onClick={handleSendManualMessage}
                   >
                     <Send className="h-4 w-4" />
-                    {t("conversations.manual.send")}
+                    {replyMode === "note" ? t("conversations.note.save") : t("conversations.manual.send")}
                   </Button>
                 </div>
-                {selectedConversation.rosane_status !== "human_takeover" ? (
+                {replyMode === "message" && selectedConversation.rosane_status !== "human_takeover" ? (
                   <p className="mt-2 text-xs text-zinc-500">{t("conversations.manual.requiresTakeover")}</p>
+                ) : null}
+                {replyMode === "note" ? (
+                  <p className="mt-2 text-xs text-amber-600">{t("conversations.note.disclaimer")}</p>
                 ) : null}
               </div>
             </div>
