@@ -971,6 +971,10 @@ export default function AgentesPage() {
     return { label: t("settings.whatsapp.disconnected"), variant: "secondary" as const };
   }, [settings.data?.whatsapp, t]);
 
+  // Edge Function pode falhar ou estar lenta; usar o banco como fallback para estado conectado
+  const isConnected = conn?.is_connected ?? settings.data?.whatsapp?.is_connected ?? false;
+  const connectedPhone = conn?.phone_number ?? (settings.data?.whatsapp as { phone_number?: string | null } | null)?.phone_number ?? null;
+
   const activeAgentCount = form.enabledAgents.length;
   const metrics = [
     { label: t("settings.activeAgents"), value: String(activeAgentCount) },
@@ -1215,17 +1219,17 @@ export default function AgentesPage() {
             </div>
           </CardHeader>
           <CardContent className="grid gap-4 text-sm">
-            {whatsappConn.query.isLoading ? (
+            {whatsappConn.query.isLoading && settings.isLoading ? (
               <div className="grid gap-2">
                 <Skeleton className="h-8 w-full" />
                 <Skeleton className="h-10 w-full" />
               </div>
-            ) : conn?.is_connected ? (
+            ) : isConnected ? (
               <>
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-medium text-zinc-900">{t("settings.whatsapp.phoneNumber")}</p>
-                    <p className="text-zinc-500">{conn.phone_number ?? t("settings.whatsapp.notInformed")}</p>
+                    <p className="text-zinc-500">{connectedPhone ?? t("settings.whatsapp.notInformed")}</p>
                   </div>
                   <Badge variant="success">{t("settings.whatsapp.connected")}</Badge>
                 </div>
@@ -1554,7 +1558,7 @@ export default function AgentesPage() {
         </SheetContent>
       </Sheet>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur md:px-6">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur md:left-56 md:px-6">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3">
           <div className="text-sm text-zinc-600">
             {saved ? t("settings.saved") : t("settings.index.assistant.description")}

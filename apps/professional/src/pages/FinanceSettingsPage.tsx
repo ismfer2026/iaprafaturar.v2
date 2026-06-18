@@ -1,14 +1,27 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import { Landmark, Plus, ReceiptText, Settings2, WalletCards } from "lucide-react";
-import { Button, Card, CardContent, Input, Skeleton } from "@iaprafaturar/ui";
+import { Button, Card, CardContent, Input, Skeleton, cn } from "@iaprafaturar/ui";
 import type { FinanceSettings } from "@iaprafaturar/domain";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFinanceReceiptSettings, useFinanceSettings } from "@/hooks/useFinancial";
-import { useI18n } from "@/i18n";
+import { useI18n, type TranslationKey } from "@/i18n";
+
+const FINANCE_TABS = [
+  { key: "extrato", path: "/financeiro" },
+  { key: "pdv", path: "/financeiro?tab=pdv" },
+  { key: "caixa", path: "/financeiro?tab=caixa" },
+  { key: "conta_cliente", path: "/financeiro?tab=conta_cliente" },
+  { key: "fluxo", path: "/financeiro?tab=fluxo" },
+  { key: "repasses", path: "/financeiro?tab=repasses" },
+  { key: "conciliacao", path: "/financeiro/conciliacao" },
+  { key: "configuracoes", path: "/financeiro/configuracoes" },
+] as const;
 
 export default function FinanceSettingsPage() {
   const { professionalId, role } = useAuth();
   const { t } = useI18n();
+  const navigate = useNavigate();
   const gestorProfessionalId = role === "gestor" ? professionalId : null;
   const settings = useFinanceSettings(gestorProfessionalId);
   const receipts = useFinanceReceiptSettings(gestorProfessionalId);
@@ -25,7 +38,17 @@ export default function FinanceSettingsPage() {
   if (!draft || settings.isLoading) return <div className="p-6"><Skeleton className="h-40 w-full" /></div>;
   const toggle = <T extends { id: string; is_active: boolean }>(list: T[], id: string) => list.map((item) => item.id === id ? { ...item, is_active: !item.is_active } : item);
   async function save(event: FormEvent) { event.preventDefault(); if (draft) await settings.saveSettings(draft); }
-  return <form onSubmit={save} className="mx-auto w-full max-w-6xl space-y-5 px-4 py-5 md:px-6"><header><h1 className="text-3xl font-semibold">{t("finance.settings.pageTitle")}</h1><p className="text-sm text-zinc-500">{t("finance.settings.pageSubtitle")}</p></header>
+  return <form onSubmit={save} className="mx-auto w-full max-w-6xl space-y-5 px-4 py-5 md:px-6">
+    <div className="overflow-x-auto">
+      <div className="flex min-w-max gap-1 rounded-lg bg-zinc-100 p-1">
+        {FINANCE_TABS.map(({ key, path }) => (
+          <button key={key} type="button" className={cn("whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-colors", key === "configuracoes" ? "bg-white text-zinc-950 shadow-sm" : "text-zinc-500")} onClick={() => navigate(path)}>
+            {t(`finance.tab.${key}` as TranslationKey)}
+          </button>
+        ))}
+      </div>
+    </div>
+    <header><h1 className="text-3xl font-semibold">{t("finance.settings.pageTitle")}</h1><p className="text-sm text-zinc-500">{t("finance.settings.pageSubtitle")}</p></header>
     <div className="grid gap-4 lg:grid-cols-2">
       <ListCard icon={Landmark} title={t("finance.settings.banks")} value={newBank} onChange={setNewBank} secondaryValue={newPix} onSecondaryChange={setNewPix} secondaryPlaceholder={t("finance.settings.pixKey")} onAdd={() => { if (newBank.trim()) setDraft({ ...draft, bankAccounts: [...draft.bankAccounts, { id: crypto.randomUUID(), professional_id: professionalId ?? "", name: newBank.trim(), bank_name: null, account_type: "corrente", pix_key: newPix.trim() || null, opening_balance: 0, is_default: false, is_active: true, created_at: "", updated_at: "" }] }); setNewBank(""); setNewPix(""); }} items={draft.bankAccounts} onToggle={(id) => setDraft({ ...draft, bankAccounts: toggle(draft.bankAccounts, id) })} />
       <ListCard icon={Settings2} title={t("finance.settings.categories")} value={newCategory} onChange={setNewCategory} extra={<select className="h-10 rounded-md border border-zinc-200 px-3 text-sm" value={categoryType} onChange={(event) => setCategoryType(event.target.value as "receita" | "despesa")}><option value="receita">{t("finance.settings.income")}</option><option value="despesa">{t("finance.settings.expense")}</option></select>} onAdd={() => { if (newCategory.trim()) setDraft({ ...draft, categories: [...draft.categories, { id: crypto.randomUUID(), professional_id: professionalId ?? "", name: newCategory.trim(), type: categoryType, is_default: false, is_active: true, created_at: "", updated_at: "" }] }); setNewCategory(""); }} items={draft.categories} onToggle={(id) => setDraft({ ...draft, categories: toggle(draft.categories, id) })} />

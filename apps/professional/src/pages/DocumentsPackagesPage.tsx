@@ -235,7 +235,7 @@ export default function DocumentsPackagesPage() {
       setAnamneseForm({
         templateId: template?.id ?? "",
         name: template?.name ?? "",
-        fields: template ? JSON.stringify(template.fields, null, 2) : "",
+        fields: template ? JSON.stringify(template.fields, null, 2) : "{}",
       });
     }
     setSheetMode(mode);
@@ -374,7 +374,6 @@ export default function DocumentsPackagesPage() {
   async function submitAnamneseTemplate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError(null);
-    if (!anamneseForm.templateId) return setFormError(t("docs.error.templateRequired"));
     if (!anamneseForm.name.trim()) return setFormError(t("docs.error.nameRequired"));
 
     let fields: Record<string, unknown>;
@@ -385,18 +384,20 @@ export default function DocumentsPackagesPage() {
       return;
     }
 
+    const templateId = anamneseForm.templateId || null;
+
     try {
       await anamneseTemplatesQuery.updateAnamneseTemplate({
-        templateId: anamneseForm.templateId,
+        templateId,
         name: anamneseForm.name.trim(),
         fields,
       });
       setSheetMode(null);
     } catch (err) {
-      if (err instanceof Error && err.message.startsWith("anamnese_template_has_fichas")) {
+      if (templateId && err instanceof Error && err.message.startsWith("anamnese_template_has_fichas")) {
         try {
           await anamneseTemplatesQuery.createAnamneseTemplateVersion({
-            templateId: anamneseForm.templateId,
+            templateId: templateId as string,
             name: anamneseForm.name.trim(),
             fields,
           });
@@ -621,9 +622,9 @@ export default function DocumentsPackagesPage() {
       {activeTab === "anamnese" ? (
         <section className="space-y-4">
           {isGestor ? (
-            <Button className="gap-2" onClick={() => openSheet("anamnese")} disabled={!currentAnamneseTemplates.length}>
+            <Button className="gap-2" onClick={() => openSheet("anamnese")}>
               <Stethoscope className="h-4 w-4" />
-              {t("docs.anamnese.edit")}
+              {currentAnamneseTemplates.length === 0 ? t("docs.anamnese.create") : t("docs.anamnese.edit")}
             </Button>
           ) : null}
           {currentAnamneseTemplates.map((template) => {
@@ -752,18 +753,24 @@ export default function DocumentsPackagesPage() {
 
           {sheetMode === "anamnese" ? (
             <form onSubmit={submitAnamneseTemplate}>
-              <SheetHeader><SheetTitle>{t("docs.anamnese.edit")}</SheetTitle></SheetHeader>
+              <SheetHeader>
+                <SheetTitle>
+                  {currentAnamneseTemplates.length === 0 ? t("docs.anamnese.create") : t("docs.anamnese.edit")}
+                </SheetTitle>
+              </SheetHeader>
               <div className="space-y-4 px-4 py-2">
-                <SelectInput label={t("docs.form.template")} value={anamneseForm.templateId} onChange={(templateId) => {
-                  const template = currentAnamneseTemplates.find((item) => item.id === templateId);
-                  setAnamneseForm({
-                    templateId,
-                    name: template?.name ?? "",
-                    fields: template ? JSON.stringify(template.fields, null, 2) : "",
-                  });
-                }} options={currentAnamneseTemplates.map((template) => ({ value: template.id, label: template.name }))} />
+                {currentAnamneseTemplates.length > 1 ? (
+                  <SelectInput label={t("docs.form.template")} value={anamneseForm.templateId} onChange={(templateId) => {
+                    const template = currentAnamneseTemplates.find((item) => item.id === templateId);
+                    setAnamneseForm({
+                      templateId,
+                      name: template?.name ?? "",
+                      fields: template ? JSON.stringify(template.fields, null, 2) : "{}",
+                    });
+                  }} options={currentAnamneseTemplates.map((template) => ({ value: template.id, label: template.name }))} />
+                ) : null}
                 <TextInput label={t("docs.form.name")} value={anamneseForm.name} onChange={(name) => setAnamneseForm((current) => ({ ...current, name }))} />
-                <TextAreaInput label={t("docs.form.fieldsJson")} value={anamneseForm.fields || (selectedTemplate ? JSON.stringify(selectedTemplate.fields, null, 2) : "")} onChange={(fields) => setAnamneseForm((current) => ({ ...current, fields }))} rows={12} />
+                <TextAreaInput label={t("docs.form.fieldsJson")} value={anamneseForm.fields || (selectedTemplate ? JSON.stringify(selectedTemplate.fields, null, 2) : "{}")} onChange={(fields) => setAnamneseForm((current) => ({ ...current, fields }))} rows={12} />
                 <FormError message={formError} />
               </div>
               <SheetFooter><SheetActions onCancel={() => setSheetMode(null)} isBusy={anamneseTemplatesQuery.isUpdatingAnamneseTemplate || anamneseTemplatesQuery.isCreatingAnamneseTemplateVersion} /></SheetFooter>

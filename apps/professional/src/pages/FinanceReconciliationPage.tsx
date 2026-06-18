@@ -1,9 +1,21 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { CheckCircle2, Upload, XCircle } from "lucide-react";
-import { Badge, Button, Card, CardContent, Skeleton } from "@iaprafaturar/ui";
+import { Badge, Button, Card, CardContent, Skeleton, cn } from "@iaprafaturar/ui";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFinanceSettings, useFinancialTransactions, useReconciliation } from "@/hooks/useFinancial";
-import { useI18n } from "@/i18n";
+import { useI18n, type TranslationKey } from "@/i18n";
+
+const FINANCE_TABS = [
+  { key: "extrato", path: "/financeiro" },
+  { key: "pdv", path: "/financeiro?tab=pdv" },
+  { key: "caixa", path: "/financeiro?tab=caixa" },
+  { key: "conta_cliente", path: "/financeiro?tab=conta_cliente" },
+  { key: "fluxo", path: "/financeiro?tab=fluxo" },
+  { key: "repasses", path: "/financeiro?tab=repasses" },
+  { key: "conciliacao", path: "/financeiro/conciliacao" },
+  { key: "configuracoes", path: "/financeiro/configuracoes" },
+] as const;
 
 function parseFile(name: string, text: string) {
   if (name.toLowerCase().endsWith(".ofx")) {
@@ -23,6 +35,7 @@ function parseFile(name: string, text: string) {
 export default function FinanceReconciliationPage() {
   const { professionalId, role } = useAuth();
   const { t, locale } = useI18n();
+  const navigate = useNavigate();
   const gestorProfessionalId = role === "gestor" ? professionalId : null;
   const reconciliation = useReconciliation(gestorProfessionalId);
   const settings = useFinanceSettings(gestorProfessionalId);
@@ -43,6 +56,15 @@ export default function FinanceReconciliationPage() {
 
   const busy = reconciliation.isImportingItems || reconciliation.isConfirmingMatch || reconciliation.isIgnoringItem;
   return <div className="mx-auto w-full max-w-6xl space-y-5 px-4 py-5 md:px-6">
+    <div className="overflow-x-auto">
+      <div className="flex min-w-max gap-1 rounded-lg bg-zinc-100 p-1">
+        {FINANCE_TABS.map(({ key, path }) => (
+          <button key={key} type="button" className={cn("whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-colors", key === "conciliacao" ? "bg-white text-zinc-950 shadow-sm" : "text-zinc-500")} onClick={() => navigate(path)}>
+            {t(`finance.tab.${key}` as TranslationKey)}
+          </button>
+        ))}
+      </div>
+    </div>
     <header><h1 className="text-3xl font-semibold">{t("finance.conciliation.title")}</h1><p className="text-sm text-zinc-500">{t("finance.conciliation.subtitle")}</p></header>
     <label className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-zinc-950 px-4 py-2 text-sm font-medium text-white"><Upload className="h-4 w-4" />{t("finance.conciliation.import")}<input className="hidden" type="file" accept=".csv,.ofx" onChange={(event) => importFile(event.target.files?.[0] ?? null)} /></label>
     {error ? <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}

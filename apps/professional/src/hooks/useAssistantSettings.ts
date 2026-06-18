@@ -30,7 +30,7 @@ export function useAssistantSettings(professionalId: string | null) {
           .maybeSingle(),
         supabase
           .from("professional_whatsapp")
-          .select("provider, status, is_connected, connection_mode, number_kind")
+          .select("provider, status, is_connected, connection_mode, number_kind, phone_number")
           .eq("professional_id", professionalId)
           .order("is_connected", { ascending: false })
           .limit(1)

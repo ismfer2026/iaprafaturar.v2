@@ -262,7 +262,7 @@ export interface AnamneseTemplate {
 }
 
 export interface UpdateAnamneseTemplateInput {
-  templateId: string;
+  templateId: string | null;
   name: string;
   fields: Record<string, unknown>;
   isDefault?: boolean;
