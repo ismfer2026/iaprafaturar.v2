@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowRight, Languages, MessageCircle, ShieldCheck } from "lucide-react";
 import { Button, Input } from "@iaprafaturar/ui";
 import type { Locale } from "@/i18n";
@@ -36,17 +36,27 @@ function normalizeLocale(value: string | null): Locale {
 
 export default function PublicEntrarPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { t, setLocale } = useI18n();
   const lang = useMemo(() => normalizeLocale(searchParams.get("lang")), [searchParams]);
   const ref = searchParams.get("ref") ?? undefined;
   const conversation = searchParams.get("conversation") ?? undefined;
+  const cameFromInvite = Boolean((location.state as { fromInvite?: boolean } | null)?.fromInvite);
 
   const [email, setEmail] = useState(searchParams.get("email") ?? "");
   const [name, setName] = useState("");
   const [phoneWhatsapp, setPhoneWhatsapp] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Qualquer acesso direto a um link de indicação (link antigo, digitado à mão,
+  // favoritado) deve passar pela página de captura antes do formulário —
+  // só pula direto quando a navegação vem do próprio CTA de /convite/:codigo.
+  if (ref && !cameFromInvite) {
+    const params = new URLSearchParams({ lang });
+    return <Navigate to={`/convite/${encodeURIComponent(ref)}?${params.toString()}`} replace />;
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
