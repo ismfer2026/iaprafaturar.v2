@@ -20,9 +20,9 @@ const STATUS_VARIANTS: Record<string, "secondary" | "success" | "destructive"> =
   rejected: "destructive",
 };
 
-function buildReferralLink(code: string): string {
+function buildReferralLink(code: string, locale: string): string {
   const base = (import.meta.env["VITE_CLIENT_APP_URL"] as string | undefined) ?? "https://app.iaprafaturar.com.br";
-  return `${base.replace(/\/$/, "")}/cadastro?ref=${encodeURIComponent(code)}`;
+  return `${base.replace(/\/$/, "")}/convite/${encodeURIComponent(code)}?lang=${encodeURIComponent(locale)}`;
 }
 
 function formatBRL(cents: number): string {
@@ -31,7 +31,7 @@ function formatBRL(cents: number): string {
 
 export default function PartnersPage() {
   const { professionalId, role } = useAuth();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const query = usePartners(role === "gestor" ? professionalId : null);
   const [copied, setCopied] = useState(false);
 
@@ -50,7 +50,7 @@ export default function PartnersPage() {
   const hasPartner = Boolean(data["partner_id"]);
   const status = String(data["status"] ?? "");
   const affiliateCode = String(data["affiliate_code"] ?? "");
-  const referralLink = affiliateCode ? buildReferralLink(affiliateCode) : "";
+  const referralLink = affiliateCode ? buildReferralLink(affiliateCode, locale) : "";
   const commissionRate = Number(data["commission_rate"] ?? 15);
   const pendingBalanceCents = Number(data["pending_balance_cents"] ?? 0);
   const referrals = Array.isArray(data["referrals"]) ? (data["referrals"] as Array<{ status: string }>) : [];

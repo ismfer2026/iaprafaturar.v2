@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Skeleton } from "@iaprafaturar/ui";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -10,6 +10,7 @@ import { professionalAliases, professionalRoutes } from "@/routes";
 
 const LoginPage = lazy(() => import("@/pages/auth/LoginPage"));
 const PublicEntrarPage = lazy(() => import("@/pages/auth/PublicEntrarPage"));
+const PublicInviteLandingPage = lazy(() => import("@/pages/auth/PublicInviteLandingPage"));
 const PublicCreateAccountPage = lazy(() => import("@/pages/auth/PublicCreateAccountPage"));
 const RecoverPasswordPage = lazy(() => import("@/pages/auth/RecoverPasswordPage"));
 const ResetPasswordPage = lazy(() => import("@/pages/auth/ResetPasswordPage"));
@@ -24,16 +25,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-function CadastroCodigoRedirect() {
-  const { codigo } = useParams<{ codigo: string }>();
-  return <Navigate to={`/criar-conta?ref=${codigo ?? ""}`} replace />;
-}
-
-function ConviteCodigoRedirect() {
-  const { codigo } = useParams<{ codigo: string }>();
-  return <Navigate to={`/criar-conta?convite=${codigo ?? ""}`} replace />;
-}
 
 function PageLoader() {
   return (
@@ -55,8 +46,8 @@ function AppRoutes() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/entrar" element={<PublicEntrarPage />} />
             <Route path="/cadastro" element={<PublicEntrarPage />} />
-            <Route path="/cadastro/:codigo" element={<CadastroCodigoRedirect />} />
-            <Route path="/convite/:codigo" element={<ConviteCodigoRedirect />} />
+            <Route path="/cadastro/:codigo" element={<PublicInviteLandingPage />} />
+            <Route path="/convite/:codigo" element={<PublicInviteLandingPage />} />
             <Route path="/criar-conta" element={<PublicCreateAccountPage />} />
             <Route path="/recuperar-senha" element={<RecoverPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
