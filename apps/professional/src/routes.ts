@@ -321,7 +321,7 @@ export const NAV_GROUPS: NavGroup[] = [
   { labelKey: "ANÁLISE",     paths: ["/relatorios", "/documentos/pacotes"] },
 ];
 
-export const NAV_BOTTOM_PATHS = ["/planos", "/agentes", "/configuracoes"];
+export const NAV_BOTTOM_PATHS = ["/planos", "/agentes", "/configuracoes", "/mais"];
 
 export const desktopNavRoutes = professionalRoutes.filter((r) => r.desktopNav);
 export const mobileNavRoutes  = professionalRoutes.filter((r) => r.mobileNav);
