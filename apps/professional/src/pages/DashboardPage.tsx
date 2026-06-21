@@ -271,8 +271,8 @@ export default function DashboardPage() {
           icon={Bot}
           value={pulse.aiExecutionsTodayCount}
           label={t("dashboard.pulse.aiActivity")}
-          iconBg="bg-violet-50"
-          iconColor="text-violet-600"
+          iconBg="bg-primary-50"
+          iconColor="text-primary-600"
         />
       </section>
 
@@ -454,8 +454,8 @@ export default function DashboardPage() {
         <Card className="rounded-xl border-zinc-200">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50">
-                <Bot className="h-5 w-5 text-violet-500" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50">
+                <Bot className="h-5 w-5 text-primary-500" />
               </div>
               <div>
                 <p className="text-xl font-bold text-zinc-950">{pulse.aiExecutionsTodayCount}</p>
@@ -465,7 +465,7 @@ export default function DashboardPage() {
             {pulse.aiExecutionsTodayCount > 0 && (
               <Link
                 to="/agentes"
-                className="mt-3 flex items-center gap-0.5 text-xs font-medium text-violet-600 hover:text-violet-700"
+                className="mt-3 flex items-center gap-0.5 text-xs font-medium text-primary-600 hover:text-primary-700"
               >
                 {t("dashboard.verTodos")}
                 <ChevronRight className="h-3.5 w-3.5" />

@@ -127,7 +127,7 @@ function WeeklyHoursEditor({
             <label className="flex items-center gap-2 text-sm font-medium text-zinc-900">
               <input
                 type="checkbox"
-                className="h-4 w-4 rounded border-zinc-300 text-violet-600"
+                className="h-4 w-4 rounded border-zinc-300 text-primary-600"
                 checked={weekly[day].enabled}
                 onChange={(event) =>
                   onChange({ ...weekly, [day]: { ...weekly[day], enabled: event.target.checked } })
@@ -294,7 +294,7 @@ export default function ConfiguracoesAgendaPage() {
             {t("team.back")}
           </Link>
         </Button>
-        <p className="text-xs font-semibold uppercase tracking-wide text-violet-600">{t("settings.schedule.eyebrow")}</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">{t("settings.schedule.eyebrow")}</p>
         <h1 className="text-2xl font-semibold text-zinc-950">{t("settings.schedule.title")}</h1>
         <p className="text-sm leading-6 text-zinc-500">{t("settings.schedule.subtitle")}</p>
       </header>
@@ -309,7 +309,7 @@ export default function ConfiguracoesAgendaPage() {
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 text-violet-700">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-primary-700">
                 <UserRound className="h-5 w-5" />
               </div>
               <div>
@@ -355,7 +355,7 @@ export default function ConfiguracoesAgendaPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 text-violet-700">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-primary-700">
                 <Clock className="h-5 w-5" />
               </div>
               <div>
@@ -404,7 +404,7 @@ export default function ConfiguracoesAgendaPage() {
             <label className="flex items-start gap-3 rounded-lg border border-zinc-200 px-3 py-3">
               <input
                 type="checkbox"
-                className="mt-1 h-4 w-4 rounded border-zinc-300 text-violet-600"
+                className="mt-1 h-4 w-4 rounded border-zinc-300 text-primary-600"
                 checked={rulesForm.relationshipCheckinsEnabled}
                 onChange={(event) =>
                   setRulesForm((current) => ({ ...current, relationshipCheckinsEnabled: event.target.checked }))
@@ -518,7 +518,7 @@ export default function ConfiguracoesAgendaPage() {
               <label className="flex items-start gap-3 rounded-lg border border-zinc-200 px-3 py-3">
                 <input
                   type="checkbox"
-                  className="mt-1 h-4 w-4 rounded border-zinc-300 text-violet-600"
+                  className="mt-1 h-4 w-4 rounded border-zinc-300 text-primary-600"
                   checked={memberForm.useClinic}
                   onChange={(event) =>
                     setMemberForm((current) => (current ? { ...current, useClinic: event.target.checked } : current))

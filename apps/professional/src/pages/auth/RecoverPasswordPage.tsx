@@ -31,7 +31,7 @@ export default function RecoverPasswordPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-zinc-50 px-4">
       <div className="w-full max-w-sm">
-        <Link to="/login" className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-violet-700">
+        <Link to="/login" className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-primary-700">
           <ArrowLeft className="h-4 w-4" />
           {t("auth.recovery.back")}
         </Link>

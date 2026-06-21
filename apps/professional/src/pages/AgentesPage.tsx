@@ -579,7 +579,7 @@ function AgentToggleCard({
           <label className="flex items-center gap-2 rounded-full border border-zinc-200 px-3 py-2 text-sm">
             <input
               type="checkbox"
-              className="h-4 w-4 rounded border-zinc-300 text-violet-600"
+              className="h-4 w-4 rounded border-zinc-300 text-primary-600"
               checked={enabled}
               onChange={() => onToggle(slot.slug)}
             />
@@ -1065,7 +1065,7 @@ export default function AgentesPage() {
             {t("team.back")}
           </Link>
         </Button>
-        <p className="text-xs font-semibold uppercase tracking-wide text-violet-600">{t("agents.eyebrow")}</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">{t("agents.eyebrow")}</p>
         <h1 className="text-3xl font-semibold tracking-tight text-zinc-950">{t("agents.title")}</h1>
         <p className="max-w-3xl text-sm leading-6 text-zinc-500">{t("agents.subtitle", assistantParams)}</p>
       </header>
@@ -1089,7 +1089,7 @@ export default function AgentesPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 text-violet-700">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-primary-700">
                 <Bot className="h-5 w-5" />
               </div>
               <div>
@@ -1112,7 +1112,7 @@ export default function AgentesPage() {
                 </label>
                 <select
                   id="tone"
-                  className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                   value={form.tone}
                   onChange={(event) =>
                     setForm((current) => ({
@@ -1132,7 +1132,7 @@ export default function AgentesPage() {
               <label className="flex items-start gap-3 rounded-lg border border-zinc-200 px-3 py-3">
                 <input
                   type="checkbox"
-                  className="mt-1 h-4 w-4 rounded border-zinc-300 text-violet-600"
+                  className="mt-1 h-4 w-4 rounded border-zinc-300 text-primary-600"
                   checked={form.autoRespond}
                   onChange={(event) => setForm((current) => ({ ...current, autoRespond: event.target.checked }))}
                 />
@@ -1145,7 +1145,7 @@ export default function AgentesPage() {
               <label className="flex items-start gap-3 rounded-lg border border-zinc-200 px-3 py-3">
                 <input
                   type="checkbox"
-                  className="mt-1 h-4 w-4 rounded border-zinc-300 text-violet-600"
+                  className="mt-1 h-4 w-4 rounded border-zinc-300 text-primary-600"
                   checked={form.shadowMode}
                   onChange={(event) => setForm((current) => ({ ...current, shadowMode: event.target.checked }))}
                 />
@@ -1163,7 +1163,7 @@ export default function AgentesPage() {
                   <label key={slot.slug} className="flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm">
                     <input
                       type="checkbox"
-                      className="h-4 w-4 rounded border-zinc-300 text-violet-600"
+                      className="h-4 w-4 rounded border-zinc-300 text-primary-600"
                       checked={form.enabledAgents.includes(slot.slug)}
                       onChange={() => toggleAgent(slot.slug)}
                     />
@@ -1176,7 +1176,7 @@ export default function AgentesPage() {
             <label className="flex items-start gap-3 rounded-lg border border-zinc-200 px-3 py-3">
               <input
                 type="checkbox"
-                className="mt-1 h-4 w-4 rounded border-zinc-300 text-violet-600"
+                className="mt-1 h-4 w-4 rounded border-zinc-300 text-primary-600"
                 checked={form.sendGoogleReviewAfterPositiveNps}
                 onChange={(event) =>
                   setForm((current) => ({

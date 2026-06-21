@@ -78,13 +78,13 @@ export default function PartnersPage() {
       </header>
 
       {/* Hero banner */}
-      <div className="flex flex-col gap-4 rounded-2xl bg-gradient-to-r from-violet-700 to-violet-800 p-5 text-white sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-4 rounded-2xl bg-gradient-to-r from-primary-700 to-primary-800 p-5 text-white sm:flex-row sm:items-center">
         <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-white/20">
           <Users className="h-7 w-7" />
         </div>
         <div>
           <h2 className="text-xl font-black">{t("growth.partners.hero.title")}</h2>
-          <p className="mt-1 text-sm text-violet-100">
+          <p className="mt-1 text-sm text-primary-100">
             {t("growth.partners.hero.prefix")}{" "}
             <strong className="text-yellow-300">{t("growth.partners.hero.highlight", rateParams)}</strong>{" "}
             {t("growth.partners.hero.suffix")}
@@ -96,7 +96,7 @@ export default function PartnersPage() {
       <Card>
         <CardHeader className="border-b pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Building2 className="h-4 w-4 text-violet-700" />
+            <Building2 className="h-4 w-4 text-primary-700" />
             {t("growth.partners.programTitle")}
           </CardTitle>
         </CardHeader>
@@ -114,7 +114,7 @@ export default function PartnersPage() {
                   <p className="mb-1 text-xs uppercase tracking-wider text-zinc-500">
                     {t("growth.partners.activeReferrals")}
                   </p>
-                  <p className="text-3xl font-black text-violet-700">{activeReferrals}</p>
+                  <p className="text-3xl font-black text-primary-700">{activeReferrals}</p>
                 </div>
                 <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
                   <p className="mb-1 text-xs uppercase tracking-wider text-zinc-500">
@@ -141,7 +141,7 @@ export default function PartnersPage() {
 
                   <Button
                     variant="outline"
-                    className="mt-3 w-full gap-2 border-violet-700 text-violet-700 hover:bg-violet-50"
+                    className="mt-3 w-full gap-2 border-primary-700 text-primary-700 hover:bg-primary-50"
                     onClick={shareWhatsApp}
                   >
                     <MessageCircle className="h-4 w-4" />
@@ -152,8 +152,8 @@ export default function PartnersPage() {
             </>
           ) : (
             <div className="space-y-4 py-6 text-center">
-              <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-violet-100">
-                <Users className="h-8 w-8 text-violet-700" />
+              <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary-100">
+                <Users className="h-8 w-8 text-primary-700" />
               </div>
               <div>
                 <p className="text-lg font-semibold text-zinc-950">{t("growth.partners.notPartnerYet")}</p>
@@ -181,7 +181,7 @@ export default function PartnersPage() {
               t("growth.partners.step4"),
             ].map((step, index) => (
               <li key={index} className="flex items-start gap-3">
-                <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-violet-700 text-xs font-bold text-white">
+                <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary-700 text-xs font-bold text-white">
                   {index + 1}
                 </span>
                 <span className="text-sm leading-snug text-zinc-500">{step}</span>

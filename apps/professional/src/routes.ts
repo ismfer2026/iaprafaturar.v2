@@ -66,6 +66,7 @@ const ConfiguracoesNotificacoesPage = lazy(() => import("@/pages/ConfiguracoesNo
 const ConfiguracoesAgendaPage      = lazy(() => import("@/pages/ConfiguracoesAgendaPage"));
 const ConfiguracoesClinicaPage     = lazy(() => import("@/pages/ConfiguracoesClinicaPage"));
 const MorePage               = lazy(() => import("@/pages/MorePage"));
+const ProfilePage            = lazy(() => import("@/pages/ProfilePage"));
 const NotFoundPage           = lazy(() => import("@/pages/NotFoundPage"));
 
 export const professionalRoutes: ProfessionalRouteDefinition[] = [
@@ -78,7 +79,7 @@ export const professionalRoutes: ProfessionalRouteDefinition[] = [
     ownerPhase: 3,
     labelKey: "nav.dashboard",
     icon: LayoutDashboard,
-    iconColor: "text-violet-500",
+    iconColor: "text-primary-500",
     desktopNav: true,
     mobileNav: true,
   },
@@ -88,7 +89,7 @@ export const professionalRoutes: ProfessionalRouteDefinition[] = [
     ownerPhase: 3,
     labelKey: "nav.agenda",
     icon: CalendarDays,
-    iconColor: "text-violet-500",
+    iconColor: "text-primary-500",
     desktopNav: true,
     mobileNav: true,
   },
@@ -169,7 +170,7 @@ export const professionalRoutes: ProfessionalRouteDefinition[] = [
     icon: TrendingUp,
     iconColor: "text-orange-500",
     desktopNav: true,
-    moreNav: { descriptionKey: "more.growth.description", tone: "bg-violet-50 text-violet-700" },
+    moreNav: { descriptionKey: "more.growth.description", tone: "bg-primary-50 text-primary-700" },
   },
   {
     path: "/campanhas",
@@ -276,6 +277,7 @@ export const professionalRoutes: ProfessionalRouteDefinition[] = [
   { path: "/configuracoes/notificacoes", component: ConfiguracoesNotificacoesPage, ownerPhase: 19 },
   { path: "/configuracoes/agenda", component: ConfiguracoesAgendaPage, ownerPhase: 19 },
   { path: "/configuracoes/clinica", component: ConfiguracoesClinicaPage, ownerPhase: 19 },
+  { path: "/perfil", component: ProfilePage, ownerPhase: 28 },
 
   // ── MOBILE ONLY ───────────────────────────────────────────
   {
@@ -321,7 +323,7 @@ export const NAV_GROUPS: NavGroup[] = [
   { labelKey: "ANÁLISE",     paths: ["/relatorios", "/documentos/pacotes"] },
 ];
 
-export const NAV_BOTTOM_PATHS = ["/planos", "/agentes", "/configuracoes", "/mais"];
+export const NAV_BOTTOM_PATHS = ["/planos", "/agentes", "/configuracoes"];
 
 export const desktopNavRoutes = professionalRoutes.filter((r) => r.desktopNav);
 export const mobileNavRoutes  = professionalRoutes.filter((r) => r.mobileNav);

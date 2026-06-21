@@ -41,7 +41,7 @@ export function LanguageSwitcher({ compact = false }: LanguageSwitcherProps) {
             size="sm"
             className={cn(
               "h-8 rounded-full px-2 text-xs font-semibold",
-              locale === item.value && "bg-violet-700 text-white hover:bg-violet-700 hover:text-white",
+              locale === item.value && "bg-primary-700 text-white hover:bg-primary-700 hover:text-white",
             )}
             aria-pressed={locale === item.value}
             onClick={() => setLocale(item.value)}

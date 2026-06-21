@@ -220,7 +220,7 @@ export default function ConfiguracoesEquipePage() {
 
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-violet-600">{t("team.eyebrow")}</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">{t("team.eyebrow")}</p>
             <h1 className="mt-1 text-3xl font-semibold tracking-tight text-zinc-950">{t("team.title")}</h1>
             <p className="mt-1 text-sm text-zinc-500">{t("team.subtitle")}</p>
           </div>
@@ -361,7 +361,7 @@ export default function ConfiguracoesEquipePage() {
                   <label className="block space-y-1.5">
                     <span className="text-sm font-medium text-zinc-700">{t("team.form.nivelAcesso")}</span>
                     <select
-                      className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm shadow-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                      className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm shadow-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
                       value={form.nivelAcesso}
                       onChange={(event) =>
                         setForm((current) => ({ ...current, nivelAcesso: event.target.value as NivelAcesso }))
@@ -375,7 +375,7 @@ export default function ConfiguracoesEquipePage() {
                   <label className="flex items-start gap-3 rounded-lg border border-zinc-200 px-3 py-3">
                     <input
                       type="checkbox"
-                      className="mt-1 h-4 w-4 rounded border-zinc-300 text-violet-600"
+                      className="mt-1 h-4 w-4 rounded border-zinc-300 text-primary-600"
                       checked={form.possuiAgenda}
                       onChange={(event) => setForm((current) => ({ ...current, possuiAgenda: event.target.checked }))}
                     />
@@ -419,7 +419,7 @@ export default function ConfiguracoesEquipePage() {
               <label className="block space-y-1.5">
                 <span className="text-sm font-medium text-zinc-700">{t("team.form.nivelAcesso")}</span>
                 <select
-                  className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm shadow-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                  className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm shadow-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
                   value={permissionsForm.nivelAcesso}
                   onChange={(event) =>
                     setPermissionsForm((current) => ({ ...current, nivelAcesso: event.target.value as NivelAcesso }))
@@ -433,7 +433,7 @@ export default function ConfiguracoesEquipePage() {
               <label className="flex items-start gap-3 rounded-lg border border-zinc-200 px-3 py-3">
                 <input
                   type="checkbox"
-                  className="mt-1 h-4 w-4 rounded border-zinc-300 text-violet-600"
+                  className="mt-1 h-4 w-4 rounded border-zinc-300 text-primary-600"
                   checked={permissionsForm.possuiAgenda}
                   onChange={(event) =>
                     setPermissionsForm((current) => ({ ...current, possuiAgenda: event.target.checked }))
@@ -448,7 +448,7 @@ export default function ConfiguracoesEquipePage() {
               </label>
 
               {permissionsForm.nivelAcesso === "gestor" ? (
-                <div className="flex items-start gap-2 rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm text-violet-700">
+                <div className="flex items-start gap-2 rounded-lg border border-primary-200 bg-primary-50 px-3 py-2 text-sm text-primary-700">
                   <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
                   {t("team.role.gestor")}
                 </div>

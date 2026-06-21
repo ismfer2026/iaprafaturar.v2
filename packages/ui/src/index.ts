@@ -35,4 +35,14 @@ export {
 } from "./components/toast";
 export type { ToastProps, ToastActionElement } from "./components/toast";
 
+export {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuPortal,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "./components/dropdown-menu";
+
 export { cn } from "./lib/utils";

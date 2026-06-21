@@ -174,7 +174,7 @@ export default function ServicesPage() {
 
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-violet-600">{t("services.eyebrow")}</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">{t("services.eyebrow")}</p>
             <h1 className="mt-1 text-3xl font-semibold tracking-tight text-zinc-950">{t("services.title")}</h1>
             <p className="mt-1 text-sm text-zinc-500">{t("services.subtitle")}</p>
           </div>
@@ -320,7 +320,7 @@ export default function ServicesPage() {
                 <label className="block space-y-1.5">
                   <span className="text-sm font-medium text-zinc-700">{t("services.form.category")}</span>
                   <select
-                    className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm shadow-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                    className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm shadow-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
                     value={form.categoryId}
                     onChange={(event) => setForm((current) => ({ ...current, categoryId: event.target.value }))}
                   >

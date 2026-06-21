@@ -140,7 +140,7 @@ export default function ReportsPage() {
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-4 py-5 sm:px-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-violet-700">{t("reports.eyebrow")}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary-700">{t("reports.eyebrow")}</p>
           <h1 className="mt-1 text-2xl font-semibold text-zinc-950 sm:text-3xl">{t("reports.title")}</h1>
           <p className="mt-1 max-w-3xl text-sm text-zinc-500">{t("reports.subtitle")}</p>
         </div>
@@ -149,7 +149,7 @@ export default function ReportsPage() {
             <span className="sr-only">{t("reports.form.month")}</span>
             <input
               type="month"
-              className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm shadow-sm outline-none transition-colors focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+              className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm shadow-sm outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
               value={monthInputValue}
               onChange={(event) => event.target.value && setMonth(`${event.target.value}-01`)}
             />
@@ -174,7 +174,7 @@ export default function ReportsPage() {
             className={cn(
               "h-10 whitespace-nowrap rounded-lg border px-3 text-sm font-semibold transition-colors",
               tab === item.value
-                ? "border-violet-600 bg-violet-600 text-white"
+                ? "border-primary-600 bg-primary-600 text-white"
                 : "border-zinc-200 bg-white text-zinc-600",
             )}
           >
@@ -210,7 +210,7 @@ export default function ReportsPage() {
               icon={LineChart}
               label={t("reports.metric.projectedRevenue")}
               value={formatCurrency(reports.summary.projectedRevenue, locale)}
-              tone="violet"
+              tone="primary"
             />
             <MetricCard
               icon={Users}
@@ -244,12 +244,12 @@ function MetricCard({
   icon: LucideIcon;
   label: string;
   value: string;
-  tone: "emerald" | "amber" | "violet" | "zinc";
+  tone: "emerald" | "amber" | "primary" | "zinc";
 }) {
   const toneClass = {
     emerald: "bg-emerald-50 text-emerald-700",
     amber: "bg-amber-50 text-amber-700",
-    violet: "bg-violet-50 text-violet-700",
+    primary: "bg-primary-50 text-primary-700",
     zinc: "bg-zinc-100 text-zinc-700",
   }[tone];
 
@@ -354,7 +354,7 @@ function ServiceRankingCard({ rows, locale }: { rows: ReportsServiceRanking[]; l
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-zinc-100">
               <div
-                className="h-full rounded-full bg-violet-600"
+                className="h-full rounded-full bg-primary-600"
                 style={{ width: `${Math.max(5, (Number(row.revenue) / maxRevenue) * 100)}%` }}
               />
             </div>
@@ -382,7 +382,7 @@ function OccupancyCard({ rows, locale }: { rows: ReportsOccupancySlot[]; locale:
             return (
               <div
                 key={`${row.weekday}-${row.hour}`}
-                className="rounded-lg border border-violet-100 p-3 text-sm"
+                className="rounded-lg border border-primary-100 p-3 text-sm"
                 style={{ backgroundColor: `rgba(124, 58, 237, ${intensity})` }}
               >
                 <p className="font-semibold text-zinc-950">

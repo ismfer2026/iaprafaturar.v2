@@ -31,7 +31,7 @@ export default function GrowthPage() {
       <MetricCard icon={TrendingUp} label={t("growth.metric.referrals")} value={String(data?.referrals ?? 0)} />
     </section>
     <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {links.map(({ to, icon: Icon, title, description }) => <Link key={to} to={to}><Card className="h-full rounded-lg transition-colors hover:border-violet-300"><CardContent className="flex gap-3 p-4"><Icon className="mt-0.5 h-5 w-5 shrink-0 text-violet-700" /><div><h2 className="font-semibold text-zinc-950">{title}</h2><p className="mt-1 text-sm text-zinc-500">{description}</p></div></CardContent></Card></Link>)}
+      {links.map(({ to, icon: Icon, title, description }) => <Link key={to} to={to}><Card className="h-full rounded-lg transition-colors hover:border-primary-300"><CardContent className="flex gap-3 p-4"><Icon className="mt-0.5 h-5 w-5 shrink-0 text-primary-700" /><div><h2 className="font-semibold text-zinc-950">{title}</h2><p className="mt-1 text-sm text-zinc-500">{description}</p></div></CardContent></Card></Link>)}
     </section>
   </main>;
 }

@@ -198,7 +198,7 @@ export default function PublicEntrarPage() {
 
             <p className="mt-6 text-center text-sm text-zinc-500">
               {t("publicAccount.enter.hasLogin")}{" "}
-              <Link to="/login" className="font-medium text-violet-700 hover:underline">
+              <Link to="/login" className="font-medium text-primary-700 hover:underline">
                 {t("auth.login.submit")}
               </Link>
             </p>

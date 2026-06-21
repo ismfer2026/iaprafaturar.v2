@@ -40,12 +40,12 @@ export default function OnboardingPage() {
       {/* Header */}
       <header className="flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-3 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-violet-600 text-sm font-bold text-white shadow-sm">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary-600 text-sm font-bold text-white shadow-sm">
             N
           </div>
           <div>
             <p className="text-sm font-semibold text-zinc-950">Nerissa</p>
-            <p className="text-xs text-violet-600">IA para Faturar — Configuração</p>
+            <p className="text-xs text-primary-600">IA para Faturar — Configuração</p>
           </div>
         </div>
 
@@ -55,7 +55,7 @@ export default function OnboardingPage() {
           </span>
           <div className="h-1.5 w-20 overflow-hidden rounded-full bg-zinc-100 sm:w-28">
             <div
-              className="h-full rounded-full bg-violet-600 transition-all duration-500"
+              className="h-full rounded-full bg-primary-600 transition-all duration-500"
               style={{ width: `${completed ? 100 : progressPercent}%` }}
             />
           </div>
@@ -67,7 +67,7 @@ export default function OnboardingPage() {
         {messages.map((msg) => (
           <div key={msg.id} className={cn("flex gap-2.5", msg.role === "user" ? "justify-end" : "justify-start")}>
             {msg.role === "nerissa" && (
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-violet-600 text-xs font-bold text-white shadow-sm">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-600 text-xs font-bold text-white shadow-sm">
                 N
               </div>
             )}
@@ -76,7 +76,7 @@ export default function OnboardingPage() {
                 "max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap",
                 msg.role === "nerissa"
                   ? "rounded-tl-sm bg-white text-zinc-950 shadow-sm ring-1 ring-zinc-100"
-                  : "rounded-tr-sm bg-violet-600 text-white",
+                  : "rounded-tr-sm bg-primary-600 text-white",
               )}
             >
               {msg.text}
@@ -87,7 +87,7 @@ export default function OnboardingPage() {
         {/* Typing indicator */}
         {isLoading && (
           <div className="flex items-end gap-2.5">
-            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-violet-600 text-xs font-bold text-white shadow-sm">
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-600 text-xs font-bold text-white shadow-sm">
               N
             </div>
             <div className="flex items-center gap-1.5 rounded-2xl rounded-tl-sm bg-white px-4 py-3.5 shadow-sm ring-1 ring-zinc-100">
@@ -147,12 +147,12 @@ export default function OnboardingPage() {
               onChange={(e) => setInput(e.target.value)}
               placeholder={isLoading ? "Nerissa está digitando..." : "Digite sua resposta..."}
               disabled={isLoading}
-              className="flex-1 rounded-full border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm text-zinc-950 outline-none transition-colors placeholder:text-zinc-400 focus:border-violet-400 focus:bg-white focus:ring-2 focus:ring-violet-100 disabled:opacity-50"
+              className="flex-1 rounded-full border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm text-zinc-950 outline-none transition-colors placeholder:text-zinc-400 focus:border-primary-400 focus:bg-white focus:ring-2 focus:ring-primary-100 disabled:opacity-50"
             />
             <button
               type="submit"
               disabled={!input.trim() || isLoading}
-              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-violet-600 text-white shadow-sm transition-all hover:bg-violet-700 disabled:opacity-40 disabled:shadow-none"
+              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary-600 text-white shadow-sm transition-all hover:bg-primary-700 disabled:opacity-40 disabled:shadow-none"
             >
               <Send className="h-4 w-4" />
             </button>

@@ -76,7 +76,7 @@ const JOURNEY_STAGE_LABELS: Record<string, string> = {
 
 const JOURNEY_STAGE_COLORS: Record<string, string> = {
   lead: "bg-sky-100 text-sky-700",
-  agendado: "bg-violet-100 text-violet-700",
+  agendado: "bg-primary-100 text-primary-700",
   em_tratamento: "bg-emerald-100 text-emerald-700",
   pos_tratamento: "bg-teal-100 text-teal-700",
   cliente_fiel: "bg-amber-100 text-amber-700",
@@ -112,10 +112,10 @@ function MessageStatus({ message }: { message: ConversationMessage }) {
     return <CheckCheck className="inline h-3.5 w-3.5 text-sky-400" aria-label="Lido" />;
   }
   if (status === "delivered") {
-    return <CheckCheck className="inline h-3.5 w-3.5 text-violet-200" aria-label="Entregue" />;
+    return <CheckCheck className="inline h-3.5 w-3.5 text-primary-200" aria-label="Entregue" />;
   }
   if (status === "sent") {
-    return <Check className="inline h-3.5 w-3.5 text-violet-200" aria-label="Enviado" />;
+    return <Check className="inline h-3.5 w-3.5 text-primary-200" aria-label="Enviado" />;
   }
   if (status === "failed" || status === "dead_lettered") {
     return <XCircle className="inline h-3.5 w-3.5 text-red-400" aria-label="Falhou" />;
@@ -160,7 +160,7 @@ function ClientContactPanel({
         <>
           {/* Avatar + name */}
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-bold text-violet-700">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-bold text-primary-700">
               {initials}
             </div>
             <div className="min-w-0">
@@ -206,7 +206,7 @@ function ClientContactPanel({
           {/* View profile link */}
           <Link
             to={`/clientes/${clientId}`}
-            className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-violet-700 transition-colors hover:bg-violet-50"
+            className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-50"
           >
             <User className="h-3.5 w-3.5" />
             {t("conversations.contact.viewProfile")}
@@ -577,7 +577,7 @@ export default function ConversasPage() {
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-4 py-5 pb-24 md:px-6 md:pb-6">
       <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-violet-600">
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">
             {t("conversations.eyebrow")}
           </p>
           <h1 className="mt-1 text-3xl font-semibold tracking-tight text-zinc-950">
@@ -616,7 +616,7 @@ export default function ConversasPage() {
                 className={cn(
                   "flex-1 rounded-md py-1.5 text-xs font-medium transition-colors",
                   statusFilter === tab
-                    ? "bg-violet-700 text-white shadow-sm"
+                    ? "bg-primary-700 text-white shadow-sm"
                     : "text-zinc-500 hover:text-zinc-800",
                 )}
               >
@@ -633,7 +633,7 @@ export default function ConversasPage() {
               placeholder={t("conversations.search.placeholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-9 pr-3 text-sm text-zinc-800 shadow-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+              className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-9 pr-3 text-sm text-zinc-800 shadow-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
             />
           </div>
 
@@ -642,7 +642,7 @@ export default function ConversasPage() {
           {!conversations.isLoading && conversationList.length === 0 ? (
             <Card className="border-dashed border-zinc-300">
               <CardContent className="p-6 text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-violet-50 text-violet-700">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary-50 text-primary-700">
                   <MessageSquare className="h-5 w-5" />
                 </div>
                 <h2 className="mt-4 text-base font-semibold text-zinc-950">
@@ -676,7 +676,7 @@ export default function ConversasPage() {
                   "block w-full rounded-lg border bg-white p-4 text-left shadow-sm transition-colors",
                   isUrgent && "border-l-4 border-l-rose-500",
                   isSelected
-                    ? "border-violet-300 ring-2 ring-violet-100"
+                    ? "border-primary-300 ring-2 ring-primary-100"
                     : "border-zinc-200 hover:border-zinc-300",
                 )}
               >
@@ -757,7 +757,7 @@ export default function ConversasPage() {
                         className={cn(
                           "rounded-md p-1.5 transition-colors",
                           showContactPanel
-                            ? "bg-violet-100 text-violet-700"
+                            ? "bg-primary-100 text-primary-700"
                             : "text-zinc-400 hover:bg-zinc-100",
                         )}
                       >
@@ -922,7 +922,7 @@ export default function ConversasPage() {
                       className={cn(
                         "max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-6 shadow-sm",
                         isOutbound
-                          ? "ml-auto bg-violet-700 text-white"
+                          ? "ml-auto bg-primary-700 text-white"
                           : "mr-auto border border-zinc-200 bg-white text-zinc-900",
                       )}
                     >
@@ -940,7 +940,7 @@ export default function ConversasPage() {
                       {!message.content && message.message_type !== "image" ? (
                         <p className="italic opacity-60">{t("conversations.messages.noContent")}</p>
                       ) : null}
-                      <div className={cn("mt-1 flex items-center gap-1 text-xs", isOutbound ? "justify-end text-violet-200" : "text-zinc-400")}>
+                      <div className={cn("mt-1 flex items-center gap-1 text-xs", isOutbound ? "justify-end text-primary-200" : "text-zinc-400")}>
                         <span>{formatConversationTime(message.created_at)}</span>
                         <MessageStatus message={message} />
                       </div>
@@ -959,7 +959,7 @@ export default function ConversasPage() {
                     className={cn(
                       "flex-1 rounded-md py-1 text-xs font-medium transition-colors",
                       replyMode === "message"
-                        ? "bg-white text-violet-700 shadow-sm"
+                        ? "bg-white text-primary-700 shadow-sm"
                         : "text-zinc-500 hover:text-zinc-700",
                     )}
                   >
@@ -1011,7 +1011,7 @@ export default function ConversasPage() {
                           <li key={tpl.id}>
                             <button
                               type="button"
-                              className="w-full px-3 py-2 text-left hover:bg-violet-50"
+                              className="w-full px-3 py-2 text-left hover:bg-primary-50"
                               onClick={() => {
                                 setManualText(tpl.content);
                                 setShowTemplates(false);
@@ -1034,10 +1034,10 @@ export default function ConversasPage() {
 
                 {/* Media preview */}
                 {mediaPreview ? (
-                  <div className="mb-2 flex items-start gap-2 rounded-lg border border-violet-200 bg-violet-50 p-2">
+                  <div className="mb-2 flex items-start gap-2 rounded-lg border border-primary-200 bg-primary-50 p-2">
                     <img src={mediaPreview} alt="" className="h-16 w-16 rounded object-cover" />
                     <div className="flex flex-1 flex-col gap-1">
-                      <p className="text-xs font-medium text-violet-700">{mediaFile?.name}</p>
+                      <p className="text-xs font-medium text-primary-700">{mediaFile?.name}</p>
                       <button
                         type="button"
                         className="self-start text-xs text-red-500 hover:text-red-700"
@@ -1055,7 +1055,7 @@ export default function ConversasPage() {
                       "min-h-20 w-full rounded-lg border px-3 py-2 text-sm leading-6 text-zinc-800 shadow-sm outline-none",
                       replyMode === "note"
                         ? "border-amber-200 bg-amber-50 focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
-                        : "border-zinc-200 bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-100",
+                        : "border-zinc-200 bg-white focus:border-primary-500 focus:ring-2 focus:ring-primary-100",
                     )}
                     placeholder={
                       replyMode === "note"
@@ -1181,7 +1181,7 @@ export default function ConversasPage() {
               </label>
               <input
                 type="datetime-local"
-                className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 shadow-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 shadow-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
                 value={rescheduleDate}
                 onChange={(e) => setRescheduleDate(e.target.value)}
                 required
@@ -1220,7 +1220,7 @@ export default function ConversasPage() {
                 {t("conversations.schedule.service")}
               </label>
               <select
-                className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 shadow-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 shadow-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
                 value={scheduleServiceId}
                 onChange={(e) => setScheduleServiceId(e.target.value)}
               >
@@ -1239,7 +1239,7 @@ export default function ConversasPage() {
               </label>
               <input
                 type="datetime-local"
-                className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 shadow-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 shadow-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
                 value={scheduleDate}
                 onChange={(e) => setScheduleDate(e.target.value)}
                 required
@@ -1256,7 +1256,7 @@ export default function ConversasPage() {
                 max="480"
                 step="15"
                 placeholder="60"
-                className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 shadow-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 shadow-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
                 value={scheduleDuration}
                 onChange={(e) => setScheduleDuration(e.target.value)}
               />
@@ -1267,7 +1267,7 @@ export default function ConversasPage() {
                 {t("conversations.schedule.notes")}
               </label>
               <textarea
-                className="min-h-20 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm leading-6 text-zinc-800 shadow-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                className="min-h-20 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm leading-6 text-zinc-800 shadow-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
                 value={scheduleNotes}
                 onChange={(e) => setScheduleNotes(e.target.value)}
               />
@@ -1276,7 +1276,7 @@ export default function ConversasPage() {
             <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
               <input
                 type="checkbox"
-                className="accent-violet-600"
+                className="accent-primary-600"
                 checked={scheduleSendWhatsapp}
                 onChange={(e) => setScheduleSendWhatsapp(e.target.checked)}
               />

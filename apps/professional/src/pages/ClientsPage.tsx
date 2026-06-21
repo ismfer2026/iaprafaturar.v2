@@ -60,7 +60,7 @@ function ClientCard({
             {t("clients.stageLabel")}
           </label>
           <select
-            className="h-9 rounded-md border border-zinc-200 bg-white px-2 text-sm text-zinc-700 shadow-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+            className="h-9 rounded-md border border-zinc-200 bg-white px-2 text-sm text-zinc-700 shadow-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
             value={client.journey_stage}
             disabled={disabled}
             onChange={(event) => onMoveStage(client.id, event.target.value as JourneyStage)}
@@ -167,7 +167,7 @@ export default function ClientsPage() {
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-5 px-4 py-5 md:px-6">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-violet-600">{t("clients.eyebrow")}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">{t("clients.eyebrow")}</p>
           <h1 className="mt-1 text-3xl font-semibold tracking-tight text-zinc-950">{t("clients.title")}</h1>
           <p className="mt-1 text-sm text-zinc-500">{t("clients.subtitle")}</p>
         </div>
@@ -214,7 +214,7 @@ export default function ClientsPage() {
               className={cn(
                 "h-9 shrink-0 rounded-full border px-4 text-sm font-medium transition-colors",
                 isActive
-                  ? "border-violet-600 bg-violet-600 text-white shadow-sm"
+                  ? "border-primary-600 bg-primary-600 text-white shadow-sm"
                   : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300",
               )}
             >
@@ -244,7 +244,7 @@ export default function ClientsPage() {
 
       {!isLoading && !error && filteredClients.length === 0 ? (
         <div className={cn("rounded-lg border border-dashed border-zinc-300 bg-white p-6 text-center", view === "kanban" && "md:hidden")}>
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-violet-50 text-violet-700">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary-50 text-primary-700">
             <Users className="h-5 w-5" />
           </div>
           <h2 className="mt-4 text-base font-semibold text-zinc-950">{t("clients.empty.title")}</h2>

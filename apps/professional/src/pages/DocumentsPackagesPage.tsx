@@ -424,7 +424,7 @@ export default function DocumentsPackagesPage() {
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-5 md:px-6">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-violet-600">{t("docs.eyebrow")}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">{t("docs.eyebrow")}</p>
           <h1 className="mt-1 text-3xl font-semibold tracking-tight text-zinc-950">{t("docs.title")}</h1>
           <p className="mt-1 text-sm text-zinc-500">{t("docs.subtitle")}</p>
         </div>
@@ -511,7 +511,7 @@ export default function DocumentsPackagesPage() {
                     <p className="mt-1 text-sm text-zinc-500">{item.package_name}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1">
-                    <Badge className="border border-violet-200 bg-violet-50 text-violet-700">
+                    <Badge className="border border-primary-200 bg-primary-50 text-primary-700">
                       {item.sessions_remaining}/{item.sessions_total}
                     </Badge>
                     <span className="text-xs text-zinc-500">{t(CLIENT_PACKAGE_STATUS_KEYS[item.status])}</span>
@@ -818,7 +818,7 @@ function TextAreaInput({
     <label className="block space-y-1.5">
       <span className="text-sm font-medium text-zinc-700">{label}</span>
       <textarea
-        className="w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+        className="w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
         value={value}
         rows={rows}
         onChange={(event) => onChange(event.target.value)}
@@ -842,7 +842,7 @@ function SelectInput({
     <label className="block space-y-1.5">
       <span className="text-sm font-medium text-zinc-700">{label}</span>
       <select
-        className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm shadow-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+        className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm shadow-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
         value={value}
         onChange={(event) => onChange(event.target.value)}
       >
@@ -869,7 +869,7 @@ function CheckboxInput({
     <label className="flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm">
       <input
         type="checkbox"
-        className="h-4 w-4 rounded border-zinc-300 text-violet-600"
+        className="h-4 w-4 rounded border-zinc-300 text-primary-600"
         checked={checked}
         onChange={(event) => onChange(event.target.checked)}
       />

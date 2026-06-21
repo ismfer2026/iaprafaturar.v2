@@ -6,7 +6,7 @@ export default function NotFoundPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-zinc-50 px-4">
       <div className="w-full max-w-md text-center">
-        <p className="text-sm font-semibold text-violet-700">404</p>
+        <p className="text-sm font-semibold text-primary-700">404</p>
         <h1 className="mt-2 text-2xl font-semibold text-zinc-950">Pagina nao encontrada</h1>
         <p className="mt-2 text-sm leading-6 text-zinc-500">
           O endereco pode ter mudado ou ainda nao pertence a uma rota aprovada.

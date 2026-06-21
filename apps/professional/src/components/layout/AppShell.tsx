@@ -4,7 +4,7 @@ import { WifiOff } from "lucide-react";
 import { cn } from "@iaprafaturar/ui";
 import { useI18n } from "@/i18n";
 import { professionalRoutes, mobileNavRoutes, NAV_GROUPS, NAV_BOTTOM_PATHS, type ProfessionalRouteDefinition } from "@/routes";
-import { LanguageSwitcher } from "./LanguageSwitcher";
+import AppHeader from "./AppHeader";
 
 function useOnlineStatus() {
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
@@ -80,9 +80,8 @@ export default function AppShell() {
       <aside className="hidden w-56 shrink-0 flex-col border-r border-zinc-200 bg-white md:flex">
 
         {/* Header */}
-        <div className="flex items-center justify-between gap-2 border-b border-zinc-100 px-4 py-4">
+        <div className="flex items-center gap-2 border-b border-zinc-100 px-4 py-4">
           <span className="text-base font-bold tracking-tight text-emerald-800">iaprafaturar</span>
-          <LanguageSwitcher compact />
         </div>
 
         {/* Nav scrollável */}
@@ -115,6 +114,8 @@ export default function AppShell() {
 
       {/* Conteúdo principal */}
       <main className="flex flex-1 flex-col overflow-hidden">
+        <AppHeader />
+
         {/* Banner offline */}
         {!isOnline && (
           <div className="flex items-center gap-2 border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs font-medium text-amber-800">

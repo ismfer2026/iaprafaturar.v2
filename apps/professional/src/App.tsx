@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Skeleton } from "@iaprafaturar/ui";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { I18nProvider } from "@/i18n";
 import AppShell from "@/components/layout/AppShell";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
@@ -81,9 +82,11 @@ function AppRoutes() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <I18nProvider>
-        <AppRoutes />
-      </I18nProvider>
+      <ThemeProvider>
+        <I18nProvider>
+          <AppRoutes />
+        </I18nProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

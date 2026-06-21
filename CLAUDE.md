@@ -275,7 +275,7 @@ professional_id: user.id          // ❌ ambíguo — desestruturar com nome can
 > 2. `theme_color` sem sincronizar em index.html + manifest.json + vite.config.ts
 > 3. `apple-mobile-web-app-capable` ou similar
 >
-> `theme_color` atual: `#7C3AED` (violet primário).
+> `theme_color` atual: `#0D6E6E` (teal primário — migrado de `#7C3AED` em 2026-06-20).
 
 ---
 

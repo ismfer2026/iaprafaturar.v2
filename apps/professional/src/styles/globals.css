@@ -6,10 +6,40 @@
   :root {
     --radius: 0.75rem;
     --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+
+    --background: 0 0% 98%;
+    --foreground: 240 10% 4%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 4%;
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+    --accent: 180 65% 91%;
+    --accent-foreground: 180 79% 24%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --ring: 180 79% 24%;
+  }
+
+  .dark {
+    --background: 180 30% 6%;
+    --foreground: 0 0% 96%;
+    --card: 180 25% 9%;
+    --card-foreground: 0 0% 96%;
+    --border: 180 20% 18%;
+    --input: 180 20% 18%;
+    --muted: 180 18% 14%;
+    --muted-foreground: 180 10% 65%;
+    --accent: 180 30% 16%;
+    --accent-foreground: 180 70% 80%;
+    --destructive: 0 70% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --ring: 180 70% 45%;
   }
 
   * {
-    @apply border-zinc-200;
+    @apply border-border;
   }
 
   html {
@@ -18,7 +48,7 @@
   }
 
   body {
-    @apply bg-zinc-50 text-zinc-950 antialiased;
+    @apply bg-background text-foreground antialiased;
     font-family: Inter, system-ui, sans-serif;
   }
 

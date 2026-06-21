@@ -21,7 +21,7 @@ import { useI18n } from "@/i18n";
 const CAMPAIGN_STATUS_COLORS: Record<string, string> = {
   draft: "bg-zinc-100 text-zinc-600",
   scheduled: "bg-sky-100 text-sky-700",
-  running: "bg-violet-100 text-violet-700",
+  running: "bg-primary-100 text-primary-700",
   completed: "bg-emerald-100 text-emerald-700",
   cancelled: "bg-red-100 text-red-600",
 };
@@ -82,7 +82,7 @@ function EditCampaignSheet({
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-zinc-700">{t("growth.form.message")}</label>
             <textarea
-              className="min-h-32 w-full rounded-md border border-zinc-200 p-3 text-sm leading-6 text-zinc-800 outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+              className="min-h-32 w-full rounded-md border border-zinc-200 p-3 text-sm leading-6 text-zinc-800 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
               value={message}
               placeholder={t("growth.form.message")}
               onChange={(e) => setMessage(e.target.value)}

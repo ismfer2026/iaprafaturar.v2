@@ -12,7 +12,7 @@ export default function ConfiguracoesIndexPage() {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-5 md:px-6">
       <header>
-        <p className="text-xs font-semibold uppercase tracking-wide text-violet-600">{t("settings.index.eyebrow")}</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">{t("settings.index.eyebrow")}</p>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight text-zinc-950">{t("settings.index.title")}</h1>
         <p className="mt-1 text-sm text-zinc-500">{t("settings.index.subtitle")}</p>
       </header>
@@ -50,7 +50,7 @@ export default function ConfiguracoesIndexPage() {
           <CardHeader>
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 text-violet-700">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-primary-700">
                   <Bell className="h-5 w-5" />
                 </div>
                 <div>

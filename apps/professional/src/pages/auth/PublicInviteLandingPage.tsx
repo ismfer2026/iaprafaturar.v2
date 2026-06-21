@@ -68,7 +68,7 @@ export default function PublicInviteLandingPage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col bg-gradient-to-br from-violet-700 via-violet-800 to-zinc-950">
+    <main className="flex min-h-screen flex-col bg-gradient-to-br from-primary-700 via-primary-800 to-zinc-950">
       <div className="flex flex-1 flex-col items-center justify-center px-4 py-12 text-center text-white">
         {referralCode ? (
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-sm font-semibold backdrop-blur-sm">

@@ -98,7 +98,7 @@ function NotificationForm({
             <label key={option.key} className="flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm">
               <input
                 type="checkbox"
-                className="h-4 w-4 rounded border-zinc-300 text-violet-600"
+                className="h-4 w-4 rounded border-zinc-300 text-primary-600"
                 checked={form.channels[option.key]}
                 onChange={(event) =>
                   onChange({ ...form, channels: { ...form.channels, [option.key]: event.target.checked } })
@@ -117,7 +117,7 @@ function NotificationForm({
             <label key={option.key} className="flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm">
               <input
                 type="checkbox"
-                className="h-4 w-4 rounded border-zinc-300 text-violet-600"
+                className="h-4 w-4 rounded border-zinc-300 text-primary-600"
                 checked={form.events[option.key]}
                 onChange={(event) =>
                   onChange({ ...form, events: { ...form.events, [option.key]: event.target.checked } })
@@ -133,7 +133,7 @@ function NotificationForm({
         <label className="flex items-start gap-3 rounded-lg border border-zinc-200 px-3 py-3">
           <input
             type="checkbox"
-            className="mt-1 h-4 w-4 rounded border-zinc-300 text-violet-600"
+            className="mt-1 h-4 w-4 rounded border-zinc-300 text-primary-600"
             checked={form.quiet_hours.enabled}
             onChange={(event) =>
               onChange({ ...form, quiet_hours: { ...form.quiet_hours, enabled: event.target.checked } })
@@ -237,7 +237,7 @@ export default function ConfiguracoesNotificacoesPage() {
             {t("team.back")}
           </Link>
         </Button>
-        <p className="text-xs font-semibold uppercase tracking-wide text-violet-600">
+        <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">
           {t("settings.notifications.eyebrow")}
         </p>
         <h1 className="text-2xl font-semibold text-zinc-950">{t("settings.notifications.title")}</h1>
@@ -254,7 +254,7 @@ export default function ConfiguracoesNotificacoesPage() {
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 text-violet-700">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-primary-700">
                 <UserRound className="h-5 w-5" />
               </div>
               <div>

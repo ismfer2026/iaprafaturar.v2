@@ -13,7 +13,7 @@ export default function MorePage() {
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 px-4 py-5 sm:px-6">
       <header>
-        <p className="text-xs font-semibold uppercase tracking-wide text-violet-700">{t("more.eyebrow")}</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-primary-700">{t("more.eyebrow")}</p>
         <h1 className="mt-1 text-2xl font-semibold text-zinc-950">{t("more.title")}</h1>
         <p className="mt-1 text-sm text-zinc-500">{t("more.subtitle")}</p>
       </header>
@@ -23,7 +23,7 @@ export default function MorePage() {
       <section className="grid gap-3 sm:grid-cols-2">
         {moreNavRoutes.map(({ path, icon: Icon, labelKey, moreNav }) => Icon && labelKey && moreNav ? (
           <Link key={path} to={path} className="block">
-            <Card className="rounded-lg border-zinc-200 transition-colors hover:border-violet-200 hover:bg-violet-50/30">
+            <Card className="rounded-lg border-zinc-200 transition-colors hover:border-primary-200 hover:bg-primary-50/30">
               <CardContent className="flex items-start gap-3 p-4">
                 <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg", moreNav.tone)}>
                   <Icon className="h-5 w-5" />

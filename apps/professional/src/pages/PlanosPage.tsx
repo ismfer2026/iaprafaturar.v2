@@ -66,14 +66,14 @@ export default function PlanosPage() {
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-5 sm:px-6">
       <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-violet-700">{t("plans.eyebrow")}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary-700">{t("plans.eyebrow")}</p>
           <h1 className="mt-1 text-2xl font-semibold text-zinc-950">{t("plans.title")}</h1>
           <p className="mt-1 max-w-2xl text-sm text-zinc-500">{t("plans.subtitle")}</p>
         </div>
         <Badge variant={access === "full" ? "success" : "secondary"}>{access === "full" ? t("plans.access.full") : t("plans.access.readOnly")}</Badge>
       </header>
 
-      {message ? <div className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-semibold text-violet-800">{message}</div> : null}
+      {message ? <div className="rounded-lg border border-primary-200 bg-primary-50 px-3 py-2 text-sm font-semibold text-primary-800">{message}</div> : null}
 
       {query.isLoading ? <Card className="rounded-lg"><CardContent className="p-5 text-sm text-zinc-500">{t("common.loading")}</CardContent></Card> : null}
       {query.isError ? <Card className="rounded-lg"><CardContent className="p-5 text-sm font-semibold text-red-700">{t("common.error.generic")}</CardContent></Card> : null}

@@ -75,13 +75,13 @@ export default function LoginPage() {
 
         <div className="mt-6 space-y-3 text-center text-sm text-zinc-500">
           <p>
-            <Link to="/recuperar-senha" className="text-violet-600 hover:underline">
+            <Link to="/recuperar-senha" className="text-primary-600 hover:underline">
               {t("auth.forgotPassword")}
             </Link>
           </p>
           <p>
             {t("auth.noAccount")}{" "}
-            <Link to="/entrar" className="text-violet-600 hover:underline">
+            <Link to="/entrar" className="text-primary-600 hover:underline">
               {t("auth.createFreeAccount")}
             </Link>
           </p>

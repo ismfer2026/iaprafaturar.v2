@@ -77,7 +77,7 @@ function TimelineItem({ item }: { item: Appointment | Session }) {
   return (
     <Card className="rounded-lg border-zinc-200">
       <CardContent className="flex gap-3 p-4">
-        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-50 text-violet-700">
+        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-700">
           <CalendarDays className="h-4 w-4" />
         </div>
         <div className="min-w-0 flex-1">
@@ -213,7 +213,7 @@ function AnamneseCard({
           <textarea
             value={reviewNotes}
             placeholder={t("clientProfile.anamnese.reviewPlaceholder")}
-            className="min-h-24 w-full resize-y rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+            className="min-h-24 w-full resize-y rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
             onChange={(event) => onReviewNotesChange(event.target.value)}
           />
           <Button type="button" className="w-full sm:w-fit" disabled={reviewPending} onClick={onReview}>
@@ -302,7 +302,7 @@ export default function ClientProfilePage() {
               {client.phone_whatsapp || client.email || t("common.noContact")}
             </p>
           </div>
-          <Badge className="shrink-0 border border-violet-200 bg-violet-50 text-violet-700">
+          <Badge className="shrink-0 border border-primary-200 bg-primary-50 text-primary-700">
             {t(STAGE_LABEL_KEYS[client.journey_stage])}
           </Badge>
         </div>
@@ -440,7 +440,7 @@ export default function ClientProfilePage() {
                     <p className="text-sm font-semibold text-zinc-950">{item.package_name}</p>
                     <p className="mt-0.5 text-xs text-zinc-500">{item.status}</p>
                   </div>
-                  <Badge className="border border-violet-200 bg-violet-50 text-violet-700">
+                  <Badge className="border border-primary-200 bg-primary-50 text-primary-700">
                     {item.sessions_remaining}/{item.sessions_total}
                   </Badge>
                 </div>
