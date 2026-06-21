@@ -104,24 +104,24 @@ export default function PublicEntrarPage() {
   return (
     <main className="min-h-screen bg-stone-50 text-zinc-950">
       <section className="mx-auto grid min-h-screen w-full max-w-6xl grid-cols-1 lg:grid-cols-[0.95fr_1.05fr]">
-        <div className="hidden min-h-screen flex-col justify-between border-r border-zinc-200 bg-zinc-950 p-10 text-white lg:flex">
+        <div className="hidden min-h-screen flex-col justify-between bg-gradient-to-br from-primary-700 via-primary-800 to-zinc-950 p-10 text-white lg:flex">
           <div>
-            <p className="text-sm font-semibold text-emerald-300">iaprafaturar</p>
+            <p className="text-sm font-semibold text-yellow-300">iaprafaturar</p>
             <h1 className="mt-10 max-w-md text-5xl font-semibold leading-tight">
               {t("publicAccount.enter.heroTitle")}
             </h1>
-            <p className="mt-5 max-w-md text-base leading-7 text-zinc-300">
+            <p className="mt-5 max-w-md text-base leading-7 text-primary-100">
               {t("publicAccount.enter.heroSubtitle")}
             </p>
           </div>
           <div className="grid gap-3">
-            <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-              <MessageCircle className="mb-3 h-5 w-5 text-emerald-300" />
-              <p className="text-sm text-zinc-200">{t("publicAccount.enter.point.whatsapp")}</p>
+            <div className="rounded-lg border border-white/15 bg-white/10 p-4">
+              <MessageCircle className="mb-3 h-5 w-5 text-yellow-300" />
+              <p className="text-sm text-white/90">{t("publicAccount.enter.point.whatsapp")}</p>
             </div>
-            <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-              <ShieldCheck className="mb-3 h-5 w-5 text-emerald-300" />
-              <p className="text-sm text-zinc-200">{t("publicAccount.enter.point.secure")}</p>
+            <div className="rounded-lg border border-white/15 bg-white/10 p-4">
+              <ShieldCheck className="mb-3 h-5 w-5 text-yellow-300" />
+              <p className="text-sm text-white/90">{t("publicAccount.enter.point.secure")}</p>
             </div>
           </div>
         </div>
