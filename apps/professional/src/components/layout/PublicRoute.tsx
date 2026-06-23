@@ -1,10 +1,10 @@
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@iaprafaturar/ui";
 
-export default function ProtectedRoute() {
+/** Rotas públicas de autenticação (login, cadastro) — se já houver sessão, redireciona para dentro do app. */
+export default function PublicRoute() {
   const { session, isLoading, chatOnboardingCompleted } = useAuth();
-  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -17,12 +17,8 @@ export default function ProtectedRoute() {
     );
   }
 
-  if (!session) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (!chatOnboardingCompleted && location.pathname !== "/onboarding") {
-    return <Navigate to="/onboarding" replace />;
+  if (session) {
+    return <Navigate to={chatOnboardingCompleted ? "/dashboard" : "/onboarding"} replace />;
   }
 
   return <Outlet />;

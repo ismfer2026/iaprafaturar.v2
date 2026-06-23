@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button, Input } from "@iaprafaturar/ui";
 import { supabase } from "@/lib/supabase";
 import { useI18n } from "@/i18n";
 
 export default function LoginPage() {
   const { t } = useI18n();
-  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -21,10 +20,12 @@ export default function LoginPage() {
 
     if (authError) {
       setError(t("auth.login.error.invalid"));
-    } else {
-      navigate("/dashboard");
+      setIsLoading(false);
+      return;
     }
-    setIsLoading(false);
+
+    // Sucesso: a sessão atualiza o AuthContext e o PublicRoute redireciona
+    // automaticamente para /onboarding ou /dashboard — sem navigate manual aqui.
   }
 
   return (

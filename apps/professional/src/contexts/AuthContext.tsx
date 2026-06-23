@@ -12,9 +12,13 @@ interface AuthContextValue {
   teamMemberId: string | null;
   onboardingCompleted: boolean;
   onboardingEssentialsCompleted: boolean;
+  /** Onboarding guiado (webchat com Nerissa) concluído — não depende de WhatsApp conectado. */
+  chatOnboardingCompleted: boolean;
   whatsappConnected: boolean;
   isLoading: boolean;
   signOut: () => Promise<void>;
+  /** Recarrega os flags de onboarding/role sem disparar o skeleton global de isLoading. */
+  refresh: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -35,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [teamMemberId, setTeamMemberId] = useState<string | null>(null);
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
   const [onboardingEssentialsCompleted, setOnboardingEssentialsCompleted] = useState(false);
+  const [chatOnboardingCompleted, setChatOnboardingCompleted] = useState(false);
   const [whatsappConnected, setWhatsappConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -49,6 +54,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setOnboardingCompleted(Boolean(context?.onboardingCompleted));
     setOnboardingEssentialsCompleted(Boolean(context?.onboardingEssentialsCompleted));
     setWhatsappConnected(Boolean(context?.whatsappConnected));
+
+    const { data: setupSession } = await supabase
+      .from("nerissa_setup_sessions")
+      .select("status")
+      .maybeSingle();
+    // Profissionais que já tinham onboarding concluído antes do webchat existir
+    // (flag legado) não devem ser forçados a refazer o fluxo.
+    setChatOnboardingCompleted(
+      setupSession?.status === "completed" || Boolean(context?.onboardingCompleted),
+    );
   }
 
   function clearProfessionalState() {
@@ -57,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setTeamMemberId(null);
     setOnboardingCompleted(false);
     setOnboardingEssentialsCompleted(false);
+    setChatOnboardingCompleted(false);
     setWhatsappConnected(false);
   }
 
@@ -73,7 +89,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
       if (s?.user) {
-        loadProfessionalId();
+        setIsLoading(true);
+        loadProfessionalId().finally(() => setIsLoading(false));
       } else {
         clearProfessionalState();
       }
@@ -97,9 +114,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         teamMemberId,
         onboardingCompleted,
         onboardingEssentialsCompleted,
+        chatOnboardingCompleted,
         whatsappConnected,
         isLoading,
         signOut,
+        refresh: loadProfessionalId,
       }}
     >
       {children}

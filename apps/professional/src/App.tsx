@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { I18nProvider } from "@/i18n";
 import AppShell from "@/components/layout/AppShell";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
+import PublicRoute from "@/components/layout/PublicRoute";
 import { professionalAliases, professionalRoutes } from "@/routes";
 
 const LoginPage = lazy(() => import("@/pages/auth/LoginPage"));
@@ -44,9 +45,11 @@ function AppRoutes() {
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/entrar" element={<PublicEntrarPage />} />
-            <Route path="/cadastro" element={<PublicEntrarPage />} />
+            <Route element={<PublicRoute />}>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/entrar" element={<PublicEntrarPage />} />
+              <Route path="/cadastro" element={<PublicEntrarPage />} />
+            </Route>
             <Route path="/cadastro/:codigo" element={<PublicInviteLandingPage />} />
             <Route path="/convite/:codigo" element={<PublicInviteLandingPage />} />
             <Route path="/criar-conta" element={<PublicCreateAccountPage />} />

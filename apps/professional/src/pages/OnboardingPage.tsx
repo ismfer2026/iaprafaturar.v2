@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Send, Wifi } from "lucide-react";
 import { Button, cn } from "@iaprafaturar/ui";
+import { useAuth } from "@/contexts/AuthContext";
 import { useOnboardingChat } from "@/hooks/useOnboardingChat";
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
+  const { refresh } = useAuth();
   const { messages, stepIndex, totalSteps, completed, isLoading, error, send } = useOnboardingChat();
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -14,6 +16,12 @@ export default function OnboardingPage() {
   useEffect(() => {
     send(null);
   }, [send]);
+
+  useEffect(() => {
+    // Sem isso, o ProtectedRoute ainda vê chatOnboardingCompleted desatualizado
+    // e manda o usuário de volta para /onboarding ao navegar para o dashboard.
+    if (completed) void refresh();
+  }, [completed, refresh]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
