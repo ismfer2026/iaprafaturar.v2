@@ -10,6 +10,7 @@ export const ClientPortalStartSessionInputSchema = z.object({
   email: z.string().email().optional(),
   lgpd_accepted: z.literal(true),
   lang: ClientPortalLocaleSchema.optional(),
+  ref: z.string().min(1).max(120).optional(),
 }).strict()
 
 export const ClientPortalTokenInputSchema = z.object({

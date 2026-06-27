@@ -32,6 +32,7 @@ export function startClientPortalSession(input: {
   phoneWhatsapp: string;
   email?: string;
   lang: Locale;
+  ref?: string;
 }): Promise<ClientPortalResult<ClientPortalStartSessionOutput>> {
   return invokePortal<ClientPortalStartSessionOutput>({
     mode: "start_session",
@@ -40,7 +41,8 @@ export function startClientPortalSession(input: {
     phone_whatsapp: input.phoneWhatsapp,
     ...(input.email ? { email: input.email } : {}),
     lgpd_accepted: true,
-    lang: input.lang
+    lang: input.lang,
+    ...(input.ref ? { ref: input.ref } : {})
   });
 }
 

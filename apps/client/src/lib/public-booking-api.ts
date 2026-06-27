@@ -2,7 +2,8 @@ import type {
   PublicBookingCompleteClientOnboardingOutput,
   PublicBookingContextOutput,
   PublicBookingCreateAppointmentOutput,
-  PublicBookingErrorOutput
+  PublicBookingErrorOutput,
+  PublicBookingResolveRegistrationLinkOutput
 } from "@iaprafaturar/contracts/edge-functions/public-booking-handler";
 import { supabase } from "@/lib/supabase";
 import type { Locale } from "@/i18n";
@@ -106,5 +107,31 @@ export async function completeClientOnboarding(
     throw error;
   }
   if (!data) throw new Error("empty_public_client_onboarding_response");
+  return data;
+}
+
+export async function resolveRegistrationLink(params: {
+  code: string;
+  lang: Locale;
+  ref?: string;
+}): Promise<PublicBookingResolveRegistrationLinkOutput | PublicBookingErrorOutput> {
+  const { data, error } = await supabase.functions.invoke<PublicBookingResolveRegistrationLinkOutput | PublicBookingErrorOutput>(
+    "public-booking-handler",
+    {
+      body: {
+        mode: "resolve_registration_link",
+        code: params.code,
+        lang: params.lang,
+        ...(params.ref ? { ref: params.ref } : {})
+      }
+    }
+  );
+
+  if (error) {
+    const errorBody = await readFunctionErrorBody<PublicBookingErrorOutput>(error);
+    if (errorBody) return errorBody;
+    throw error;
+  }
+  if (!data) throw new Error("empty_registration_link_response");
   return data;
 }

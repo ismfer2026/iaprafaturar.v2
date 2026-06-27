@@ -64,7 +64,7 @@ export default function PublicInviteLandingPage() {
   function handleCTA() {
     const params = new URLSearchParams({ lang });
     if (referralCode) params.set("ref", referralCode);
-    navigate(`/cadastro?${params.toString()}`, { state: { fromInvite: true } });
+    navigate(`/entrar?${params.toString()}`, { state: { fromInvite: true } });
   }
 
   return (

@@ -2,6 +2,7 @@ import {
   validatePublicBookingHandlerInput,
   validatePublicBookingCreateAppointmentOutput,
   validatePublicBookingCompleteClientOnboardingOutput,
+  validatePublicBookingResolveRegistrationLinkOutput,
   type PublicBookingCreateAppointmentOutput,
 } from '@iaprafaturar/contracts/edge-functions/public-booking-handler.ts'
 
@@ -107,6 +108,21 @@ async function invokeAppointmentConfirmation(appointmentId: string, dryRun: bool
   return { confirmationStatus: 'queued' }
 }
 
+async function claimRegistrationLinkUse(
+  supabase: ReturnType<typeof createServiceClient>,
+  code: string | undefined,
+  slug: string,
+): Promise<void> {
+  if (!code) return
+  const { error } = await supabase.rpc('claim_registration_link_use', {
+    p_code: code,
+    p_slug: slug,
+  })
+  if (error) {
+    console.warn('claim_registration_link_use_failed', error)
+  }
+}
+
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: CORS_HEADERS })
@@ -124,9 +140,54 @@ Deno.serve(async (request) => {
       supabase,
       request,
       action: `public-booking:${input.mode}`,
-      subject: input.slug,
+      subject: 'slug' in input ? input.slug : input.code,
       limit: input.mode === 'get_context' ? 60 : 10,
     })
+
+    if (input.mode === 'resolve_registration_link') {
+      const code = input.code.trim()
+      const locale = input.lang ?? 'pt-BR'
+      const { data: links, error: linkError } = await supabase
+        .from('registration_links')
+        .select('code, is_active, expires_at, uses_count, max_uses, professionals!inner(slug, deleted_at, onboarding_completed)')
+        .ilike('code', code)
+        .eq('is_active', true)
+        .is('professionals.deleted_at', null)
+        .eq('professionals.onboarding_completed', true)
+        .limit(1)
+
+      if (linkError) throw linkError
+
+      const link = links?.[0] as {
+        code: string
+        expires_at: string | null
+        uses_count: number
+        max_uses: number | null
+        professionals: { slug: string } | Array<{ slug: string }>
+      } | undefined
+
+      const professional = Array.isArray(link?.professionals)
+        ? link?.professionals[0]
+        : link?.professionals
+
+      const isExpired = link?.expires_at ? new Date(link.expires_at).getTime() <= Date.now() : false
+      const isExhausted = link?.max_uses !== null && link?.max_uses !== undefined
+        ? link.uses_count >= link.max_uses
+        : false
+
+      if (!link || !professional?.slug || isExpired || isExhausted) {
+        return publicJsonResponse({ ok: false, error: 'not_found', locale }, { status: 404 })
+      }
+
+      return publicJsonResponse(validatePublicBookingResolveRegistrationLinkOutput({
+        ok: true,
+        registration_link_code: link.code,
+        professional_slug: professional.slug,
+        locale,
+        ref: input.ref ?? link.code,
+        next_step: 'client_onboarding',
+      }))
+    }
 
     if (input.mode === 'get_context') {
       const { data, error } = await supabase.rpc('get_public_booking_context', {
@@ -156,7 +217,9 @@ Deno.serve(async (request) => {
       })
 
       if (error) throw error
-      return publicJsonResponse(validatePublicBookingCompleteClientOnboardingOutput(data))
+      const output = validatePublicBookingCompleteClientOnboardingOutput(data)
+      await claimRegistrationLinkUse(supabase, input.ref, input.slug)
+      return publicJsonResponse(output)
     }
 
     const { data, error } = await supabase.rpc('create_public_appointment', {

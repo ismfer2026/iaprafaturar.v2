@@ -59,6 +59,17 @@ async function rpc(functionName: string, body: Record<string, unknown>): Promise
   return { data, error: null }
 }
 
+async function claimRegistrationLinkUse(code: string | undefined, slug: string): Promise<void> {
+  if (!code) return
+  const { error } = await rpc('claim_registration_link_use', {
+    p_code: code,
+    p_slug: slug,
+  })
+  if (error) {
+    console.warn('claim_registration_link_use_failed', error)
+  }
+}
+
 function clientIp(request: Request): string | null {
   return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
     ?? request.headers.get('cf-connecting-ip')
@@ -202,6 +213,7 @@ Deno.serve(async (request) => {
       if (error) throw error
       const rpcError = rpcJsonResponse(data)
       if (rpcError) return rpcError
+      await claimRegistrationLinkUse(input.ref, input.slug)
       return publicJsonResponse(data)
     }
 

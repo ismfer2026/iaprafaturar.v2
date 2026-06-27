@@ -13,6 +13,7 @@ import { professionalAliases, professionalRoutes } from "@/routes";
 const LoginPage = lazy(() => import("@/pages/auth/LoginPage"));
 const PublicEntrarPage = lazy(() => import("@/pages/auth/PublicEntrarPage"));
 const PublicInviteLandingPage = lazy(() => import("@/pages/auth/PublicInviteLandingPage"));
+const PublicClientRegistrationRedirectPage = lazy(() => import("@/pages/auth/PublicClientRegistrationRedirectPage"));
 const PublicCreateAccountPage = lazy(() => import("@/pages/auth/PublicCreateAccountPage"));
 const RecoverPasswordPage = lazy(() => import("@/pages/auth/RecoverPasswordPage"));
 const ResetPasswordPage = lazy(() => import("@/pages/auth/ResetPasswordPage"));
@@ -50,7 +51,7 @@ function AppRoutes() {
               <Route path="/entrar" element={<PublicEntrarPage />} />
               <Route path="/cadastro" element={<PublicEntrarPage />} />
             </Route>
-            <Route path="/cadastro/:codigo" element={<PublicInviteLandingPage />} />
+            <Route path="/cadastro/:codigo" element={<PublicClientRegistrationRedirectPage />} />
             <Route path="/convite/:codigo" element={<PublicInviteLandingPage />} />
             <Route path="/criar-conta" element={<PublicCreateAccountPage />} />
             <Route path="/recuperar-senha" element={<RecoverPasswordPage />} />

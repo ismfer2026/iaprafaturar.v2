@@ -50,9 +50,7 @@ export default function PublicEntrarPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Qualquer acesso direto a um link de indicação (link antigo, digitado à mão,
-  // favoritado) deve passar pela página de captura antes do formulário —
-  // só pula direto quando a navegação vem do próprio CTA de /convite/:codigo.
+  // Direct/favorited referral URLs must see the capture page first.
   if (ref && !cameFromInvite) {
     const params = new URLSearchParams({ lang });
     return <Navigate to={`/convite/${encodeURIComponent(ref)}?${params.toString()}`} replace />;

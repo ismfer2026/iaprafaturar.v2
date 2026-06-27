@@ -482,9 +482,12 @@ Rotas que funcionam sem autenticação. Toda rota pública deve:
 | Rota | Propósito | Auth | Parâmetros críticos |
 |---|---|---|---|
 | `/agendar/:slug` | Agendamento público do cliente | Não | `slug` (professionals.slug) |
+| `/cliente/:slug` | Onboarding/perfil público do cliente da clínica | Não | `slug`, `lang`, tenant resolvido no backend |
 | `/anamnese/:token` | Ficha de anamnese pré-consulta | Não | `token` (registration_sessions.token) |
+| `/cadastro/:codigo` | Onboarding/cadastro público de cliente da clínica | Não | `codigo` (registration_links.code), `lang`, `ref` |
 | `/convite/:codigo` | Onboarding via convite de profissional | Não | `codigo` (referral_links.code) |
 | `/entrar` | Login/cadastro com contexto de referral | Não | `ref`, `lang` |
+| `/indicacao/:codigo` | Cliente indica/referencia possível cliente para a clínica | Não | `codigo`, `lang`, tenant validado no backend |
 | `/pacote/:slug` | Apresentação de pacote de serviços | Não | `slug` |
 | Webhook Evolution Go | Receber mensagens WhatsApp | HMAC | `x-evolution-hmac` |
 | Webhook Stripe | Receber eventos de billing | Stripe signature | `stripe-signature` |
@@ -492,8 +495,12 @@ Rotas que funcionam sem autenticação. Toda rota pública deve:
 **Invariante — cadastro separado:**
 > Cadastro de profissional e cadastro de cliente são fluxos distintos. Nunca podem compartilhar rota, agente, payload, billing, créditos ou contexto de Auth.
 >
-> - `/cadastro` e `/onboarding` → exclusivos do profissional
+> - `/cadastro` sem parâmetro e `/onboarding` → exclusivos do profissional autenticado ou pré-conta profissional
+> - `/cadastro/:codigo` → exclusivo do cliente da clínica, usando `registration_links` validados no backend
+> - `/cliente/:slug` → exclusivo do cliente da clínica; a Fase 28 decide se `/cadastro/:codigo` reutiliza, resolve e redireciona, ou amplia este mesmo fluxo sem criar segunda experiência paralela
 > - `/agendar/:slug` → exclusivo do cliente da clínica
+> - `/convite/:codigo` e `/entrar?ref=...` → exclusivos de profissional convidando outro profissional para usar a plataforma
+> - `/indicacao/:codigo` → exclusivo de cliente indicando/referenciando possível cliente para a clínica
 > - Um cliente não pode criar conta de profissional pelo fluxo público.
 > - Um profissional não passa pelo fluxo de agendamento público da própria clínica como cliente.
 
@@ -746,6 +753,7 @@ Se já existir artefato equivalente, a tarefa deve ampliá-lo ou substituí-lo c
 | Dashboard admin | Fases 9 e 17 | Fase 23 | ampliar dashboard e RPCs existentes; não criar dashboard paralelo |
 | Afiliados da plataforma | Fase 17 | Fase 24 | `/embaixadores` é canônica no admin; não confundir com parceiros profissionais |
 | Parceiros profissionais | contratos a validar | Fase 21 | professional vê apenas seu escopo; pagamentos administrativos ficam na Fase 24 |
+| Onboardings públicos e indicação | Fases 2, 11, 25 e 27 | Fase 28 | `/convite/:codigo` e `/entrar?ref=...` são profissional -> profissional; `/cadastro/:codigo` é cliente da clínica; `/indicacao/:codigo` é cliente -> possível cliente da clínica |
 
 ---
 
@@ -1674,6 +1682,47 @@ Se já existir artefato equivalente, a tarefa deve ampliá-lo ou substituí-lo c
 - ⚠️ Gate externo pendente: validação física Safari iOS + Android Chrome (não executável nesta estação Windows)
 
 **Documentos base:** `POST-PHASE-26-V1-V2-PARITY-AUDIT.md`, `PHASE-27-PREFLIGHT.md`, `PHASE-27-EXECUTION-PLAN.md`.
+
+---
+
+### FASE 28 — Correção de Onboardings Públicos e Separação de Funis
+**Status:** planejada; execução funcional bloqueada até aprovação do preflight
+**Duração estimada:** 1-2 semanas
+**Entrega:** rotas públicas de profissional, cliente e indicação deixam de competir entre si e voltam a respeitar o contrato de produto.
+
+**Escopo:**
+- Auditar `/convite/:codigo`, `/entrar`, `/cadastro`, `/cadastro/:codigo` e `/indicacao/:codigo`
+- Decidir formalmente a relação entre `/cliente/:slug` e `/cadastro/:codigo` antes de qualquer nova UI de cliente
+- Restaurar o handoff de profissional convidando profissional sem mandar para cadastro de cliente
+- Restaurar `/cadastro/:codigo` como onboarding/cadastro público de cliente da clínica, com tenant validado no backend
+- Garantir que `/indicacao/:codigo` continue sendo cliente indicando/referenciando possível cliente para a clínica
+- Validar se `/indicacao/:codigo` existente já está correto antes de reconstruir qualquer parte do funil
+- Preservar `lang`, `ref`, código dinâmico e contexto de origem em todos os fluxos
+- Documentar aliases/redirects seguros e remover qualquer redirect circular
+
+**Invariantes:**
+- `/cadastro` sem parâmetro pode ser profissional; `/cadastro/:codigo` é cliente da clínica.
+- `/convite/:codigo` nunca cria cliente; `/cadastro/:codigo` nunca cria profissional.
+- `registration_links` não é lido diretamente por `anon`; qualquer resolução pública de código exige RPC/Edge Function pública com validação, rate limit e payload mínimo.
+- `/cliente/:slug` e `/cadastro/:codigo` não podem virar duas fontes de onboarding de cliente.
+- `/indicacao/:codigo` não é afiliado da plataforma e não gera comissão SaaS.
+- Nenhum fluxo público confia em `professional_id` vindo do payload do cliente.
+- v1 é referência de comportamento, nunca fonte técnica de schema/functions.
+
+**DoD Fase 28:**
+- [ ] Preflight aprovado com app dono, ator, rota canônica, aliases e contratos v2
+- [ ] `/convite/:codigo` -> onboarding/cadastro de profissional preservando `ref` e `lang`
+- [ ] `/entrar?ref=...` não redireciona para `/convite` quando já está no passo de cadastro/onboarding aprovado
+- [ ] Preflight decidiu se `/cadastro/:codigo` reutiliza `/cliente/:slug`, redireciona para ele, ou amplia o mesmo contrato
+- [ ] Existe caminho backend público seguro para resolver `registration_links.code` sem SELECT anon direto
+- [ ] `/cadastro/:codigo` renderiza experiência de cliente da clínica, não landing de profissional
+- [ ] `/indicacao/:codigo` existente foi validado antes de qualquer rebuild e escreve somente no funil da clínica/profissional correto
+- [ ] Códigos inválidos retornam erro amigável sem vazamento de tenant
+- [ ] Isolamento professionalA/professionalB validado
+- [ ] Build, lint e typecheck passam
+- [ ] PRD-FRONTEND, PRD-EDGE-FUNCTIONS e PRD-SCHEMA sincronizados quando houver alteração funcional
+
+**Documento base:** `PHASE-28-EXECUTION-PLAN.md`.
 
 ---
 

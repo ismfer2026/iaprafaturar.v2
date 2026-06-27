@@ -53,7 +53,8 @@ export default function PublicClientOnboardingPage() {
       fullName,
       phoneWhatsapp,
       ...(email.trim() ? { email: email.trim() } : {}),
-      lang: locale
+      lang: locale,
+      ...(ref ? { ref } : {})
     }),
     onSuccess(data) {
       if ("ok" in data && data.ok === false) {

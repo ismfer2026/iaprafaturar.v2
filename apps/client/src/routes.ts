@@ -11,6 +11,7 @@ export interface ClientRouteDefinition {
 
 const PublicBookingPage = lazy(() => import("@/pages/PublicBookingPage"));
 const PublicClientOnboardingPage = lazy(() => import("@/pages/PublicClientOnboardingPage"));
+const PublicRegistrationLinkRedirectPage = lazy(() => import("@/pages/PublicRegistrationLinkRedirectPage"));
 const PublicAnamnesePage = lazy(() => import("@/pages/PublicAnamnesePage"));
 const PublicAppointmentActionsPage = lazy(() => import("@/pages/PublicAppointmentActionsPage"));
 const PublicPackagePage = lazy(() => import("@/pages/PublicPackagePage"));
@@ -20,6 +21,7 @@ const PublicChatPage = lazy(() => import("@/pages/PublicChatPage"));
 const PublicIndicacaoPage = lazy(() => import("@/pages/PublicIndicacaoPage"));
 
 export const clientRoutes: ClientRouteDefinition[] = [
+  { path: "/cadastro/:codigo", component: PublicRegistrationLinkRedirectPage, access: "public-slug", ownerPhase: 28 },
   { path: "/cliente/:slug", component: PublicClientOnboardingPage, access: "public-slug", ownerPhase: 25 },
   { path: "/agendar/:slug", component: PublicBookingPage, access: "public-slug", ownerPhase: 6 },
   { path: "/agendamento/:token", component: PublicAppointmentActionsPage, access: "public-token", ownerPhase: 14 },
