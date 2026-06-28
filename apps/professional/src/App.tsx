@@ -12,6 +12,7 @@ import { professionalAliases, professionalRoutes } from "@/routes";
 
 const LoginPage = lazy(() => import("@/pages/auth/LoginPage"));
 const PublicEntrarPage = lazy(() => import("@/pages/auth/PublicEntrarPage"));
+const PublicProfessionalOnboardingFlowPage = lazy(() => import("@/pages/auth/PublicProfessionalOnboardingFlowPage"));
 const PublicInviteLandingPage = lazy(() => import("@/pages/auth/PublicInviteLandingPage"));
 const PublicClientRegistrationRedirectPage = lazy(() => import("@/pages/auth/PublicClientRegistrationRedirectPage"));
 const PublicCreateAccountPage = lazy(() => import("@/pages/auth/PublicCreateAccountPage"));
@@ -48,7 +49,7 @@ function AppRoutes() {
           <Routes>
             <Route element={<PublicRoute />}>
               <Route path="/login" element={<LoginPage />} />
-              <Route path="/entrar" element={<PublicEntrarPage />} />
+              <Route path="/entrar" element={<PublicProfessionalOnboardingFlowPage />} />
               <Route path="/cadastro" element={<PublicEntrarPage />} />
             </Route>
             <Route path="/cadastro/:codigo" element={<PublicClientRegistrationRedirectPage />} />

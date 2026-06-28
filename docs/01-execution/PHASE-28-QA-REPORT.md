@@ -12,7 +12,8 @@ Fase 28 executada no codigo.
 - `/cadastro/:codigo` reutiliza o contrato existente de `/cliente/:slug`; nao foi criada segunda experiencia paralela de onboarding de cliente.
 - `registration_links.code` e resolvido por Edge Function com service role e rate limit publico; RLS anon continua fechada.
 - `/convite/:codigo` permanece profissional convidando profissional.
-- `/entrar?ref=...` e `/cadastro?ref=...` acessados diretamente voltam para `/convite/:codigo`; somente o CTA de `/convite/:codigo`, marcado com `state.fromInvite`, entra no formulario profissional.
+- `/entrar?ref=...` e o destino aprovado do CTA de `/convite/:codigo` e abre o onboarding publico profissional em formato conversacional.
+- `/cadastro?ref=...` acessado diretamente continua voltando para `/convite/:codigo`, evitando pular a pagina de captura do convite profissional.
 - `/indicacao/:codigo` foi validado como rota isolada do app client e nao foi reconstruido nesta fase.
 
 ## Implementacao
@@ -34,8 +35,10 @@ Fase 28 executada no codigo.
   - resolve o codigo e envia para o app client.
 - `apps/professional/src/pages/auth/PublicInviteLandingPage.tsx`
   - CTA de convite profissional vai para `/entrar?ref=...`.
+- `apps/professional/src/pages/auth/PublicProfessionalOnboardingFlowPage.tsx`
+  - restaura `/entrar?ref=...` como onboarding publico profissional conversacional e cria a pre-conta via `public-create-account`.
 - `apps/professional/src/pages/auth/PublicEntrarPage.tsx`
-  - preserva o guard condicional de `ea82931`: acesso direto com `ref` passa pela pagina de captura, mas o CTA de `/convite/:codigo` pode seguir para o formulario.
+  - permanece como formulario/fallback de `/cadastro` e preserva o guard de `/cadastro?ref=...` para a pagina de captura.
 - `supabase/migrations/20260627090000_phase28_claim_registration_link_use.sql`
   - cria `claim_registration_link_use(p_code, p_slug)` para consumir `uses_count` de forma atomica depois de uma sessao/onboarding de cliente bem-sucedido.
 - `supabase/functions/client-portal-handler/index.ts` e `supabase/functions/public-booking-handler/index.ts`
@@ -47,6 +50,7 @@ Fase 28 executada no codigo.
 - `npm run lint`: passou.
 - `npm run build`: passou.
 - `git diff --check`: passou.
+- `2026-06-28`: restauracao de `/entrar?ref=...` como onboarding publico profissional validada com `npm run typecheck`, `npm run lint`, `npm run build` e `git diff --check`.
 - `supabase functions deploy public-booking-handler --import-map supabase/functions/deno.json`: passou no projeto `hqjghltqnbhbfoybtrgq`.
 - `supabase db push`: aplicou `20260627090000_phase28_claim_registration_link_use.sql` no projeto remoto.
 - `supabase functions deploy client-portal-handler --import-map supabase/functions/deno.json`: passou no projeto `hqjghltqnbhbfoybtrgq`.

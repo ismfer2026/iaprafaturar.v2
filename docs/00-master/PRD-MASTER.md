@@ -1712,7 +1712,7 @@ Se já existir artefato equivalente, a tarefa deve ampliá-lo ou substituí-lo c
 **DoD Fase 28:**
 - [ ] Preflight aprovado com app dono, ator, rota canônica, aliases e contratos v2
 - [ ] `/convite/:codigo` -> onboarding/cadastro de profissional preservando `ref` e `lang`
-- [ ] `/entrar?ref=...` não redireciona para `/convite` quando já está no passo de cadastro/onboarding aprovado
+- [x] `/entrar?ref=...` abre o onboarding publico profissional aprovado apos o CTA de `/convite/:codigo`; `/cadastro?ref=...` continua voltando para captura quando acessado direto
 - [ ] Preflight decidiu se `/cadastro/:codigo` reutiliza `/cliente/:slug`, redireciona para ele, ou amplia o mesmo contrato
 - [ ] Existe caminho backend público seguro para resolver `registration_links.code` sem SELECT anon direto
 - [ ] `/cadastro/:codigo` renderiza experiência de cliente da clínica, não landing de profissional
