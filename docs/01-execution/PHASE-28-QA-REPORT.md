@@ -36,7 +36,9 @@ Fase 28 executada no codigo.
 - `apps/professional/src/pages/auth/PublicInviteLandingPage.tsx`
   - CTA de convite profissional vai para `/entrar?ref=...`.
 - `apps/professional/src/pages/auth/PublicProfessionalOnboardingFlowPage.tsx`
-  - restaura `/entrar?ref=...` como onboarding publico profissional conversacional e cria a pre-conta via `public-create-account`.
+  - restaura `/entrar?ref=...` como onboarding publico profissional conversacional, chamando `onboarding-agent` como na v1.
+- `supabase/functions/onboarding-agent/index.ts`
+  - recria o modo publico `web_chat`, coleta dados via IA, finaliza via `create_public_professional_preaccount` e atualiza o cadastro profissional com os dados coletados.
 - `apps/professional/src/pages/auth/PublicEntrarPage.tsx`
   - permanece como formulario/fallback de `/cadastro` e preserva o guard de `/cadastro?ref=...` para a pagina de captura.
 - `supabase/migrations/20260627090000_phase28_claim_registration_link_use.sql`
@@ -50,7 +52,7 @@ Fase 28 executada no codigo.
 - `npm run lint`: passou.
 - `npm run build`: passou.
 - `git diff --check`: passou.
-- `2026-06-28`: restauracao de `/entrar?ref=...` como onboarding publico profissional validada com `npm run typecheck`, `npm run lint`, `npm run build` e `git diff --check`.
+- `2026-06-28`: restauracao de `/entrar?ref=...` como onboarding publico profissional real validada com `npm run typecheck`, `npm run lint`, `npm run build`, `git diff --check`, deploy de `onboarding-agent` e chamada live `mode=web_chat/message=INICIO`.
 - `supabase functions deploy public-booking-handler --import-map supabase/functions/deno.json`: passou no projeto `hqjghltqnbhbfoybtrgq`.
 - `supabase db push`: aplicou `20260627090000_phase28_claim_registration_link_use.sql` no projeto remoto.
 - `supabase functions deploy client-portal-handler --import-map supabase/functions/deno.json`: passou no projeto `hqjghltqnbhbfoybtrgq`.
