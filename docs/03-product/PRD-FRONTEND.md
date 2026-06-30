@@ -340,6 +340,8 @@ useMoveClientStage()      // otimistic update
 ## apps/client — PWA do Cliente
 
 > **Implementação Fase 25 (2026-06-14):** as rotas canônicas atuais são `/cliente/:slug`, `/agendar/:slug`, `/agendamento/:token`, `/anamnese/:token`, `/pacote/:slug`, `/orcamento/:token`, `/chat/:slug`, `/portal/:token` e as subrotas `/portal/home|historico|pacotes|agendar|onboarding`. O portal usa sessão tokenizada em `sessionStorage`, histórico paginado por cursor, i18n pt-BR/en-US/es-419 e ações de perfil, cancelamento e reagendamento pelos contratos canônicos. As rotas antigas abaixo permanecem como visão histórica e não autorizam implementações paralelas.
+>
+> **Implementação Fase 28 (2026-06-29):** `/cadastro/:codigo` resolve `registration_links.code` por backend público seguro e redireciona para o contrato único `/cliente/:slug`. `/cliente/:slug` renderiza onboarding conversacional inteligente de cliente via `cadastro-agent`, preservando `lang` e `ref`, e finaliza abrindo `/portal/:token`.
 
 ### Características PWA
 - `display: standalone` — nunca alterar
@@ -360,6 +362,8 @@ useMoveClientStage()      // otimistic update
 | `/pacote/:packageId` | `PacoteAtivo` | J31 | Magic link |
 | `/anamnese/:token` | `AnamnesePublica` | J5 | Anon (token) |
 | `/cadastro` | `CadastroPublico` | J11 | Anon |
+| `/cadastro/:codigo` | `PublicRegistrationLinkRedirectPage` | J11 / F28 | Anon |
+| `/cliente/:slug` | `PublicClientOnboardingPage` | J11 / F28 | Anon |
 | `/login` | `LoginOTP` | J15 | Anon |
 
 ### Onboarding do Cliente (`/onboarding`) — J60

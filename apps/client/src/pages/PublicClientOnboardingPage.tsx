@@ -1,27 +1,44 @@
-import { useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { Bell, ShieldCheck, UserRound, type LucideIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Skeleton, cn } from "@iaprafaturar/ui";
+import { AlertCircle, CheckCircle2, ChevronRight, Loader, Send } from "lucide-react";
+import { Button, Input } from "@iaprafaturar/ui";
 import { useI18n } from "@/i18n";
-import { getPublicBookingContext } from "@/lib/public-booking-api";
-import { startClientPortalSession } from "@/lib/client-portal-api";
+import { supabase } from "@/lib/supabase";
 import { buildPublicPath, readRefParam } from "@/lib/public-flow-state";
-import { PublicLayout } from "./PublicLayout";
-import type {
-  PublicBookingContextOutput
-} from "@iaprafaturar/contracts/edge-functions/public-booking-handler";
 
-type ContactPreference = "whatsapp" | "email" | "both";
+type PageState = "loading" | "chat" | "done" | "error";
 
-function isContext(data: unknown): data is PublicBookingContextOutput {
-  return Boolean(data && typeof data === "object" && "professional" in data);
+interface Message {
+  id: string;
+  sender: "cliente" | "agente";
+  content: string;
+  timestamp: Date;
 }
 
-function getOnboardingErrorKey(error: string) {
-  if (error === "not_found") return "clientOnboarding.error.load";
-  if (error === "invalid_input") return "clientOnboarding.error.invalidInput";
-  return "clientOnboarding.error.submit";
+interface CadastroAgentResponse {
+  ok?: boolean;
+  error?: string;
+  reply?: string;
+  collected_data?: Record<string, unknown>;
+  is_complete?: boolean;
+  portal_url?: string;
+  session_token?: string;
+}
+
+function makeId(prefix: string): string {
+  return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+}
+
+function formatTime(date: Date, locale: string): string {
+  return date.toLocaleTimeString(locale === "es-419" ? "es-419" : locale, { hour: "2-digit", minute: "2-digit" });
+}
+
+function firstNameFromData(data: Record<string, unknown>): string {
+  const firstName = data["first_name"];
+  if (typeof firstName === "string" && firstName.trim()) return firstName.trim();
+  const fullName = data["full_name"];
+  if (typeof fullName === "string" && fullName.trim()) return fullName.trim().split(/\s+/)[0] ?? "";
+  return "";
 }
 
 export default function PublicClientOnboardingPage() {
@@ -31,216 +48,332 @@ export default function PublicClientOnboardingPage() {
   const { locale, t } = useI18n();
   const ref = readRefParam(location.search);
 
-  const [fullName, setFullName] = useState("");
-  const [phoneWhatsapp, setPhoneWhatsapp] = useState("");
-  const [email, setEmail] = useState("");
-  const [contactPreference, setContactPreference] = useState<ContactPreference>("whatsapp");
-  const [remindersOptIn, setRemindersOptIn] = useState(true);
-  const [lgpdAccepted, setLgpdAccepted] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [pageState, setPageState] = useState<PageState>("loading");
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputValue, setInputValue] = useState("");
+  const [isThinking, setIsThinking] = useState(false);
+  const [conversation, setConversation] = useState<Array<{ role: string; content: string }>>([]);
+  const [collectedData, setCollectedData] = useState<Record<string, unknown>>({});
+  const [portalUrl, setPortalUrl] = useState("");
+  const [sessionToken, setSessionToken] = useState("");
+  const [clientName, setClientName] = useState("");
+  const [errorDetail, setErrorDetail] = useState("");
 
-  const contextQuery = useQuery({
-    queryKey: ["public-client-onboarding-context", slug, locale, ref],
-    queryFn: () => getPublicBookingContext({ slug, lang: locale, ...(ref ? { ref } : {}) }),
-    enabled: Boolean(slug)
-  });
+  const startedRef = useRef(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const context = isContext(contextQuery.data) ? contextQuery.data : null;
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isThinking]);
 
-  const submitMutation = useMutation({
-    mutationFn: () => startClientPortalSession({
-      slug,
-      fullName,
-      phoneWhatsapp,
-      ...(email.trim() ? { email: email.trim() } : {}),
-      lang: locale,
-      ...(ref ? { ref } : {})
-    }),
-    onSuccess(data) {
-      if ("ok" in data && data.ok === false) {
-        setFormError(t(getOnboardingErrorKey(data.error)));
-        return;
+  useEffect(() => {
+    if (pageState !== "chat" || isThinking) return;
+    const timer = window.setTimeout(() => inputRef.current?.focus(), 80);
+    return () => window.clearTimeout(timer);
+  }, [isThinking, pageState]);
+
+  function appendMessage(sender: Message["sender"], content: string) {
+    setMessages((current) => [
+      ...current,
+      { id: makeId(sender), sender, content, timestamp: new Date() },
+    ]);
+  }
+
+  async function invokeAgent(input: {
+    message: string;
+    conversation: Array<{ role: string; content: string }>;
+    collectedData: Record<string, unknown>;
+  }) {
+    const { data, error } = await supabase.functions.invoke<CadastroAgentResponse>("cadastro-agent", {
+      body: {
+        mode: "web_chat",
+        slug,
+        message: input.message,
+        conversation: input.conversation,
+        collected_data: input.collectedData,
+        locale,
+        ...(ref ? { ref } : {}),
+      },
+    });
+
+    if (error) throw error;
+    if (!data || data.ok === false) throw new Error(data?.error ?? "cadastro_agent_failed");
+    return data;
+  }
+
+  useEffect(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+
+    if (!slug) {
+      setErrorDetail("missing_slug");
+      setPageState("error");
+      return;
+    }
+
+    async function start() {
+      setPageState("chat");
+      setIsThinking(true);
+      try {
+        const data = await invokeAgent({ message: "INICIO", conversation: [], collectedData: {} });
+        const reply = data.reply || "Oi! Para comecar, qual e o seu nome?";
+        appendMessage("agente", reply);
+        setConversation([{ role: "assistant", content: reply }]);
+        setCollectedData(data.collected_data ?? {});
+      } catch (error) {
+        setErrorDetail(error instanceof Error ? error.message : String(error));
+        setPageState("error");
+      } finally {
+        setIsThinking(false);
       }
+    }
 
-      navigate(buildPublicPath(`/portal/${data.session_token}`, { lang: locale, ...(ref ? { ref } : {}) }), { replace: true });
-    },
-    onError() {
-      setFormError(t("clientOnboarding.error.submit"));
-    }
-  });
+    void start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug]);
 
-  function submit() {
-    setFormError(null);
-    if (!fullName.trim()) {
-      setFormError(t("clientOnboarding.error.name"));
-      return;
+  async function handleSendMessage(event: React.FormEvent) {
+    event.preventDefault();
+    const text = inputValue.trim();
+    if (!text || isThinking) return;
+
+    setInputValue("");
+    appendMessage("cliente", text);
+    const nextConversation = [...conversation, { role: "user", content: text }];
+    setConversation(nextConversation);
+    setIsThinking(true);
+
+    try {
+      const data = await invokeAgent({ message: text, conversation: nextConversation, collectedData });
+      const nextCollected = data.collected_data ?? collectedData;
+      setCollectedData(nextCollected);
+      const firstName = firstNameFromData(nextCollected);
+      if (firstName) setClientName(firstName);
+
+      const reply = data.reply || "Pode repetir sua ultima resposta?";
+      appendMessage("agente", reply);
+      setConversation([...nextConversation, { role: "assistant", content: reply }]);
+
+      if (data.is_complete) {
+        if (data.portal_url) setPortalUrl(data.portal_url);
+        if (data.session_token) setSessionToken(data.session_token);
+        window.setTimeout(() => setPageState("done"), 900);
+      }
+    } catch (error) {
+      console.error("[PublicClientOnboardingPage] cadastro-agent error:", error);
+      appendMessage("agente", "Tive um problema tecnico. Pode repetir sua ultima resposta?");
+    } finally {
+      setIsThinking(false);
     }
-    if (!phoneWhatsapp.trim()) {
-      setFormError(t("clientOnboarding.error.phone"));
-      return;
-    }
-    if (!lgpdAccepted) {
-      setFormError(t("clientOnboarding.error.lgpd"));
-      return;
-    }
-    submitMutation.mutate();
   }
 
-  if (contextQuery.isLoading) {
+  function openPortal() {
+    if (sessionToken) {
+      navigate(buildPublicPath(`/portal/${sessionToken}`, { lang: locale, ...(ref ? { ref } : {}) }), { replace: true });
+      return;
+    }
+    if (portalUrl) window.location.href = portalUrl;
+  }
+
+  if (pageState === "loading") {
     return (
-      <PublicLayout eyebrow={t("shell.client")} title={t("clientOnboarding.title")} subtitle={t("common.loading")}>
-        <Card className="rounded-lg">
-          <CardContent className="space-y-4 p-5">
-            <Skeleton className="h-8 w-2/3" />
-            <Skeleton className="h-28 w-full" />
-            <Skeleton className="h-28 w-full" />
-          </CardContent>
-        </Card>
-      </PublicLayout>
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-teal-50 to-white">
+        <div className="space-y-4 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0D6E6E]">
+            <span className="text-2xl font-black text-white">ia</span>
+          </div>
+          <Loader className="mx-auto h-5 w-5 animate-spin text-[#0D6E6E]" />
+        </div>
+      </div>
     );
   }
 
-  if (!context || contextQuery.data?.ok === false) {
+  if (pageState === "error") {
     return (
-      <PublicLayout eyebrow={t("shell.client")} title={t("common.notFound.title")} subtitle={t("clientOnboarding.error.load")}>
-        <Card className="rounded-lg">
-          <CardContent className="space-y-4 p-5">
-            <p className="text-sm leading-6 text-zinc-600">{t("common.notFound.description")}</p>
-            <Button type="button" className="w-full bg-brand text-white hover:bg-brand/90" onClick={() => contextQuery.refetch()}>
-              {t("common.tryAgain")}
-            </Button>
-          </CardContent>
-        </Card>
-      </PublicLayout>
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-teal-50 to-white p-4">
+        <div className="max-w-md space-y-4 text-center">
+          <AlertCircle size={56} className="mx-auto text-red-500" />
+          <h1 className="text-2xl font-bold">{t("common.notFound.title")}</h1>
+          <p className="text-sm text-zinc-500">{t("clientOnboarding.error.load")}</p>
+          {location.search.includes("debug=1") && errorDetail ? (
+            <pre className="max-h-48 overflow-auto rounded border bg-white p-3 text-left text-xs text-zinc-600">{errorDetail}</pre>
+          ) : null}
+        </div>
+      </div>
     );
   }
 
-  return (
-    <PublicLayout
-      eyebrow={t("shell.client")}
-      title={t("clientOnboarding.title")}
-      subtitle={t("clientOnboarding.subtitle", { professionalName: context.professional.public_name })}
-      {...(context.professional.brand_color ? { brandColor: context.professional.brand_color } : {})}
-    >
-      <Card className="w-full max-w-full overflow-hidden rounded-lg border-zinc-200 shadow-lg shadow-teal-950/5">
-        <CardHeader className="space-y-4 border-b border-zinc-100 bg-white">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary">{t("clientOnboarding.badge")}</Badge>
-            <span className="max-w-full truncate text-sm font-medium text-zinc-700">{context.professional.public_name}</span>
+  if (pageState === "done") {
+    const firstName = clientName || "Voce";
+    return (
+      <div
+        className="flex min-h-screen items-center justify-center p-4"
+        style={{ background: "linear-gradient(160deg, #0D6E6E 0%, #1a1a2e 60%)" }}
+      >
+        <div className="w-full max-w-md space-y-6 text-center text-white">
+          <div className="relative mx-auto h-20 w-20">
+            <div className="absolute inset-0 rounded-full bg-white/15" />
+            <CheckCircle2 size={80} className="relative z-10 text-[#4DB6AC]" />
           </div>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-            <StepIcon icon={UserRound} label={t("clientOnboarding.step.identity")} active />
-            <StepIcon icon={ShieldCheck} label={t("clientOnboarding.step.consent")} active />
-            <StepIcon icon={Bell} label={t("clientOnboarding.step.preferences")} active />
+          <div className="space-y-2">
+            <h1 className="text-3xl font-black">Cadastro concluido</h1>
+            <p className="text-sm leading-6 text-white/70">
+              {firstName}, seus dados foram recebidos. Agora voce pode acessar seu portal para acompanhar agendamentos e informacoes.
+            </p>
           </div>
-          <div className="space-y-1">
-            <CardTitle className="text-xl">{t("clientOnboarding.card.title")}</CardTitle>
-            <p className="break-words text-sm leading-6 text-zinc-600">{t("clientOnboarding.card.description")}</p>
-          </div>
-        </CardHeader>
-
-        <CardContent className="space-y-5 p-5">
-          <div className="space-y-4">
-            <Field label={t("booking.form.name")} required>
-              <Input value={fullName} placeholder={t("booking.form.namePlaceholder")} onChange={(event) => setFullName(event.target.value)} />
-            </Field>
-            <Field label={t("booking.form.phone")} required>
-              <Input
-                value={phoneWhatsapp}
-                inputMode="tel"
-                placeholder={t("booking.form.phonePlaceholder")}
-                onChange={(event) => setPhoneWhatsapp(event.target.value)}
-              />
-            </Field>
-            <Field label={t("booking.form.email")}>
-              <Input
-                value={email}
-                type="email"
-                inputMode="email"
-                placeholder={t("booking.form.emailPlaceholder")}
-                onChange={(event) => setEmail(event.target.value)}
-              />
-            </Field>
-          </div>
-
-          <div className="space-y-3">
-            <p className="text-sm font-semibold text-zinc-800">{t("clientOnboarding.preference.title")}</p>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-              {(["whatsapp", "email", "both"] as const).map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  className={cn(
-                    "min-h-14 rounded-lg border px-2 py-3 text-center text-xs font-semibold transition",
-                    contactPreference === value
-                      ? "border-brand bg-teal-50 text-brand"
-                      : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300"
-                  )}
-                  onClick={() => setContactPreference(value)}
-                >
-                  {t(`clientOnboarding.preference.${value}`)}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <label className="flex items-start gap-3 rounded-lg border border-zinc-200 bg-[#fbfdfc] p-4">
-            <input
-              type="checkbox"
-              className="mt-1 h-4 w-4 rounded border-zinc-300 text-brand focus:ring-brand"
-              checked={remindersOptIn}
-              onChange={(event) => setRemindersOptIn(event.target.checked)}
-            />
-            <span className="text-sm leading-6 text-zinc-700">{t("clientOnboarding.reminders")}</span>
-          </label>
-
-          <label className="flex items-start gap-3 rounded-lg border border-zinc-200 bg-white p-4">
-            <input
-              type="checkbox"
-              className="mt-1 h-4 w-4 rounded border-zinc-300 text-brand focus:ring-brand"
-              checked={lgpdAccepted}
-              onChange={(event) => setLgpdAccepted(event.target.checked)}
-            />
-            <span className="text-sm leading-6 text-zinc-700">{t("clientOnboarding.lgpd")}</span>
-          </label>
-
-          {formError ? <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{formError}</p> : null}
-
           <Button
             type="button"
-            className="h-12 w-full bg-brand text-white hover:bg-brand/90"
-            disabled={submitMutation.isPending}
-            onClick={submit}
+            size="lg"
+            className="h-14 w-full gap-2 rounded-2xl bg-[#4DB6AC] text-base font-black text-white hover:bg-[#43a49a]"
+            onClick={openPortal}
           >
-            {submitMutation.isPending ? t("common.sending") : t("clientOnboarding.submit")}
+            Abrir portal do cliente
+            <ChevronRight className="h-5 w-5" />
           </Button>
-        </CardContent>
-      </Card>
-    </PublicLayout>
-  );
-}
+          <p className="text-xs text-white/40">iaprafaturar</p>
+        </div>
+      </div>
+    );
+  }
 
-function StepIcon({ icon: Icon, label, active }: { icon: LucideIcon; label: string; active?: boolean }) {
   return (
-    <div className={cn(
-      "flex h-14 flex-col items-center justify-center rounded-lg border text-[11px] font-semibold",
-      active ? "border-brand bg-teal-50 text-brand" : "border-zinc-200 bg-zinc-50 text-zinc-500"
-    )}>
-      <Icon className="mb-1 h-4 w-4" aria-hidden="true" />
-      <span className="truncate px-1">{label}</span>
+    <div style={{ minHeight: "100dvh", background: "#F8FFFE", display: "flex", flexDirection: "column" }}>
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 50,
+          backgroundColor: "#0D6E6E",
+          padding: "14px 16px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: "50%",
+              background: "rgba(255,255,255,0.2)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <span style={{ color: "#fff", fontWeight: 900, fontSize: 14 }}>ia</span>
+          </div>
+          <div>
+            <div style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>Cadastro inteligente</div>
+            <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 11 }}>Assistente da clinica</div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", padding: "80px 16px 96px" }}>
+        {messages.map((message) => (
+          <div
+            key={message.id}
+            style={{
+              display: "flex",
+              justifyContent: message.sender === "cliente" ? "flex-end" : "flex-start",
+              marginBottom: 10,
+            }}
+          >
+            <div
+              style={{
+                maxWidth: "78%",
+                padding: "10px 14px",
+                borderRadius: message.sender === "cliente" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+                backgroundColor: message.sender === "cliente" ? "#0D6E6E" : "#fff",
+                color: message.sender === "cliente" ? "#fff" : "#111",
+                boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+              }}
+            >
+              <p style={{ fontSize: 14, margin: 0, whiteSpace: "pre-wrap", lineHeight: 1.5 }}>{message.content}</p>
+              <p
+                style={{
+                  fontSize: 10,
+                  margin: "4px 0 0",
+                  color: message.sender === "cliente" ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.35)",
+                  textAlign: "right",
+                }}
+              >
+                {formatTime(message.timestamp, locale)}
+              </p>
+            </div>
+          </div>
+        ))}
+
+        {isThinking ? (
+          <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 10 }}>
+            <div
+              style={{
+                backgroundColor: "#fff",
+                borderRadius: "16px 16px 16px 4px",
+                padding: "12px 16px",
+                boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+              }}
+            >
+              <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                {[0, 150, 300].map((delay) => (
+                  <div
+                    key={delay}
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      backgroundColor: "#0D6E6E",
+                      animation: "client-onboarding-bounce 1s infinite",
+                      animationDelay: `${delay}ms`,
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : null}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <div
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: "#fff",
+          borderTop: "1px solid #E8F5F5",
+          padding: "12px 16px",
+        }}
+      >
+        <form onSubmit={handleSendMessage} style={{ display: "flex", gap: 8 }}>
+          <Input
+            ref={inputRef}
+            value={inputValue}
+            placeholder="Digite sua resposta..."
+            disabled={isThinking}
+            onChange={(event) => setInputValue(event.target.value)}
+            style={{ flex: 1, borderRadius: 12 }}
+          />
+          <Button
+            type="submit"
+            disabled={isThinking || !inputValue.trim()}
+            style={{ backgroundColor: "#0D6E6E", borderRadius: 12, padding: "0 16px" }}
+            className="hover:opacity-90"
+          >
+            {isThinking ? <Loader size={18} className="animate-spin" /> : <Send size={18} />}
+          </Button>
+        </form>
+      </div>
+
+      <style>{`
+        @keyframes client-onboarding-bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-5px); }
+        }
+      `}</style>
     </div>
-  );
-}
-
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
-  const { t } = useI18n();
-  return (
-    <label className="block space-y-2">
-      <span className="flex items-center gap-2 text-sm font-semibold text-zinc-800">
-        {label}
-        {required ? <span className="text-xs font-medium text-brand">{t("common.required")}</span> : null}
-      </span>
-      {children}
-    </label>
   );
 }

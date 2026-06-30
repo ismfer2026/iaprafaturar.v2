@@ -1686,7 +1686,7 @@ Se já existir artefato equivalente, a tarefa deve ampliá-lo ou substituí-lo c
 ---
 
 ### FASE 28 — Correção de Onboardings Públicos e Separação de Funis
-**Status:** planejada; execução funcional bloqueada até aprovação do preflight
+**Status:** execução funcional em andamento; funis profissional e cliente restaurados
 **Duração estimada:** 1-2 semanas
 **Entrega:** rotas públicas de profissional, cliente e indicação deixam de competir entre si e voltam a respeitar o contrato de produto.
 
@@ -1711,16 +1711,17 @@ Se já existir artefato equivalente, a tarefa deve ampliá-lo ou substituí-lo c
 
 **DoD Fase 28:**
 - [ ] Preflight aprovado com app dono, ator, rota canônica, aliases e contratos v2
-- [ ] `/convite/:codigo` -> onboarding/cadastro de profissional preservando `ref` e `lang`
+- [x] `/convite/:codigo` -> onboarding/cadastro de profissional preservando `ref` e `lang`
 - [x] `/entrar?ref=...` abre o onboarding publico profissional aprovado apos o CTA de `/convite/:codigo`, usando `onboarding-agent` publico como na v1; `/cadastro?ref=...` continua voltando para captura quando acessado direto
-- [ ] Preflight decidiu se `/cadastro/:codigo` reutiliza `/cliente/:slug`, redireciona para ele, ou amplia o mesmo contrato
-- [ ] Existe caminho backend público seguro para resolver `registration_links.code` sem SELECT anon direto
-- [ ] `/cadastro/:codigo` renderiza experiência de cliente da clínica, não landing de profissional
+- [x] Preflight decidiu se `/cadastro/:codigo` reutiliza `/cliente/:slug`, redireciona para ele, ou amplia o mesmo contrato
+- [x] Existe caminho backend público seguro para resolver `registration_links.code` sem SELECT anon direto
+- [x] `/cadastro/:codigo` renderiza experiência de cliente da clínica, não landing de profissional
+- [x] `/cliente/:slug` preserva o contrato unico de cliente e voltou a usar onboarding conversacional inteligente via `cadastro-agent`, finalizando pelo portal/sessao v2
 - [ ] `/indicacao/:codigo` existente foi validado antes de qualquer rebuild e escreve somente no funil da clínica/profissional correto
 - [ ] Códigos inválidos retornam erro amigável sem vazamento de tenant
 - [ ] Isolamento professionalA/professionalB validado
-- [ ] Build, lint e typecheck passam
-- [ ] PRD-FRONTEND, PRD-EDGE-FUNCTIONS e PRD-SCHEMA sincronizados quando houver alteração funcional
+- [x] Build, lint e typecheck passam
+- [x] PRD-FRONTEND, PRD-EDGE-FUNCTIONS e PRD-SCHEMA sincronizados quando houver alteração funcional
 
 **Documento base:** `PHASE-28-EXECUTION-PLAN.md`.
 

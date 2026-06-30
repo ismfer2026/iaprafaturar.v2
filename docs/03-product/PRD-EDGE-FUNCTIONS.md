@@ -969,7 +969,7 @@ Output: { alerts_sent }
 | reativacao-agent | Internal token | 3 |
 | relacionamento-agent | Internal token | 3 |
 | objecoes-agent | Internal token | 3 |
-| cadastro-agent | Internal token | 3 |
+| cadastro-agent | Public rate limit / Service Role | 28 |
 | aniversariantes-agent | Internal token | 9 |
 | upsell-agent | Internal token | 9 |
 | audio-processor | Internal token | 2 |
@@ -1016,3 +1016,12 @@ Em 2026-06-14, os handlers públicos foram consolidados sob o mesmo padrão:
 - erros públicos usam envelope mínimo e não retornam mensagens SQL;
 - todos são publicados com `verify_jwt = false`, mas usam somente RPCs `service_role` curadas;
 - `public-chat-handler` continua sendo o único chat público e não envia WhatsApp automaticamente.
+
+# Implementação Fase 28 — Onboardings públicos
+
+Em 2026-06-29, os funis públicos de profissional e cliente foram separados e restaurados:
+
+- `onboarding-agent` atende onboarding público de profissional via `/entrar?ref=...`, mantendo `/convite/:codigo` como captura de profissional convidando profissional.
+- `cadastro-agent` atende onboarding público de cliente via `/cliente/:slug`, usado por `/cadastro/:codigo` após resolução segura de `registration_links.code`.
+- `cadastro-agent` usa `verify_jwt = false`, `assertPublicRateLimit`, `service_role` e payload mínimo; não abre SELECT anon em `registration_links`.
+- A conclusão do cliente usa `create_client_portal_session`, complementa `clients` com dados coletados e consome `registration_links.uses_count` somente após sucesso.
