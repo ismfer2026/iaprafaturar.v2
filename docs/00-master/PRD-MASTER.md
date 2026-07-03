@@ -1686,7 +1686,7 @@ Se já existir artefato equivalente, a tarefa deve ampliá-lo ou substituí-lo c
 ---
 
 ### FASE 28 — Correção de Onboardings Públicos e Separação de Funis
-**Status:** execução funcional em andamento; funis profissional e cliente restaurados
+**Status:** execução funcional em andamento; funis profissional, cliente e indicacao webflow restaurados
 **Duração estimada:** 1-2 semanas
 **Entrega:** rotas públicas de profissional, cliente e indicação deixam de competir entre si e voltam a respeitar o contrato de produto.
 
@@ -1717,8 +1717,8 @@ Se já existir artefato equivalente, a tarefa deve ampliá-lo ou substituí-lo c
 - [x] Existe caminho backend público seguro para resolver `registration_links.code` sem SELECT anon direto
 - [x] `/cadastro/:codigo` renderiza experiência de cliente da clínica, não landing de profissional
 - [x] `/cliente/:slug` preserva o contrato unico de cliente e voltou a usar onboarding conversacional inteligente via `cadastro-agent`, finalizando pelo portal/sessao v2
-- [ ] `/indicacao/:codigo` existente foi validado antes de qualquer rebuild e escreve somente no funil da clínica/profissional correto
-- [ ] Códigos inválidos retornam erro amigável sem vazamento de tenant
+- [x] `/indicacao/:codigo` existente foi validado, deixou de ser tela estatica e agora escreve somente no funil da clinica/profissional correto via `public-referral-handler`
+- [x] Códigos inválidos retornam erro amigável sem vazamento de tenant
 - [ ] Isolamento professionalA/professionalB validado
 - [x] Build, lint e typecheck passam
 - [x] PRD-FRONTEND, PRD-EDGE-FUNCTIONS e PRD-SCHEMA sincronizados quando houver alteração funcional

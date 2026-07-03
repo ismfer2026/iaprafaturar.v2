@@ -343,6 +343,8 @@ useMoveClientStage()      // otimistic update
 >
 > **Implementação Fase 28 (2026-06-29):** `/cadastro/:codigo` resolve `registration_links.code` por backend público seguro e redireciona para o contrato único `/cliente/:slug`. `/cliente/:slug` renderiza onboarding conversacional inteligente de cliente via `cadastro-agent`, preservando `lang` e `ref`, e finaliza abrindo `/portal/:token`.
 
+> **Implementacao Fase 28.3 (2026-07-03):** `/indicacao/:codigo` tambem segue o padrao webflow conversacional. A rota usa `PublicIndicacaoPage`, chama `public-referral-handler` em `mode=web_chat`, resolve `referral_links.code` no backend e cria/atualiza lead em `clients` apenas apos confirmacao da conversa.
+
 ### Características PWA
 - `display: standalone` — nunca alterar
 - `theme_color`: definido dinamicamente pelo `professionals.settings.primary_color`
@@ -364,6 +366,7 @@ useMoveClientStage()      // otimistic update
 | `/cadastro` | `CadastroPublico` | J11 | Anon |
 | `/cadastro/:codigo` | `PublicRegistrationLinkRedirectPage` | J11 / F28 | Anon |
 | `/cliente/:slug` | `PublicClientOnboardingPage` | J11 / F28 | Anon |
+| `/indicacao/:codigo` | `PublicIndicacaoPage` | J27 / F28.3 | Anon |
 | `/login` | `LoginOTP` | J15 | Anon |
 
 ### Onboarding do Cliente (`/onboarding`) — J60

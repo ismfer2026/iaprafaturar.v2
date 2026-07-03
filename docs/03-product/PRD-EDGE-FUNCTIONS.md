@@ -954,7 +954,7 @@ Output: { alerts_sent }
 
 ---
 
-## Resumo de Todas as Functions (47 total)
+## Resumo de Todas as Functions (48 total)
 
 | Função | Proteção | Fase |
 |---|---|---|
@@ -970,6 +970,7 @@ Output: { alerts_sent }
 | relacionamento-agent | Internal token | 3 |
 | objecoes-agent | Internal token | 3 |
 | cadastro-agent | Public rate limit / Service Role | 28 |
+| public-referral-handler | Public rate limit / Service Role | 28.3 |
 | aniversariantes-agent | Internal token | 9 |
 | upsell-agent | Internal token | 9 |
 | audio-processor | Internal token | 2 |
@@ -1009,7 +1010,7 @@ Output: { alerts_sent }
 
 Em 2026-06-14, os handlers públicos foram consolidados sob o mesmo padrão:
 
-- `public-booking-handler`, `client-portal-handler`, `anamnese-public-handler`, `public-appointment-actions`, `public-package-handler`, `public-quote-handler` e `public-chat-handler`;
+- `public-booking-handler`, `client-portal-handler`, `anamnese-public-handler`, `public-appointment-actions`, `public-package-handler`, `public-quote-handler`, `public-chat-handler` e `public-referral-handler`;
 - todos usam contrato runtime compartilhado em `@iaprafaturar/contracts`;
 - todos aplicam `claim_public_request_rate_limit()` antes da operação;
 - chave antiabuso usa IP + sujeito com SHA-256; tokens e PII não são persistidos em texto;
@@ -1025,3 +1026,4 @@ Em 2026-06-29, os funis públicos de profissional e cliente foram separados e re
 - `cadastro-agent` atende onboarding público de cliente via `/cliente/:slug`, usado por `/cadastro/:codigo` após resolução segura de `registration_links.code`.
 - `cadastro-agent` usa `verify_jwt = false`, `assertPublicRateLimit`, `service_role` e payload mínimo; não abre SELECT anon em `registration_links`.
 - A conclusão do cliente usa `create_client_portal_session`, complementa `clients` com dados coletados e consome `registration_links.uses_count` somente após sucesso.
+- Em 2026-07-03, `public-referral-handler` passou a atender `/indicacao/:codigo` como webflow conversacional de cliente indicando possivel cliente; resolve `referral_links.code`, coleta dados por IA, cria/atualiza `clients` com `source='referral'` e registra `referral_events.lead_created`.

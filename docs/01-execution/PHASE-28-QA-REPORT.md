@@ -15,7 +15,7 @@ Fase 28 executada no codigo.
 - `/convite/:codigo` permanece profissional convidando profissional.
 - `/entrar?ref=...` e o destino aprovado do CTA de `/convite/:codigo` e abre o onboarding publico profissional em formato conversacional.
 - `/cadastro?ref=...` acessado diretamente continua voltando para `/convite/:codigo`, evitando pular a pagina de captura do convite profissional.
-- `/indicacao/:codigo` foi validado como rota isolada do app client e nao foi reconstruido nesta fase.
+- `/indicacao/:codigo` foi corrigido para seguir o mesmo padrao de webflow conversacional dos onboardings publicos, sem tela estatica.
 
 ## Implementacao
 
@@ -55,6 +55,19 @@ Fase 28 executada no codigo.
   - cria `claim_registration_link_use(p_code, p_slug)` para consumir `uses_count` de forma atomica depois de uma sessao/onboarding de cliente bem-sucedido.
 - `supabase/functions/client-portal-handler/index.ts` e `supabase/functions/public-booking-handler/index.ts`
   - chamam `claim_registration_link_use` apos sucesso quando existe `ref`, sem gastar uso apenas por abertura do link.
+- `packages/contracts/edge-functions/public-referral-handler.ts`
+  - adiciona contrato publico para resolver e executar `web_chat` de indicacao cliente -> possivel cliente.
+- `supabase/functions/public-referral-handler/index.ts`
+  - resolve `referral_links.code` com service role e rate limit publico;
+  - valida link ativo, nao expirado e profissional ativo/onboardado;
+  - coleta dados via conversa IA e confirma antes de gravar;
+  - cria/atualiza `clients` com `source='referral'`, `referral_client_id` e metadata de origem;
+  - registra `referral_events.lead_created` via RPC `register_referral_event`;
+  - nunca aceita `professional_id` vindo do payload publico.
+- `apps/client/src/pages/PublicIndicacaoPage.tsx`
+  - substitui a tela estatica por webflow conversacional mobile-first;
+  - chama `public-referral-handler` com `mode=web_chat`;
+  - mostra estados de carregamento, erro, conversa e conclusao.
 
 ## Validacao local
 
@@ -68,8 +81,9 @@ Fase 28 executada no codigo.
 - `supabase functions deploy public-booking-handler --import-map supabase/functions/deno.json`: passou no projeto `hqjghltqnbhbfoybtrgq`.
 - `supabase db push`: aplicou `20260627090000_phase28_claim_registration_link_use.sql` no projeto remoto.
 - `supabase functions deploy client-portal-handler --import-map supabase/functions/deno.json`: passou no projeto `hqjghltqnbhbfoybtrgq`.
+- `2026-07-03`: `/indicacao/:codigo` convertido para webflow conversacional validado com `npm run typecheck`, `npm run lint`, `npm run build`, `deno check --config supabase/functions/deno.json supabase/functions/public-referral-handler/index.ts`, `git diff --check` e deploy de `public-referral-handler`.
 
 ## Riscos remanescentes
 
 - Validacao live ainda depende de link real em `registration_links` para confirmar status de expiracao e roteamento do dominio de producao.
-- `/indicacao/:codigo` permanece isolado, mas a criacao efetiva de lead indicado continua fora do escopo desta correcao se o produto exigir captura ativa nessa tela.
+- Validacao live de `/indicacao/:codigo` ainda depende de link real em `referral_links` para confirmar criacao do lead indicado e isolamento entre tenants em producao.

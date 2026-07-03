@@ -28,6 +28,8 @@
     "./edge-functions/professional-whatsapp-connection.ts": "./edge-functions/professional-whatsapp-connection.ts",
     "./edge-functions/public-booking-handler": "./edge-functions/public-booking-handler.ts",
     "./edge-functions/public-booking-handler.ts": "./edge-functions/public-booking-handler.ts",
+    "./edge-functions/public-referral-handler": "./edge-functions/public-referral-handler.ts",
+    "./edge-functions/public-referral-handler.ts": "./edge-functions/public-referral-handler.ts",
     "./edge-functions/client-portal-handler": "./edge-functions/client-portal-handler.ts",
     "./edge-functions/client-portal-handler.ts": "./edge-functions/client-portal-handler.ts",
     "./edge-functions/public-package-handler": "./edge-functions/public-package-handler.ts",
